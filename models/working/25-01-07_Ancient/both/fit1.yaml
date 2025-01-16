@@ -1,0 +1,37 @@
+description: Tree model relating LBK, Vindija demes
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {method: NelderMead, objective_func: objective_H2, fopt: -138.4014261638948,
+    max_iter: 500, num_iter: 500, func_calls: 817, flag: 2, u_fitted: 0, u: 1.1e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 50000.26495955151, start_size: 21538.33828927677}
+- name: N
+  start_time: 636211.1915980419
+  ancestors: [A]
+  epochs:
+  - {end_time: 55000.08068378367, start_size: 1978.746221185008}
+- name: NI
+  ancestors: [N]
+  epochs:
+  - {end_time: 50000, start_size: 1978.746221185008}
+- name: Vindija
+  ancestors: [N]
+  epochs:
+  - {end_time: 55000, start_size: 100.10358501769986}
+- name: LBK
+  ancestors: [A]
+  epochs:
+  - {end_time: 32005.82873530955, start_size: 1160.821337997308}
+  - {end_time: 7000, start_size: 4262.125944780542}
+pulses:
+- sources: [A]
+  dest: N
+  time: 200000
+  proportions: [0.1]
+- sources: [NI]
+  dest: LBK
+  time: 50000
+  proportions: [0.02]

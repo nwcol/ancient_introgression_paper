@@ -1,0 +1,34 @@
+description: Tree model relating LBK, Loschbour, Ust_Ishim demes with no migration no admixture.
+time_units: years
+generation_time: 29
+demes:
+- name: A
+  epochs:
+  - start_size: 15000
+    end_time: 60000
+- name: OOA
+  ancestors: [A]
+  epochs:
+  - start_size: 1000
+    end_time: 48000
+- name: UstIshim
+  ancestors: [OOA]
+  epochs:
+  - start_size: 1000
+    end_time: 45000
+- name: WE
+  description: "West Eurasians"
+  ancestors: [OOA]
+  epochs:
+  - start_size: 1000
+    end_time: 25000  
+- name: LBK
+  ancestors: [WE]
+  epochs:
+  - start_size: 4000
+    end_time: 7000
+- name: Loschbour
+  ancestors: [WE]
+  epochs:
+  - start_size: 4000
+    end_time: 8000

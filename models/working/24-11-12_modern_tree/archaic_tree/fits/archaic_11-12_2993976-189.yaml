@@ -1,0 +1,55 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {method: NelderMead, objective_func: objective_H2, fopt: -13529.455587318525,
+    max_iter: 10000, num_iter: 7539, func_calls: 10212, flag: 0, u_fitted: 0, u: 1.112e-08}
+demes:
+- name: A
+  description: Ancestral to modern and archaic humans
+  epochs:
+  - {end_time: 986891.8205707443, start_size: 17157.660408288255}
+- name: ND
+  description: Ancestral to Neandertals and Denisovans
+  ancestors: [A]
+  epochs:
+  - {end_time: 910369.9258198524, start_size: 3017.831653062174}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 80000, start_size: 5042.123011019399}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 155641.62789361505, start_size: 4405.253496776546}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 120000, start_size: 5184.831336159055}
+- name: CV
+  ancestors: [N]
+  epochs:
+  - {end_time: 119999.99999995624, start_size: 4405.253496776546}
+- name: Chagyrskaya
+  ancestors: [CV]
+  epochs:
+  - {end_time: 80000, start_size: 946.7022020611694}
+- name: Vindija
+  ancestors: [CV]
+  epochs:
+  - {end_time: 55000, start_size: 4763.9297498646265}
+- name: Yoruba
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 37557.53429630025}
+migrations:
+- demes: [Altai, Denisova]
+  rate: 1.0391515963238439e-05
+- demes: [Altai, CV]
+  rate: 0.00021299093571123642
+- demes: [Vindija, Chagyrskaya]
+  rate: 0.00037299339395741705
+pulses:
+- sources: [Yoruba]
+  dest: N
+  time: 250000
+  proportions: [0.012981514117540513]

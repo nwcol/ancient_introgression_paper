@@ -1,26 +1,29 @@
-# invoke the fit_H2 script
+##invoke the fit_H2 script
 # created 2024-10-11
-# edited 2024-11-08
+# edited 15-01-2025
 
-# ~ variables ~
+## --- variables: edit here --- ##
 
-graph = archaic_tree_$(NA).yaml
-params = params_archaic_tree.yaml
-out = archaic_tree_$(NA)_$(Cluster)-$(Process).yaml
-data = bootstrap.pkl
-u = 1.112e-8
+graph = tree_three_pulse.yaml
+params = params_three_pulse.yaml
+out = three_pulse_$(Cluster)-$(Process).yaml
+data = Behrer10kb.pkl
+u = 1.1e-8
 
-maxiter = 5000
-perturb = 0.5
+maxiter = 10000
+perturb = 0.3
 method = NelderMead
+reps = 30
 
-#     
+## --- end variables --- ## 
 
-log = out/job_$(Cluster).log
-error = out/job_$(Cluster)_$(Process).err
-output = out/job_$(Cluster)_$(Process).out
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+
 requirements = (Target.HasCHTCStaging == true)
-container_image = file:///staging/nwcollier/h2-container.sif
+container_image = file:///staging/nwcollier/h2py-container.sif
+
 executable = fit_H2.sh      
 
 arguments = \
@@ -47,4 +50,4 @@ request_cpus = 1
 request_memory = 500MB
 request_disk = 800MB
 
-queue 30
+queue $(reps)

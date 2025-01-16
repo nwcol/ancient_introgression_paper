@@ -1,0 +1,52 @@
+description: Tree model relating LBK, Loschbour, Ust_Ishim demes with Neandertal->OOA
+  and Basal Eurasian->LBK admixture pulses.
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {method: NelderMead, objective_func: objective_H2, fopt: -259.92893867216696,
+    max_iter: 500, num_iter: 500, func_calls: 744, flag: 2, u_fitted: 0, u: 1.1e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 60000, start_size: 19365.895333434062}
+- name: N
+  start_time: 399482.9687382973
+  ancestors: [A]
+  epochs:
+  - {end_time: 50000, start_size: 1121.0810595727876}
+- name: OOA
+  ancestors: [A]
+  epochs:
+  - {end_time: 48000, start_size: 2483.1743269485296}
+- name: BE
+  description: Basal Eurasians
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 20000, start_size: 1605.4282698791499}
+- name: UstIshim
+  start_time: 46000
+  ancestors: [BE]
+  epochs:
+  - {end_time: 45000, start_size: 1605.4282698791499}
+- name: WE
+  description: West Eurasians
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 32724.57805592187, start_size: 2483.1743269485296}
+- name: LBK
+  ancestors: [WE]
+  epochs:
+  - {end_time: 7000, start_size: 7148.464432557981}
+- name: Loschbour
+  ancestors: [WE]
+  epochs:
+  - {end_time: 8000, start_size: 1600.0313200601447}
+pulses:
+- sources: [N]
+  dest: OOA
+  time: 50000
+  proportions: [0.016053968007291704]
+- sources: [BE]
+  dest: LBK
+  time: 20000
+  proportions: [0.20000547652468215]

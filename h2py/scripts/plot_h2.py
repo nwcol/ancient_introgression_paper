@@ -33,7 +33,19 @@ def get_args():
         type=str,
     )
     parser.add_argument(
-        '--ylim_0', type=int, default=0
+        '--two_sample', type=int, default=0
+    )
+    parser.add_argument(
+        '--compute_ll', type=int, default=1
+    )
+    parser.add_argument(
+        '--confidence', type=float, default=0.95
+    )
+    parser.add_argument(
+        '--ylim', type=str, default=None
+    )
+    parser.add_argument(
+        '--share_y', type=int, default=0
     )
     parser.add_argument(
         '--ratios', type=int, default=0
@@ -49,6 +61,21 @@ def get_args():
     )
     parser.add_argument(
         '--labels', nargs='*', default=None
+    )
+    parser.add_argument(
+        '--phased', type=int, default=0
+    )
+    parser.add_argument(
+        "--fill_between", action="store_true"
+    )
+    parser.add_argument(
+        "--title", default=None
+    )
+    parser.add_argument(
+        "--hlines", default=None, type=float, nargs="*"
+    )
+    parser.add_argument(
+        "--n_cols", default=5, type=int
     )
     return parser.parse_args()
 
@@ -82,38 +109,68 @@ def main():
         with open(file, 'rb') as fin:
             dic = pickle.load(fin)
         for key in dic:
-            data = h2_parsing.subset_H2(dic[key], graph=g)
+            if args.pop_ids is None:
+                data = h2_parsing.subset_statistics(dic[key], graph=g)
+            else:
+                data = h2_parsing.subset_statistics(dic[key], to_pops=args.pop_ids)
             label = os.path.basename(file) + '-' + key
+
+            if args.ratios:
+                data["means"][:-1] /= (data["means"][-1] ** 2)
+                data["covs"][:-1] /= (data["means"][-1] ** 4)
+
             datas.append(data)
             labels.append(label)
 
     # load graphs
-    pop_ids = args.pop_ids
-
     if len(datas) > 0:
-        data = datas[0]
-        models = [inference.moments_H2(g, u=u, data=data) 
-                  for g in args.graph_files]
-        lls = [np.round(inference.compute_ll(m, data, include_H=False), 2)
-               for m in models] 
-        labels += [os.path.basename(args.graph_files[i]) + f', ll={lls[i]}'
-                   for i in range(len(args.graph_files))]
+        if args.pop_ids is None:
+            data = datas[0]
+            models = [inference.moments_H2(g, u=u, data=data, phased=args.phased) 
+                      for g in args.graph_files]
+        else:
+            pop_ids = args.pop_ids
+            bins = datas[0]['bins']
+            models = [inference.moments_H2(g, u=u, bins=bins, sampled_demes=pop_ids, phased=args.phased) 
+                      for g in args.graph_files]
+        if args.compute_ll:
+            lls = [np.round(inference.compute_ll(m, data, include_H=False), 2)
+                   for m in models] 
+            labels += [os.path.basename(args.graph_files[i]) + f', ll={lls[i]}'
+                       for i in range(len(args.graph_files))]
+        else:
+            labels += [os.path.basename(args.graph_files[i]) 
+                       for i in range(len(args.graph_files))]
 
     else:
+        pop_ids = args.pop_ids
         models = [inference.moments_H2(g, u=u, sampled_demes=pop_ids) 
                   for g in args.graph_files]
         labels += [os.path.basename(g) for g in args.graph_files]
 
     if args.labels is not None:
         labels = args.labels
+
+    if args.ylim:
+        if args.ylim == "0,":
+            ylim = (0, None)
+        else:
+            ylim = [float(x) for x in args.ylim.split(",")]
+    else:
+        ylim = None
         
     plotting.plot_H2s(
         models=models, 
         datas=datas,
         labels=labels,
-        conf=0.95,
-        plot_H=True,
-        ylim_0=args.ylim_0
+        plot_H=args.plot_H,
+        ylim=ylim,
+        share_y=args.share_y,
+        conf=args.confidence,
+        fill=bool(args.fill_between),
+        title=args.title,
+        hlines=args.hlines,
+        n_cols=args.n_cols
     )
 
     plt.savefig(args.out_file, dpi=244, bbox_inches='tight')

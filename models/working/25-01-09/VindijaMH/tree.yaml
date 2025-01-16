@@ -1,0 +1,43 @@
+description: a simple tree joining the Ust-Ishim and Vindija demes without any modelling of admixture
+time_units: years
+generation_time: 29
+demes:
+- name: A
+  epochs:
+  - start_size: 18000
+    end_time: 700000
+- name: N
+  ancestors: [A]
+  epochs:
+  - start_size: 5000
+    end_time: 100000
+- name: NI
+  ancestors: [N]
+  epochs:
+  - start_size: 3000
+    end_time: 50000
+- name: Vindija
+  ancestors: [N]
+  epochs:
+  - start_size: 3000
+    end_time: 55000
+- name: MH
+  ancestors: [A]
+  epochs:
+  - start_size: 20000
+    end_time: 60000
+- name: UstIshim
+  ancestors: [MH]
+  epochs:
+  - start_size: 2000
+    end_time: 45000
+
+pulses:
+- sources: [MH]
+  dest: N
+  proportions: [0.1]
+  time: 200000
+- sources: [NI]
+  dest: UstIshim
+  proportions: [0.02]
+  time: 50000

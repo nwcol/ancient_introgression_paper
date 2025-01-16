@@ -6,6 +6,7 @@ import demes
 import matplotlib.pyplot as plt
 from moments.Demes import Inference
 import numpy as np
+import warnings
 
 from h2py import plotting
 
@@ -62,10 +63,15 @@ def main():
         if args.min_ll:
             if ll < args.min_ll:
                 continue
-        lls.append(ll)
 
         builder = Inference._get_demes_dict(file)
-        names, p, *_ = Inference._set_up_params_and_bounds(options, builder)
+        try:
+            names, p, *_ = Inference._set_up_params_and_bounds(options, builder)
+        except:
+            warnings.warn(f'{file} fails bound setup')
+            continue
+
+        lls.append(ll)
 
         if args.params is not None:
             idx = []

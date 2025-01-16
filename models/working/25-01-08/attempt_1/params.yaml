@@ -1,0 +1,71 @@
+parameters:
+- name: NA
+  lower_bound: 100
+  upper_bound: 30000
+  values:
+    - demes:  
+        A:  
+          epochs:
+            0: start_size
+- name: TA 
+  lower_bound: 55100
+  upper_bound: 1.2e6
+  values:
+    - demes:  
+        A:  
+          epochs:
+            0: end_time
+- name: NV0
+  lower_bound: 100
+  upper_bound: 20000
+  values:
+    - demes:  
+        Vindija:  
+          epochs:
+            0: start_size
+- name: TV
+  lower_bound: 55100
+  upper_bound: 1e6
+  values:
+    - demes:  
+        Vindija:  
+          epochs:
+            0: end_time
+- name: NV1
+  lower_bound: 10
+  upper_bound: 10000
+  values:
+    - demes:  
+        Vindija:  
+          epochs:
+            1: start_size
+- name: NU0
+  lower_bound: 10
+  upper_bound: 50000
+  values:
+    - demes:  
+        UstIshim:  
+          epochs:
+            0: start_size
+- name: TU
+  lower_bound: 55100
+  upper_bound: 1e6
+  values:
+    - demes:  
+        UstIshim:  
+          epochs:
+            0: end_time
+- name: NU1
+  lower_bound: 10
+  upper_bound: 20000
+  values:
+    - demes:  
+        UstIshim:  
+          epochs:
+            1: start_size
+
+constraints:
+- params: [TA, TV]
+  constraint: greater_than
+- params: [TA, TU]
+  constraint: greater_than

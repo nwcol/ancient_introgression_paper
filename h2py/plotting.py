@@ -24,15 +24,26 @@ def plot_H2s(
     labels=None,
     conf=0.95,
     plot_H=True,
-    ylim_0=False
+    ylim=None,
+    share_y=False,
+    two_sample=True,
+    fill=False,
+    title=None,
+    hlines=None,
+    n_cols=5
 ):
     """
     Plot one or more sets of H2 curves.
     """
     ci = stats.norm().ppf(0.5 + conf / 2)
     width_fac = 0.09
-    height_ratio = 1.1
-    n_cols = 5
+    height_ratio = 1
+
+    # decide whether this data dict has only one-sample or both one and 
+    # two-sample statistics
+    if len(datas) > 0:
+        if datas[0]['means'].shape[1] == len(datas[0]['pops']):
+            two_sample = False
 
     if len(datas) > 0:
         data = datas[0]
@@ -44,14 +55,25 @@ def plot_H2s(
         bins = h2_parsing._default_bins
 
     if plot_H:
-        n_axs = num_stats + 2
+        if num_stats == 1:
+            n_axs = num_stats + 1
+            H_axs = [n_axs - 1]
+        else:
+            n_axs = num_stats + 2
+            H_axs = [n_axs - 2, n_axs - 1]
     else:
         n_axs = num_stats
+        H_axs = []
 
     n_rows = int(np.ceil(n_axs / n_cols))
+    if n_rows < 3:
+        height_ratio = 0.9
     if n_axs < n_cols:
         n_cols = n_axs
-    width = width_fac * len(bins)
+    if not fill:
+        width = width_fac * len(bins)
+    else:
+        width = 2
     height = width / height_ratio
 
     fig, axs = plt.subplots(
@@ -70,11 +92,26 @@ def plot_H2s(
         colors = ['black', 'black'] 
     elif len(datas) + len(models) == 2:
         colors = [TolRainbow[3][0], TolRainbow[3][2]]
+    elif len(datas) + len(models) == 3:
+        colors = [TolRainbow[3][0], TolRainbow[3][2], 'black']
     elif len(datas) + len(models) <= 11:
         colors = TolRainbow[len(datas) + len(models)]
     else:
         gap = int(np.floor(256 / len(datas) + len(models)))
         colors = [Turbo256[i] for i in range(0, 255, gap)]
+
+    x_min = 0.5 * (bins[0] + (bins[1] - bins[0]) / 2)
+    x_max = 2 * (bins[-1] + (bins[-1] - bins[-2]) / 2)
+
+    if hlines is not None:
+        for i, ax in enumerate(axs):
+            if ax is not None:
+                if i not in H_axs:
+                    ax.hlines(hlines, x_min, x_max, color="black", linewidth=0.8)
+                else:
+                    #sqrt_h = np.sqrt(hlines)
+                    #ax.hlines(hlines, 0, num_stats, color="black", linewidth=0.8)
+                    pass
 
     lines = []
     for data, color in zip(datas + models, colors):
@@ -84,7 +121,10 @@ def plot_H2s(
             color,
             ci,
             n_axs,
-            two_sample=True
+            H_axs,
+            two_sample=two_sample,
+            plot_H=plot_H,
+            fill=fill
         )
         lines.append(l)
 
@@ -100,19 +140,31 @@ def plot_H2s(
         ncols=3
     )
 
+    if share_y:
+        upper_lim = max(
+            np.max([np.max(data['means'][:-1]) for data in datas]),
+            np.max([np.max(model['means'][:-1]) for model in models])
+        ) * 1.05
+    else:
+        upper_lim = None
+
+    if ylim:
+        y_min, y_max = ylim
+    else:
+        y_min = y_max = None
+        
     for i, ax in enumerate(axs):
         if ax is None:
             continue
-        if i in [n_axs - 1, n_axs - 2]: 
-            pass
-            #ax.set_ylabel('$H$')
-            #format_ticks(ax, x_ax=False)
+        if i in H_axs: 
+            if y_min == 0:
+                ax.set_ylim(0, )
         else:
+            ax.set_ylim(y_min, y_max)
             ax.set_xscale('log')
-            ax.set_xlim(max(1e-8, 0.5 * bins[0]), 2 * bins[-1])
-            #format_ticks(ax)
-        if ylim_0:
-            ax.set_ylim(0, )
+            ax.set_xlim(x_min, x_max)
+
+    fig.suptitle(title)
     
     return
 
@@ -123,11 +175,17 @@ def plot_H2(
     color,
     ci,
     n_axs,
+    H_axs,
     two_sample=True,
-    plot_H=True
+    plot_H=True,
+    fill=False
 ):
+    """
+    
+    """
 
-    empirical = {
+    # define plot markers
+    empirical_marker_args = {
         'fmt': 'o',
         'markersize': 3.7,
         'elinewidth': 0.7,  
@@ -137,34 +195,43 @@ def plot_H2(
         'ecolor': color,
         'capsize': 0
     }
-
-    exp = {
-        'linewidth': 0.8,
+    fill_between_args = {
+        #"step": "mid",
+        "alpha": 0.3,
+        "color": color,
+        
     }
-    exp_scatter = {
+
+    curve_args = {
+        'linewidth': 0.8,
+        "color": color
+    }
+    expected_markers_args = {
         'marker': 'x',
         's': 16,
-        'linewidth': 0.7
+        'linewidth': 0.7,
+        "color": color
     }
-
 
     hlabels = []
     hxylabels = []
     x = data['bins'][:-1] + np.diff(data['bins']) / 2
     k = 0
-    for i, sample_i in enumerate(data['pop_ids']):
-        for sample_j in data['pop_ids'][i:]:
+    for i, sample_i in enumerate(data['pops']):
+        for sample_j in data['pops'][i:]:
             if sample_i == sample_j: 
                 label = sample_i  
-                hlabels.append(label[:3])
-                Hax = n_axs - 2
-                hpos = i
+                if plot_H:
+                    hlabels.append(label[:3])
+                    Hax = H_axs[0]
+                    hpos = i
             else:
                 if two_sample:
-                    label = f'{sample_i[:3]},{sample_j[:3]}'
-                    hxylabels.append(label)
-                    Hax = n_axs - 1
-                    hpos = k - i - 1
+                    label = f'{sample_i},{sample_j}'
+                    if plot_H:
+                        hxylabels.append(f'{sample_i[:3]},{sample_j[:3]}')
+                        Hax = H_axs[-1]
+                        hpos = k - i - 1
                 else:
                     continue
 
@@ -172,26 +239,41 @@ def plot_H2(
             H2 = data['means'][:-1, k]
 
             if 'covs' in data:
-                stdH2 = data['covs'][:-1, k, k] ** 0.5 * ci
-                stdH = data['covs'][-1, k, k] ** 0.5 * ci
-                l,*_ = axs[k].errorbar(
-                    x, 
-                    H2, 
-                    yerr=stdH2, 
-                    **empirical
-                )
+                if data['covs'] is None:
+                    stdH2 = np.zeros(len(data['means'][:-1]))
+                    stdH = np.zeros(1)
+                else:
+                    stdH2 = data['covs'][:-1, k, k] ** 0.5 * ci
+                    stdH = data['covs'][-1, k, k] ** 0.5 * ci
+
+                if not fill:
+                    l,*_ = axs[k].errorbar(
+                        x, 
+                        H2, 
+                        yerr=stdH2, 
+                        **empirical_marker_args
+                    )
+                else:
+                    axs[k].fill_between(
+                        x, 
+                        H2 - stdH2,
+                        H2 + stdH2,
+                        **fill_between_args
+                    )
+                    l, = axs[k].plot(x, H2, **curve_args)
+                
                 if plot_H:
                     axs[Hax].errorbar( 
                         hpos, 
                         H, 
                         yerr=stdH, 
-                        **empirical
+                        **empirical_marker_args
                     )
 
             else:
-                l, = axs[k].plot(x, H2, color=color, **exp)
+                l, = axs[k].plot(x, H2, **curve_args)
                 if plot_H:
-                    axs[Hax].scatter(hpos, H, color=color, **exp_scatter)
+                    axs[Hax].scatter(hpos, H, **expected_markers_args)
 
             axs[k].set_title(label)
             k += 1
@@ -228,6 +310,57 @@ def format_ticks(ax, y_ax=True, x_ax=True):
         ax.xaxis.set_major_formatter(formatter)
     if y_ax:
         ax.yaxis.set_major_formatter(formatter)
+    return
+
+
+def plot_pair_counts(datas):  
+    
+    marker = lambda color: {
+        'marker': 'o',
+        'markerfacecolor': 'none',
+        'markeredgecolor': color, 
+        'markeredgewidth': 0.7,
+        'markeredgecolor': color,
+        "color": color
+    }
+    
+    fig, axs = plt.subplots(
+        1, 
+        len(datas),
+        figsize=(len(datas) * 4.5, 4), 
+        layout="constrained",
+        sharey=True
+    )
+    if len(datas) == 1:
+        axs = [axs]
+    else:
+        axs = [ax for ax in axs.flat]
+
+    axs[0].set_ylabel("number of locus pairs")
+
+    for ax in axs:
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel("$r$")
+
+    for label, ax in zip(datas.keys(), axs):
+        print(label)
+        data = datas[label]
+        ax.set_title(label)
+        x = data['bins'][:-1] + np.diff(data['bins']) / 2
+        num_pairs = data["denoms"][:-1]
+        num_sites = data["denoms"][-1]
+
+        ax.plot(x, num_pairs, **marker("black"))
+
+        if "weights" in data:
+            num_sites = data["weights"]["num_sites"]
+            sum_mut = data["weights"]["mean_mut"] * num_sites
+            mean_mut_sqr = (sum_mut / num_sites) ** 2
+            mut_prods = data["weights"]["mut_prods"]
+            weighted_num_pairs = mut_prods / mean_mut_sqr
+            ax.plot(x, weighted_num_pairs, **marker("red"))
+
     return
 
 
@@ -772,7 +905,7 @@ Generic plotting functions
 """
 
 
-def plot_pair_counts(H2_dict):
+def _plot_pair_counts(H2_dict):
     #
     fig, ax = plt.subplots(layout='constrained')
     x = H2_dict['r_bins'][1:]

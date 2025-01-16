@@ -1,0 +1,18 @@
+description: Tree model relating LBK, Vindija demes
+time_units: years
+generation_time: 29
+demes:
+- name: A
+  epochs:
+  - start_size: 15000
+    end_time: 600000
+- name: Vindija
+  ancestors: [A]
+  epochs:
+  - start_size: 1000
+    end_time: 55000
+- name: LBK
+  ancestors: [A]
+  epochs:
+  - start_size: 4000
+    end_time: 7000

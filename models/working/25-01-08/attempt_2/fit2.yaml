@@ -1,0 +1,41 @@
+description: a simple tree joining ancient modern human and Vindija demes without
+  any modelling of admixture
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {method: NelderMead, objective_func: objective_H2, fopt: -2769.0198113602464,
+    max_iter: 2000, num_iter: 2000, func_calls: 2797, flag: 2, u_fitted: 0, u: 1.1e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 475239.89612942806, start_size: 20647.22574803704}
+- name: Vindija
+  ancestors: [A]
+  epochs:
+  - {end_time: 215030.24919831555, start_size: 112.59757759892943}
+  - {end_time: 55000, start_size: 11.353879949385025}
+- name: MH
+  ancestors: [A]
+  epochs:
+  - {end_time: 69329.27004034648, start_size: 12826.814135442044}
+- name: OOA
+  ancestors: [MH]
+  epochs:
+  - {end_time: 46987.646765612386, start_size: 3567.2180500079176}
+- name: UstIshim
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 45000, start_size: 733.1404356439284}
+- name: WE
+  description: West Eurasians
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 34076.09793243099, start_size: 2556.6422340789622}
+- name: LBK
+  ancestors: [WE]
+  epochs:
+  - {end_time: 7000, start_size: 5979.674204831106}
+- name: Loschbour
+  ancestors: [WE]
+  epochs:
+  - {end_time: 8000, start_size: 1262.0606165258396}

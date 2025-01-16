@@ -21,6 +21,12 @@ def get_args():
         required=True
     )
     parser.add_argument(
+        '-d', '--denom_files',
+        nargs='*',
+        default=None,
+        type=str
+    )
+    parser.add_argument(
         '--num_reps',
         type=int,
         default=None
@@ -31,14 +37,7 @@ def get_args():
         default=None
     )
     parser.add_argument(
-        '--mut_weighted',
-        type=int,
-        default=0
-    )
-    parser.add_argument(
-        '--mean_mut',
-        type=float,
-        default=None
+        '--weighted', action="store_true"
     )
     return parser.parse_args()
 
@@ -59,12 +58,22 @@ def main():
             else:
                 regions[region] = file_regs[region]
 
+    if args.denom_files is not None:
+        denoms = {}
+        for in_file in args.denom_files:
+            with open(in_file, 'rb') as fin:
+                file_data = pickle.load(fin)
+            for key in file_data:
+                denoms[key] = file_data[key] 
+    else:
+        denoms = None
+
     bootstrapped_stats = h2_parsing.bootstrap_H2(
         regions, 
         num_reps=args.num_reps, 
         num_samples=args.num_samples,
-        mut_weighted=args.mut_weighted,
-        to_mean_mut=args.mean_mut
+        weighted=args.weighted,
+        denom_data=denoms
     )
     out = {'bootstrap': bootstrapped_stats}
 

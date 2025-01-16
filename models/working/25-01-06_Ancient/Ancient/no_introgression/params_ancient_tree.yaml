@@ -1,0 +1,55 @@
+parameters:
+- name: NA
+  lower_bound: 100
+  values:
+    - demes:  
+        A: 
+          epochs:
+            0: start_size
+# TA (start of OOA) fixed at 60kya
+- name: NOOA
+  lower_bound: 100
+  values:
+    - demes:  
+        OOA: 
+          epochs:
+            0: start_size
+        UstIshim:
+          epochs:
+            0: start_size
+        WE:
+          epochs:
+            0: start_size
+- name: TUST
+  upper_bound: 49900
+  lower_bound: 45100
+  values:
+    - demes:  
+        OOA: 
+          epochs:
+            0: end_time
+- name: TWE
+  lower_bound: 10000
+  values:
+    - demes:  
+        WE: 
+          epochs:
+            0: end_time
+- name: NLBK
+  lower_bound: 100
+  values:
+    - demes:  
+        LBK: 
+          epochs:
+            0: start_size
+- name: NLOS
+  lower_bound: 100
+  values:
+    - demes:  
+        Loschbour: 
+          epochs:
+            0: start_size
+
+constraints:
+- params: [TUST, TWE]
+  constraint: greater_than

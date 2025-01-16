@@ -1,0 +1,58 @@
+time_units: years
+generation_time: 29
+demes:
+- name: A
+  epochs:
+  - start_size: 16000
+    end_time: 750000
+- name: Vindija
+  ancestors: [A]
+  epochs:
+  - start_size: 4000
+    end_time: 55000
+- name: MH0
+  ancestors: [A]
+  epochs:
+  - start_size: 30000
+    end_time: 200000
+- name: S1
+  ancestors: [MH0]
+  epochs:
+  - start_size: 10000
+    end_time: 140000
+- name: S2
+  ancestors: [MH0]
+  epochs:
+  - start_size: 10000
+    end_time: 140000
+- name: MH1
+  start_time: 140000
+  ancestors: [S1, S2]
+  proportions: [0.5, 0.5]
+  epochs:
+  - start_size: 30000
+    end_time: 120000
+- name: KhomaniSan
+  ancestors: [MH1]
+  epochs:
+  - start_size: 20000
+    end_time: 500
+  - start_size: 1000
+    end_time: 0
+- name: Yoruba
+  ancestors: [MH1]
+  epochs:
+  - start_size: 20000
+    end_time: 5000
+  - start_size: 30000
+    end_time: 0
+
+pulses:
+- sources: [MH0]
+  proportions: [0.08]
+  time: 250000
+  dest: Vindija
+  
+migrations:
+- demes: [Yoruba, KhomaniSan]
+  rate: 5e-5

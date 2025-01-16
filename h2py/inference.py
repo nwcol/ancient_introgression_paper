@@ -9,7 +9,6 @@ import scipy
 import pickle
 
 from h2py import util, h2_parsing, theory
-from h2py.h2stats_mod import H2stats
 
 
 """
@@ -45,7 +44,7 @@ def optimize(
     """
     print(
         util.get_time(), f'fitting {objective_func.__name__} ' 
-        f'to data for demes {data["pop_ids"]}'
+        f'to data for demes {data["pops"]}'
     )
     builder = Inference._get_demes_dict(graph_file)
     options = Inference._get_params_dict(param_file)
@@ -318,14 +317,14 @@ Computing expected statistics
 def moments_H2(
     graph,
     data=None,
-    rhos=None,
     theta=None,
     rs=None,
     bins=None,
     u=None,
     approximation='trapezoid',
     sampled_demes=None,
-    sample_times=None
+    sample_times=None,
+    phased=False
 ):
     """
     Compute expected H2 using moments.LD.
@@ -344,7 +343,7 @@ def moments_H2(
         graph = demes.load(graph)
 
     if data is not None:
-        sampled_demes = data['pop_ids']
+        sampled_demes = data['pops']
         bins = data['bins']
     else:
         if sampled_demes is not None:
@@ -370,7 +369,6 @@ def moments_H2(
         graph,
         sampled_demes,
         sample_times=sample_times,
-        rho=rhos,
         theta=theta,
         r=rs,
         u=u
@@ -381,7 +379,7 @@ def moments_H2(
     raw_H2 = np.zeros((len(rs), len(indices)))
 
     for k, (i, j) in enumerate(indices):
-        phasing = True if i == j else False
+        phasing = True if i == j else bool(phased)
         raw_H2[:, k] = ld_stats.H2(i, j, phased=phasing)
 
     H2 = approximate_H2(raw_H2, approximation)
@@ -389,7 +387,7 @@ def moments_H2(
 
     model = {
         'means': H2H,
-        'pop_ids': sampled_demes,
+        'pops': sampled_demes,
         'bins': bins
     }
     return model
@@ -453,7 +451,7 @@ def load_H2(file, graph=None):
         dic = pickle.load(fin)
     _data = dic[next(iter(dic))]
     if graph is not None:
-        data = h2_parsing.subset_H2(_data, graph=graph)
+        data = h2_parsing.subset_statistics(_data, graph=graph)
     return data
 
 

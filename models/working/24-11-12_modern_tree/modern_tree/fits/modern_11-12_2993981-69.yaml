@@ -1,0 +1,41 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {method: NelderMead, objective_func: objective_H2, fopt: -589.484002464055,
+    max_iter: 10000, num_iter: 5963, func_calls: 8245, flag: 0, u_fitted: 0, u: 1.112e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 843960.1451334517, start_size: 18156.399785968297}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 836408.5082374336, start_size: 291.28232941295346}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 80000, start_size: 4291.052410603232}
+- name: Vindija
+  ancestors: [ND]
+  epochs:
+  - {end_time: 55000, start_size: 2526.826383734376}
+- name: MH
+  ancestors: [A]
+  epochs:
+  - {end_time: 189555.4845350235, start_size: 29521.544731099737}
+- name: KhomaniSan
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 23340.233566013983}
+- name: Yoruba
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 20006.715069969512}
+migrations:
+- demes: [KhomaniSan, Yoruba]
+  rate: 2.414021630190575e-05
+pulses:
+- sources: [MH]
+  dest: Vindija
+  time: 250000
+  proportions: [0.09997301087192825]

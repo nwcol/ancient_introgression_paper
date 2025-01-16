@@ -1,0 +1,17 @@
+description: a simple tree joining the Ust-Ishim and Vindija demes without any modelling
+  of admixture
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {method: NelderMead, objective_func: objective_H2, fopt: -3.5086311343479673,
+    max_iter: 2000, num_iter: 2000, func_calls: 3022, flag: 2, u_fitted: 0, u: 1.1e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 947554.9424302133, start_size: 9602.861506762772}
+- name: Vindija
+  ancestors: [A]
+  epochs:
+  - {end_time: 292831.7581340058, start_size: 19999.542560118658}
+  - {end_time: 105014.04204108915, start_size: 4979.601715538549}
+  - {end_time: 55000, start_size: 829.9709376795981}

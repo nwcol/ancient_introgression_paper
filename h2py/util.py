@@ -1,66 +1,82 @@
-"""
+## utilities, mostly for reading and writing common types of file
 
-"""
 from datetime import datetime
 import gzip
 import numpy as np
-import numpy.ma as ma
-from scipy import interpolate
 import re
 import warnings
 
 
-"""
-Bedfiles and masks
-"""
+## .bed files and genetic masks
 
-def read_bedfile(bed_file, min_reg_len=None):
+
+def read_bedfile(bed_file, return_chrom=False):
     """
-    
+    Load the regions in a .bed file as a (num_regions, 2) shape numpy array.
     """
     open_func = gzip.open if bed_file.endswith('.gz') else open
+
     with open_func(bed_file, 'rb') as fin:
         split_line = fin.readline().decode().split()
-        skiprows = 0 if split_line[1].isnumeric() else 1
-        chrom_num = fin.readline().decode().split()[0]
-    regions = np.loadtxt(
-        bed_file, usecols=(1, 2), dtype=int, skiprows=skiprows
-    )
+        if split_line[1].isnumeric():
+            skiprows = 0
+        else:
+            skiprows = 1
+
+        if return_chrom:
+            if skiprows == 0:
+                chrom_num = split_line[0]
+            else:
+                chrom_num = fin.readline().decode().split()[0]
+
+    regions = np.loadtxt(bed_file, usecols=(1, 2), dtype=int, skiprows=skiprows)
 
     if regions.ndim == 1:
-        regions = regions[np.newaxis]
+        regions = regions[np.newaxis, :]
 
-    if min_reg_len is not None:
-        lens = regions[:, 1] - regions[:, 0]
-        regions = regions[lens > min_reg_len]
+    if return_chrom:
+        ret = (regions, chrom_num)
+    else:
+        ret = regions
 
-    return chrom_num, regions
+    return ret
 
 
-def read_bedfile_positions(bed_file, region=None):
+def read_bedfile_positions(bed_file, return_chrom=False):
     """
-    Return a vector of 0-indexed positions covered in a .bed file.
+    Get the vector of 0-indexed positions within the regions specified in 
+    `bed_file`.
     """
-    chrom_num, regions = read_bedfile(bed_file)
+    regions = read_bedfile(bed_file, return_chrom=False)
     mask = regions_to_mask(regions)
     positions = np.nonzero(~mask)[0]
-    if region is not None:
-        within = np.logical_and(positions >= region[0], positions < region[-1])
-        positions = positions[within]
-    return chrom_num, positions
+    
+    return positions
 
 
-def write_bedfile(file, chrom_num, regions, header=False):
+def write_bedfile(file, regions, chrom_num=None, chrom_nums=None, header=False):
     """
     
     """
     open_func = gzip.open if file.endswith('.gz') else open
+
+    if chrom_num is not None:
+        chr_col = [chrom_num] * len(regions)
+
+    elif chrom_nums is not None:
+        assert len(chrom_nums) == len(regions)
+        chr_col = chrom_nums
+
+    else:
+        raise ValueError('please provide chromosome numbers')
+
     with open_func(file, "wb") as file:
         if header:
             header = b'#chrom\tchromStart\tchromEnd\n'
             file.write(header)
-        for start, stop in regions:
-            line = f'{chrom_num}\t{start}\t{stop}\n'.encode()
+            
+        for i, (start, stop) in enumerate(regions):
+            line = f'{chr_col[i]}\t{start}\t{stop}\n'.encode()
             file.write(line)
     return 
 
@@ -125,8 +141,8 @@ def read_bedgraph(file, sep=','):
     and .tsv, with column seperator determined by the `sep` argument.
     """
     open_func = gzip.open if file.endswith('.gz') else open
-    with open_func(file, 'rb') as file:
-        header_line = file.readline().decode().strip().split(sep)
+    with open_func(file, 'rb') as fin:
+        header_line = fin.readline().decode().strip().split(sep)
     # check for proper header format
     assert header_line[0] in ['chrom', '#chrom']
     assert header_line[1] in ['chromStart', 'start']
@@ -155,7 +171,7 @@ def read_bedgraph(file, sep=','):
     )
     dataT = [arr] if arr.ndim == 1 else [col for col in arr]
     data = dict(zip(fields, dataT))
-    return ret_chrom, windows, data
+    return windows, data
 
 
 def write_bedgraph(file, chrom_num, regions, data, sep=','):
@@ -175,30 +191,46 @@ def write_bedgraph(file, chrom_num, regions, data, sep=','):
             ldata = [str(data[field][i]) for field in fields]
             line = sep.join([chrom_num, str(start), str(end)] + ldata) + '\n'
             file.write(line.encode())
+
     return
 
 
-"""
-Recombination maps
-"""
+## dealing with recombination maps
 
 
-def read_recombination_map(rec_map_file, map_col='Map(cM)'):
+def get_uniform_rec_map(r, sites):
     """
-    Read a recombination map in `hapmap` map format. 
+    Obtain a recombination map for `sites` assuming a constant recombination
+    rate `r`. Returns a map in units of cM.
     """
-    open_func = gzip.open if rec_map_file.endswith('.gz') else open
-    with open_func(rec_map_file, 'rb') as fin:
-        header_line = fin.readline().decode().split()
-    pos_idx = header_line.index('Position(bp)')
-    map_idx = header_line.index(map_col)
-    mapcoords, mapvals = np.loadtxt(
-        rec_map_file, skiprows=1, usecols=(pos_idx, map_idx), unpack=True
-    )
-    assert np.all(np.diff(mapcoords) > 0)
-    assert np.all(np.diff(mapvals) >= 0)
-    rmap = interpolate.interp1d(mapcoords, mapvals, fill_value=0)
-    return rmap
+    cM_per_bp = map_function(r)
+    rec_map = sites * cM_per_bp
+
+    return rec_map
+
+
+def get_rec_map(rec_map_file, sites, map_col="Map(cM)"):
+    
+    if (
+        rec_map_file.endswith(".txt") 
+        or rec_map_file.endswith(".txt.gz")
+    ):
+        coords, vals = read_hapmap_rec_map(rec_map_file, map_col=map_col)
+
+    elif (
+        rec_map_file.endswith(".bedgraph") 
+        or rec_map_file.endswith(".bedgraph.gz")
+    ):
+        coords, vals = read_bedgraph_rec_map(rec_map_file)
+
+    else:
+        raise ValueError("unrecognized recombination map file type")
+
+    assert np.all(np.diff(coords) > 0)
+    assert np.all(np.diff(vals) >= 0)
+    site_map = np.interp(sites, coords, vals)
+
+    return site_map
 
 
 def read_recombination_map(rec_map_file, positions, map_col='Map(cM)'):
@@ -214,30 +246,68 @@ def read_recombination_map(rec_map_file, positions, map_col='Map(cM)'):
     map_coords, map_vals = np.loadtxt(
         rec_map_file, skiprows=1, usecols=(pos_idx, map_idx), unpack=True
     )
+
     assert np.all(np.diff(map_coords) > 0)
     assert np.all(np.diff(map_vals) >= 0)
+    
     pos_map = np.interp(positions, map_coords, map_vals)
     return pos_map
 
 
-def read_bedgraph_recombination_map():
-    """
-    
-    """
-    return
+def read_hapmap_rec_map(map_file, map_col="Map(cM)"):
+    ## get coords and map values
+    open_func = gzip.open if map_file.endswith('.gz') else open
+
+    with open_func(map_file, 'rb') as fin:
+        header_line = fin.readline().decode().split()
+
+    coord_idx = header_line.index('Position(bp)')
+    map_idx = header_line.index(map_col)
+
+    coords = np.loadtxt(
+        map_file, skiprows=1, usecols=(coord_idx), dtype=np.int64
+    )
+    vals = np.loadtxt(map_file, skiprows=1, usecols=(map_idx), dtype=np.float64)
+
+    return coords, vals
+
+
+def read_bedgraph_rec_map(map_file):
+    # assumes map coordinate is in the LAST column, e.g.
+    # chrom start end ... map_coord
+    open_func = gzip.open if map_file.endswith('.gz') else open
+
+    coords = []
+    mapvals = []
+
+    with open_func(map_file, "rb") as fin:
+        for lineb in fin:
+            line = lineb.decode()
+            if line.startswith("#"):
+                continue
+        
+            split_line = line.split()
+            coords.append(int(split_line[2]))
+            mapvals.append(float(split_line[-1]))
+
+    coords = np.array(coords, dtype=np.int64)
+    mapvals = np.array(mapvals, dtype=np.float64)
+
+    return coords, mapvals
 
 
 def read_mutation_map(mut_map_file, positions):
+
     """
     """
     if (
         mut_map_file.endswith('.bedgraph') 
         or mut_map_file.endswith('.bedgraph.gz')
     ):
-        _, regions, data = read_bedgraph()
+        regions, data = read_bedgraph(mut_map_file)
         # interpolate.
         idxs = np.searchsorted(regions[:, 1], positions)
-        reg_mut_map = data['u']
+        reg_mut_map = data['mut_rate']
         mut_map = reg_mut_map[idxs]
         
     elif mut_map_file.endswith('.npy'):
@@ -251,9 +321,7 @@ def read_mutation_map(mut_map_file, positions):
     return mut_map
 
 
-"""
-Reading .vcf files
-"""
+## reading .vcf files (under construction)
 
 
 def extract_gqs(samples, gq_index):
@@ -265,15 +333,19 @@ def extract_gqs(samples, gq_index):
     return gqs
 
 
-def extract_genotypes(samples, allow_missing=False):
+def extract_genotypes(samples, missing_to_ref=True):
     """
     not finished
     """
-    gt_strs = [re.split('/|\|', s.split(':')[0]) for s in samples]
-    if allow_missing:
-        raise ValueError('not implemented')
+    if missing_to_ref:
+        gts = [re.split('/|\|', s.split(':')[0]) for s in samples]
+        if '.' in str(gts):
+            gts = [['0', '0'] if '.' in x else x for x in gts]
+            print('replaced missing alleles')
+        genotypes = np.array(gts, dtype=np.int64)
     else:
-        genotypes = np.array(gt_strs, dtype=np.int64)
+        gts = [re.split('/|\|', s.split(':')[0]) for s in samples]
+        genotypes = np.array(gts, dtype=np.int64)
     return genotypes
 
 
@@ -284,16 +356,17 @@ def read_genotypes(
     region=None,
     ancestral_seq=None, 
     read_multiallelic=False,
-    allow_missing=False
+    missing_to_ref=True,
 ):
     """
     Read a genotype matrix from a .vcf file. Matrix has shape 
     (nsamples, nsites, 2). Ignores sites that are not biallelic. 
     """
     if bed_file is not None:
-        _, regions = read_bedfile(bed_file, min_reg_len=min_reg_len)
+        _, regions = read_bedfile(bed_file)
         mask = regions_to_mask(regions)
         len_mask = len(mask)
+    
     open_func = gzip.open if vcf_file.endswith('.gz') else open
 
     first_row = True
@@ -339,59 +412,28 @@ def read_genotypes(
                         continue
 
                 if not read_multiallelic:
-                    if len(alt.split(',')) > 1:
+                    if len(alt.split(',')) > 1 or len(ref) > 1:
                         multiallelic += 1
                         continue
 
                 line_genotypes = extract_genotypes(
-                    samples, allow_missing=allow_missing
+                    samples, missing_to_ref=missing_to_ref
                 )
                 chrom_nums.append(chrom)
                 positions.append(position)
                 genotypes.append(line_genotypes)
 
     positions = np.array(positions, dtype=np.int64)
-    genotype_matrix = np.stack(genotypes, axis=1, dtype=np.int64)
+    genotypes = np.stack(genotypes, axis=1, dtype=np.int64)
     unique_chrom_nums = list(set(chrom_nums))
     if len(unique_chrom_nums) > 1:
         warnings.warn('more than one unique chromosome in .vcf')
     chrom_num = unique_chrom_nums[0]
 
-    return chrom_num, sample_ids, positions, genotype_matrix
+    return chrom_num, sample_ids, positions, genotypes
 
 
-def read_vcf_positions(vcf_file):
-    """
-    Read and return the vector of positions covered in a .vcf file
-    """
-    open_func = gzip.open if vcf_file.endswith('.gz') else open
-
-    chrom_nums = []
-    positions = []
-
-    with open_func(vcf_file, "rb") as fin:
-        for lineb in fin:
-            line = lineb.decode()
-            if line.startswith('#'):
-                continue
-            else:
-                chrom, pos = line.split()[:2]
-                position = int(pos) - 1
-                chrom_nums.append(chrom)
-                positions.append(position)
-
-    positions = np.array(positions, dtype=np.int64)
-    unique_chrom_nums = list(set(chrom_nums))
-    if len(unique_chrom_nums) > 1:
-        warnings.warn('more than one unique chromosome in .vcf')
-    chrom_num = unique_chrom_nums[0]
-
-    return chrom_num, positions
-
-
-"""
-Math
-"""
+## math
 
 
 def n_choose_2(n):
@@ -401,9 +443,7 @@ def n_choose_2(n):
     return n * (n - 1) // 2
 
 
-"""
-Recombination map arithmetic
-"""
+## recombination map math
 
 
 def map_function(r):
@@ -420,13 +460,11 @@ def inverse_map_function(d):
     return (1 - np.exp(-d / 50)) / 2
 
 
-"""
-printouts
-"""
+## printouts
 
 
 def get_time():
     """
-    Return a string giving the time and date with yy-mm-dd format
+    Return a string giving the time and date with yy-mm-dd format.
     """
     return "[" + datetime.strftime(datetime.now(), "%y-%m-%d %H:%M:%S") + "]"

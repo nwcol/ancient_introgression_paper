@@ -1,0 +1,15 @@
+description: a simple tree joining the Ust-Ishim and Vindija demes without any modelling of admixture
+time_units: years
+generation_time: 29
+demes:
+- name: A
+  epochs:
+  - start_size: 18000
+    end_time: 700000
+- name: Vindija
+  ancestors: [A]
+  epochs:
+  - start_size: 5000
+    end_time: 600000
+  - start_size: 3000
+    end_time: 55000

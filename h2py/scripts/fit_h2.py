@@ -2,7 +2,6 @@
 import argparse
 
 from h2py import inference
-from h2py.h2stats_mod import H2stats
 
 
 def get_args():

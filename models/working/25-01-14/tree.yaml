@@ -1,0 +1,54 @@
+time_units: years
+generation_time: 29
+demes:
+- name: A
+  description: Ancestral to modern and archaic humans
+  epochs:
+  - start_size: 15000
+    end_time: 700000
+- name: ND
+  description: Ancestral to Neandertals and Denisovans
+  ancestors: [A]
+  epochs:
+  - start_size: 10000
+    end_time: 600000
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - start_size: 3000
+    end_time: 80000
+- name: N
+  ancestors: [ND]
+  epochs:
+  - start_size: 3000
+    end_time: 170000
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - start_size: 1000
+    end_time: 120000
+- name: WN
+  ancestors: [N]
+  epochs:
+  - start_size: 1000
+    end_time: 105000
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - start_size: 1000
+    end_time: 80000
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - start_size: 3000
+    end_time: 55000
+- name: MH
+  ancestors: [A]
+  epochs:
+  - start_size: 20000
+    end_time: 60000
+- name: UstIshim
+  ancestors: [MH]
+  epochs:
+  - start_size: 1000
+    end_time: 45000 

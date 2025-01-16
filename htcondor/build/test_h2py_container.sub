@@ -1,0 +1,19 @@
+# tests a few imports from h2py Apptainer container
+
+universe = vanilla
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster).err 
+output = reports/job_$(Cluster).out
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/h2py-container.sif
+
+executable = test_h2py_container.sh
+
+transfer_input_files = test_h2py_container.py
+
+request_cpus = 1
+request_memory = 1GB
+request_disk = 1GB
+
+queue 1
