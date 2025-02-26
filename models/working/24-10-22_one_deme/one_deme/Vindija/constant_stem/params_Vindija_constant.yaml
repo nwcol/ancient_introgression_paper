@@ -1,9 +1,0 @@
-parameters:
-- name: NV
-  lower_bound: 10
-  upper_bound: 10000
-  values:
-    - demes:
-        Vindija:
-          epochs:
-            0: start_size

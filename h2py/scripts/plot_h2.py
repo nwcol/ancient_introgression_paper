@@ -8,7 +8,7 @@ import numpy as np
 import pickle
 import os
 
-from h2py import h2_parsing, inference, plotting
+from h2py import inference, parsing, plotting
 
 
 def get_args():
@@ -105,14 +105,14 @@ def main():
     datas = []
     labels = []
 
-    for file in args.data_files:
+    for i, file in enumerate(args.data_files):
         with open(file, 'rb') as fin:
             dic = pickle.load(fin)
         for key in dic:
             if args.pop_ids is None:
-                data = h2_parsing.subset_statistics(dic[key], graph=g)
+                data = parsing.subset_statistics(dic[key], graph=g)
             else:
-                data = h2_parsing.subset_statistics(dic[key], to_pops=args.pop_ids)
+                data = parsing.subset_statistics(dic[key], to_pops=args.pop_ids)
             label = os.path.basename(file) + '-' + key
 
             if args.ratios:
@@ -120,7 +120,10 @@ def main():
                 data["covs"][:-1] /= (data["means"][-1] ** 4)
 
             datas.append(data)
-            labels.append(label)
+            if args.labels is None:
+                labels.append(label)
+            else:
+                labels.append(args.labels[i])
 
     # load graphs
     if len(datas) > 0:
@@ -136,7 +139,11 @@ def main():
         if args.compute_ll:
             lls = [np.round(inference.compute_ll(m, data, include_H=False), 2)
                    for m in models] 
-            labels += [os.path.basename(args.graph_files[i]) + f', ll={lls[i]}'
+            if args.labels is not None:
+                labs = args.labels[len(args.data_files):]
+            else:
+                labs = [os.path.basename(f) for f in args.graph_files]
+            labels += [labs[i] + f', ll={lls[i]}'
                        for i in range(len(args.graph_files))]
         else:
             labels += [os.path.basename(args.graph_files[i]) 
@@ -147,9 +154,6 @@ def main():
         models = [inference.moments_H2(g, u=u, sampled_demes=pop_ids) 
                   for g in args.graph_files]
         labels += [os.path.basename(g) for g in args.graph_files]
-
-    if args.labels is not None:
-        labels = args.labels
 
     if args.ylim:
         if args.ylim == "0,":

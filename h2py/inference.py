@@ -8,7 +8,11 @@ from moments.Demes import Inference
 import scipy
 import pickle
 
-from h2py import util, h2_parsing, theory
+from h2py import parsing, util, theory
+
+
+_out_of_bounds = -1e10
+_n_calls = 0
 
 
 """
@@ -16,13 +20,41 @@ optimization functions
 """
 
 
-_out_of_bounds = -1e10
-_n_calls = 0
+def _object_func():
 
 
-_init_u = 1.3e-8
-_lower_u = 1e-8
-_upper_u = 1.6e-8
+
+    return
+
+
+def optimize_powell():
+
+
+    return
+
+
+def optimize_fmin():
+
+
+    return
+
+
+def optimize_log_powell():
+
+
+    return
+
+
+def optimize_log_fmin():
+
+
+    return
+
+
+def optimize_log_lbfgsb():
+
+
+    return
 
 
 def optimize(
@@ -362,7 +394,7 @@ def moments_H2(
 
     if rs is None:
         if bins is None:
-            bins = h2_parsing._default_bins
+            bins = parsing._default_bins
         rs = get_rs(bins, approximation)
 
     ld_stats = moments.Demes.LD(
@@ -451,7 +483,7 @@ def load_H2(file, graph=None):
         dic = pickle.load(fin)
     _data = dic[next(iter(dic))]
     if graph is not None:
-        data = h2_parsing.subset_statistics(_data, graph=graph)
+        data = parsing.subset_statistics(_data, graph=graph)
     return data
 
 

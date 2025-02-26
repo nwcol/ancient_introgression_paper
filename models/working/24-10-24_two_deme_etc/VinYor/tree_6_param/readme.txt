@@ -1,1 +1,0 @@
-here the Yoruba deme also goes through two epochs, with the second representing the recent era of expansion

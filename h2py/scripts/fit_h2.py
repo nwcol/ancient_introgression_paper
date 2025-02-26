@@ -28,7 +28,7 @@ def get_args():
     parser.add_argument(
         '-u',
         type=float,
-        required=True
+        default=None
     )
     parser.add_argument(
         '-o',
@@ -43,7 +43,7 @@ def get_args():
         default=0
     )
     parser.add_argument(
-        '--verbose',
+        "-v", '--verbose',
         type=int,
         default=1
     )

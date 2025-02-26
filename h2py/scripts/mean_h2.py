@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import pickle
 
-from h2py import h2_parsing
+from h2py import parsing
 
 
 def get_args():
@@ -73,7 +73,7 @@ def main():
     else:
         denoms = None
 
-    mean_stats = h2_parsing.compute_mean_H2(
+    mean_stats = parsing.compute_mean_H2(
         data, 
         denominators=denoms,
         weighted=bool(args.weighted),

@@ -41,6 +41,10 @@ def get_args():
         type=float,
         default=None
     )
+    parser.add_argument(
+        "--n_cols", default=5, type=int
+    )
+
     return parser.parse_args()
 
 
@@ -91,6 +95,7 @@ def main():
         names,
         p_arr,
         lls,
+        n_cols=args.n_cols
     )
     plt.savefig(args.out_file, dpi=244, bbox_inches='tight')
 

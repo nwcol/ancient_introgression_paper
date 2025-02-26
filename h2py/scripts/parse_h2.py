@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import pickle
 
-from h2py import h2_parsing
+from h2py import parsing
 
 
 def get_args():
@@ -89,7 +89,7 @@ def main():
     stats = {}
     
     for i, region in enumerate(regions):
-        stats[f"{args.chrom_num}_{i}"] = h2_parsing.parse_statistics(
+        stats[f"{args.chrom_num}_{i}"] = parsing.parse_statistics(
             args.vcf_file,
             bed_file=args.bed_file,
             region=region,

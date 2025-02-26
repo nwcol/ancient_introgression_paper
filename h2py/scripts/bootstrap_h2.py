@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import pickle
 
-from h2py import h2_parsing
+from h2py import parsing
 
 
 def get_args():
@@ -68,7 +68,7 @@ def main():
     else:
         denoms = None
 
-    bootstrapped_stats = h2_parsing.bootstrap_H2(
+    bootstrapped_stats = parsing.bootstrap_H2(
         regions, 
         num_reps=args.num_reps, 
         num_samples=args.num_samples,

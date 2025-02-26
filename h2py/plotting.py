@@ -1,5 +1,5 @@
 
-from bokeh.palettes import Category10, Turbo256, TolRainbow
+from bokeh.palettes import Category10_10, Turbo256, TolRainbow
 import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -7,7 +7,7 @@ import numpy as np
 import scipy
 from scipy import stats
 
-from h2py import util, h2_parsing, inference
+from h2py import parsing, util, inference
 
 
 mpl.rcParams['text.usetex'] = True
@@ -36,8 +36,8 @@ def plot_H2s(
     Plot one or more sets of H2 curves.
     """
     ci = stats.norm().ppf(0.5 + conf / 2)
-    width_fac = 0.09
-    height_ratio = 1
+    width_fac = 0.10
+    height_ratio = 0.9
 
     # decide whether this data dict has only one-sample or both one and 
     # two-sample statistics
@@ -52,7 +52,7 @@ def plot_H2s(
     else:
         model = models[0]
         num_stats = model['means'].shape[1]
-        bins = h2_parsing._default_bins
+        bins = parsing._default_bins
 
     if plot_H:
         if num_stats == 1:
@@ -70,11 +70,8 @@ def plot_H2s(
         height_ratio = 0.9
     if n_axs < n_cols:
         n_cols = n_axs
-    if not fill:
-        width = width_fac * len(bins)
-    else:
-        width = 2
-    height = width / height_ratio
+    width = 2.4
+    height = 2.3
 
     fig, axs = plt.subplots(
         n_rows, 
@@ -86,6 +83,7 @@ def plot_H2s(
     for ax in axs[n_axs:]:
         ax.remove()
 
+    """
     if len(datas) + len(models) == 1:
         colors = ['black']
     elif len(datas) == 1 and len(models) == 1:
@@ -99,6 +97,8 @@ def plot_H2s(
     else:
         gap = int(np.floor(256 / len(datas) + len(models)))
         colors = [Turbo256[i] for i in range(0, 255, gap)]
+    """
+    colors = list(Category10_10)
 
     x_min = 0.5 * (bins[0] + (bins[1] - bins[0]) / 2)
     x_max = 2 * (bins[-1] + (bins[-1] - bins[-2]) / 2)
@@ -187,11 +187,11 @@ def plot_H2(
     # define plot markers
     empirical_marker_args = {
         'fmt': 'o',
-        'markersize': 3.7,
-        'elinewidth': 0.7,  
+        'markersize': 6,
+        'elinewidth': 1,  
         'markerfacecolor': 'none',
         'markeredgecolor': color, 
-        'markeredgewidth': 0.7,
+        'markeredgewidth': 1,
         'ecolor': color,
         'capsize': 0
     }
@@ -203,19 +203,25 @@ def plot_H2(
     }
 
     curve_args = {
-        'linewidth': 0.8,
+        "marker": "o",
+        'markersize': 4,
+        'linewidth': 1,
         "color": color
     }
     expected_markers_args = {
-        'marker': 'x',
+        'marker': 'o',
         's': 16,
-        'linewidth': 0.7,
+        'linewidth': 1,
         "color": color
     }
 
     hlabels = []
     hxylabels = []
-    x = data['bins'][:-1] + np.diff(data['bins']) / 2
+    #x = data['bins'][:-1] + np.diff(data['bins']) / 2
+    log_bins = np.log10(data['bins'])
+    x = 10 ** (log_bins[:-1] + (log_bins[1:] -log_bins[:-1]) / 2)
+    if np.isnan(x[0]):
+        x[0] = data["bins"][1]
     k = 0
     for i, sample_i in enumerate(data['pops']):
         for sample_j in data['pops'][i:]:

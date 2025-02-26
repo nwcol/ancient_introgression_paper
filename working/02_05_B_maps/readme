@@ -1,0 +1,3 @@
+The idea is to bin windows by B-value (from a map that I inferred- publication would use Murpy or Buffalo+Kern) and estimate H2 separately in each bin. A more sophisticated approach might bin haplotypes by the products of locus B values (this would allow us to use a lot more data).
+
+Reasoning not clear, but I wonder: might this resolve that non monotonic pattern?

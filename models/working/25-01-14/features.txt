@@ -1,4 +1,0 @@
-features that should be incorporated into the model in a nested fashion;
-    MH->N pulse
-    N->UstIshim pulse 
-    

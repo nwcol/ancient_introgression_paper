@@ -1,8 +1,0 @@
-parameters:
-- name: NA 
-  lower_bound: 100
-  values:
-    - demes:
-        Yoruba:
-          epochs:
-            0: start_size

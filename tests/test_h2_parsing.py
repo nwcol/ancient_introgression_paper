@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from h2py import h2_parsing
+from h2py import parsing
 
 
 """
@@ -11,7 +11,7 @@ UNIT TESTS
 
 def test_one_genotype_h2():
 
-    func = h2_parsing._one_genotype_h2
+    func = parsing._one_genotype_h2
     b = np.array([0, 1])
     r= np.array([0, 0])
     
@@ -57,7 +57,7 @@ def test_one_genotype_h2():
 
 def test_two_haplotype_h2():
     # iterate over a number of haplotype configurations and check their H2
-    func = h2_parsing._two_haplotype_h2
+    func = parsing._two_haplotype_h2
     b = np.array([0, 1])
     r = np.array([0, 0])
 
@@ -127,7 +127,7 @@ def test_two_haplotype_h2():
 
 def test_two_genotype_h2():
 
-    func = h2_parsing._two_genotype_h2
+    func = parsing._two_genotype_h2
     bins = np.array([0, 1])
     site_map = np.array([0, 0])
 
