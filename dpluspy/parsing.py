@@ -15,96 +15,86 @@ def compute_statistics(
     vcf_file,
     bed_file=None,
     pop_file=None,
-    pop_mapping=None,
     rec_map_file=None,
-    map_type="linear",
-    regions=None,
-    regions_file=None,
     L=None,
     r=None,
+    map_type="linear",
+    interval_within=None,
+    interval_between=None,
     r_bins=None,
     phased=False,
-    cross_pop=True,
-    between=True
+    cross_pop=True
 ):
     """
-    
-    :param regions: List of 3-tuples or 3-lists 
-    """
-    if regions_file is not None and not regions: 
-        regions = []
-        with open(regions_file, "r") as fin:
-            for line in fin:
-                b0, bl, br = line.split()[:3]
-                regions.append([int(float(b0)), int(float(bl)), int(float(br))])
+    Compute the D+ and H statistics from a .vcf file. 
 
-    sites, genotype_matrix, sample_ids = read_genotypes(
-        vcf_file, bed_file=bed_file 
-    )
+    """
+    if interval_within is not None:
+        within = True
+        assert len(interval_within) == 2
+        interval = interval_within
+    elif interval_between is not None:
+        within = False
+        assert len(interval_between) == 2
+        left_interval = interval_between[0]
+        right_interval = interval_between[1]
+        assert len(left_interval) == len(right_interval) == 2
+        assert right_interval[0] >= left_interval[1]
+        interval = (left_interval[0], right_interval[1])
+    else:
+        within = True
+        warnings.warn("no interval given; parsing all sites")
+        interval = None
+
     if r is not None:
+        if L is None:
+            if interval is not None:
+                L = interval[-1]
+            else:
+                raise ValueError("please provide L")
         rec_map = get_uniform_recombination_map(L, r, kind=map_type)
     else:
         rec_map = load_recombination_map(rec_map_file, kind=map_type)
+
     if isinstance(r_bins, str):
         r_bins = np.loadtxt(r_bins)
-    ret_bins = r_bins
     bins = utils.map_function(r_bins)
 
-    stats = {}
-    for i, (b0, bl, br) in enumerate(regions):
-        print(i, b0, bl, br)
-        block_stats = {} 
-        where = np.where((sites >= b0) & (sites < bl))[0]
-        if len(where) == 0:
-            continue
-        genotypes = genotype_matrix[where]        
+    if within:
+        sites, genotype_matrix, sample_ids = read_genotypes(
+            vcf_file, bed_file=bed_file, interval=interval
+        )
         pop_genotypes = build_pop_genotypes(
-            genotypes, 
-            None, 
-            sample_ids, 
-            pop_mapping=pop_mapping, 
-            pop_file=pop_file
+            genotype_matrix, sample_ids, pop_file=pop_file
         )
-        site_map = rec_map(sites[where])
-        stats_within = compute_stats_within(
-            pop_genotypes, 
-            site_map, 
-            bins, 
-            cross_pop=cross_pop,
-            phased=phased,
+        site_map = rec_map(sites)
+        sums = compute_stats_within(
+            pop_genotypes, site_map, bins, cross_pop=cross_pop, phased=phased,
         )
-        if between:
-            where_r = np.where((sites >= bl) & (sites < br))[0]
-            if len(where_r) > 0:
-                genotypes_r = genotype_matrix[where_r]
-                site_map_r = rec_map(sites[where_r])
-                pop_genotypes_r = build_pop_genotypes(
-                    genotypes_r, 
-                    None, 
-                    sample_ids, 
-                    pop_mapping=pop_mapping, 
-                    pop_file=pop_file
-                )
-                stats_between = compute_stats_between(
-                    pop_genotypes,
-                    pop_genotypes_r,
-                    site_map,
-                    site_map_r,
-                    bins, 
-                    cross_pop=True,
-                    phased=False
-                )
-                block_stats["sums"] = stats_within + stats_between
-            else:
-                block_stats["sums"] = stats_within
-        else:
-            block_stats["sums"] = stats_within
+        pop_ids = list(pop_genotypes.keys())
+    else:
+        sites_left, genotype_matrix_left, sample_ids = read_genotypes(
+            vcf_file, bed_file=bed_file, interval=left_interval
+        )
+        pop_genotypes_left = build_pop_genotypes(
+            genotype_matrix_left, sample_ids, pop_file=pop_file
+        )
+        sites_right, genotype_matrix_right, _ = read_genotypes(
+            vcf_file, bed_file=bed_file, interval=right_interval
+        )
+        pop_genotypes_right = build_pop_genotypes(
+            genotype_matrix_right, sample_ids, pop_file=pop_file
+        )
+        site_map_left = rec_map(sites_left)
+        site_map_right = rec_map(sites_right)
+        sums = compute_stats_between(
+            pop_genotypes_left, pop_genotypes_right, 
+            site_map_left, site_map_right,
+            bins, cross_pop=True, phased=False
+        )
+        pop_ids = list(pop_genotypes_left.keys())
 
-        block_stats["bins"] = ret_bins
-        block_stats["pop_ids"] = list(pop_genotypes.keys())
-        stats[i] = block_stats
-
-    return stats
+    return sums, pop_ids
 
 
 def compute_denominators(
@@ -112,100 +102,122 @@ def compute_denominators(
     rec_map_file=None,
     map_type="linear",
     mut_map_file=None,
-    regions=None,
-    regions_file=None,
     L=None,
     r=None,
-    r_bins=None,
-    between=True
+    interval_within=None,
+    interval_between=None,
+    r_bins=None
 ):
     """
+    Compute denominators for the D+ and H statistics. 
+
+
     """
-    if regions_file is not None and not regions: 
-        regions = []
-        with open(regions_file, "r") as fin:
-            for line in fin:
-                b0, bl, br = line.split()[:3]
-                regions.append([int(float(b0)), int(float(bl)), int(float(br))])
-
-    if bed_file is not None:
-        positions = utils.read_bedfile_positions(bed_file)
+    if interval_within is not None:
+        within = True
+        assert len(interval_within) == 2
+        interval = interval_within
+    elif interval_between is not None:
+        within = False
+        assert len(interval_between) == 2
+        left_interval = interval_between[0]
+        right_interval = interval_between[1]
+        assert len(left_interval) == len(right_interval) == 2
+        assert right_interval[0] >= left_interval[1]
+        interval = (left_interval[0], right_interval[1])
     else:
-        positions = None
-
-    if mut_map_file is not None:
-        if mut_map_file.endswith(".npy"):
-            _mut_map = np.load(mut_map_file)
-            mut_map = _mut_map[positions]
-        elif ".bedgraph" in mut_map_file:
-            windows, mut_data = utils.read_bedgraph(mut_map_file)
-            avg_mut = mut_data["u"]
-            mut_map = mut_map_discretized(windows, avg_mut, positions)
-    else:
-        mut_map = None
+        within = True
+        warnings.warn("no interval given; parsing all sites")
+        interval = None
 
     if r is not None:
+        if L is None:
+            if interval is not None:
+                L = interval[-1]
+            else:
+                raise ValueError("please provide L")
         rec_map = get_uniform_recombination_map(L, r, kind=map_type)
     else:
         rec_map = load_recombination_map(rec_map_file, kind=map_type)
+
+    if bed_file is not None:
+        all_positions = utils.read_bedfile_positions(bed_file)
+    else:
+        if L is None:
+            raise ValueError("L or a bed_file is required to compute denoms")
+        all_positions = np.arange(L)
+
     if isinstance(r_bins, str):
         r_bins = np.loadtxt(r_bins)
-    ret_bins = r_bins
     bins = utils.map_function(r_bins)
 
-    denoms = {}
-    for i, (b0, bl, br) in enumerate(regions):
-        print(i, b0, bl, br)
-        block_denoms = {} 
-        where = np.where((positions >= b0) & (positions < bl))[0]
-        if len(where) == 0:
-            continue
-        pos_map = rec_map(positions[where])
-        window_mut = mut_map[where]
-        denoms_within = count_locus_pairs(pos_map, bins, verbose=True)
-        denoms_within = np.append(denoms_within, len(where))
-
-        if mut_map is not None:
-            mut_facs_within = count_locus_pairs(
-                pos_map, bins, weights=window_mut, verbose=True
-            )
-            sum_mut = np.sum(window_mut)
-            mut_facs_within = np.append(mut_facs_within, sum_mut)
-        
-        if between:
-            where_r = np.where((positions >= bl) & (positions < br))[0]
-            if len(where_r) > 0:
-                pos_map_r = rec_map(positions[where_r])
-                denoms_between = count_locus_pairs_between(
-                    pos_map, pos_map_r, bins, verbose=True
-                )
-                denoms_between = np.append(denoms_between, 0)
-                block_denoms["denoms"] = denoms_within + denoms_between 
-                if mut_map is not None:
-                    mut_facs_between = count_locus_pairs_between(
-                        pos_map, 
-                        pos_map_r, 
-                        bins, 
-                        weights_l=window_mut, 
-                        weights_r=mut_map[where_r]
-                    )
-                    mut_facs_between = np.append(mut_facs_between, 0)
-                    block_denoms["mut_facs"] = (
-                        mut_facs_within + mut_facs_between
-                    )
-            else:
-                block_denoms["denoms"] = denoms_within
-                if mut_map is not None:
-                    block_denoms["mut_facs"] = mut_facs_within
+    if within:
+        if interval is None:
+            positions = all_positions
         else:
-            block_denoms["denoms"] = denoms_within
-            if mut_map is not None:
-                block_denoms["mut_facs"] = mut_facs_within
-     
-        block_denoms["bins"] = ret_bins
-        denoms[i] = block_denoms   
+            positions = all_positions[
+                (all_positions >= interval[0]) & (all_positions < interval[1])
+            ]
+        pos_map = rec_map(positions)
+        denoms = count_locus_pairs(pos_map, bins, verbose=True)
+        denoms = np.append(denoms, len(positions))
 
-    return denoms
+        if mut_map_file is not None:
+            if mut_map_file.endswith(".npy"):
+                _mut_map = np.load(mut_map_file)
+                mut_map = _mut_map[positions]
+            elif ".bedgraph" in mut_map_file:
+                windows, mut_data = utils.read_bedgraph(mut_map_file)
+                avg_mut = mut_data["u"]
+                mut_map = mut_map_discretized(windows, avg_mut, positions)
+            mut_facs= count_locus_pairs(
+                pos_map, bins, weights=mut_map, verbose=True
+            )
+            sum_mut = np.sum(mut_map)
+            mut_facs = np.append(mut_facs, sum_mut)
+        else:
+            mut_facs = None
+    else:
+        left_positions = all_positions[
+            (all_positions >= left_interval[0]) 
+            & (all_positions < left_interval[1])
+        ]
+        pos_map_left = rec_map(left_positions)
+        right_positions = all_positions[
+            (all_positions >= right_interval[0]) 
+            & (all_positions < right_interval[1])
+        ]
+        pos_map_right = rec_map(right_positions)
+        denoms = count_locus_pairs_between(
+            pos_map_left, pos_map_right, bins, verbose=True
+        )
+        denoms = np.append(denoms, 0)
+        if mut_map_file is not None:
+            if mut_map_file.endswith(".npy"):
+                _mut_map = np.load(mut_map_file)
+                mut_map_left = _mut_map[left_positions]
+                mut_map_right = _mut_map[right_positions]
+            elif ".bedgraph" in mut_map_file:
+                windows, mut_data = utils.read_bedgraph(mut_map_file)
+                avg_mut = mut_data["u"]
+                mut_map_left = mut_map_discretized(
+                    windows, avg_mut, left_positions
+                )
+                mut_map_right = mut_map_discretized(
+                    windows, avg_mut, right_positions
+                )
+            mut_facs = count_locus_pairs_between(
+                pos_map_left, pos_map_right, bins, 
+                weights_l=mut_map_left, weights_r=mut_map_right
+            )
+            mut_facs = np.append(mut_facs, 0)
+        else:
+            mut_facs = None 
+
+    if mut_facs is None:
+        return denoms
+    else:
+        return denoms, mut_facs
 
 
 def build_pop_genotypes(
@@ -230,7 +242,7 @@ def build_pop_genotypes(
                 pop_mapping[pop].append(sample)
     elif pop_mapping is None:
         # use sample ids as pop ids
-        pop_mapping = {sample_id: sample_id for sample_id in sample_ids}
+        pop_mapping = {sample_id: [sample_id] for sample_id in sample_ids}
     pop_ids = list(pop_mapping.keys())
     pop_indices = {}
     for pop_id in pop_ids:
@@ -857,7 +869,8 @@ def read_genotypes(
     vcf_file, 
     bed_file=None, 
     multiallelic=False,
-    missing_to_ref=True
+    missing_to_ref=True,
+    interval=None
 ):
     """
     Read sites and genotypes from a .vcf file.
@@ -876,6 +889,8 @@ def read_genotypes(
     :param multiallelic: If True, do not skip multiallelic sites (default False)
     :param missing_to_ref: If True, genotypes ./. and .|. will be read as 0/0
         or 0|0 respectively. Default False skips sites with any missing data.
+    :param interval: 2-tuple or list specifying upper and lower bounds on 
+        positions (default None).
 
     :returns: Array of 0-indexed sites, array of genotypes, list of sample IDs
     """
@@ -902,6 +917,9 @@ def read_genotypes(
             position = int(pos) - 1
             if masked:
                 if position >= len(mask) or mask[position] == 1:
+                    continue
+            if interval is not None:
+                if position < interval[0] or position >= interval[1]:
                     continue
             split_alts = alts.split(',')
             if "<NON_REF>" in split_alts:

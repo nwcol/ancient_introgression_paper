@@ -3,9 +3,9 @@ requires = ["setuptools", "cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "h2py"
+name = "dpluspy"
 version = "0.0"
-description = "a package for estimating two-locus heterozygosity"
+description = "a package for learning about D+, a two-locus genetic statistic"
 requires-python = ">=3.8"
 dependencies = [
     "numpy >= 1.26.4",
@@ -18,14 +18,11 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["h2py", "h2py.scripts"]
+packages = ["dpluspy", "dpluspy.scripts"]
 
 [project.scripts]
-parse_h2 = "h2py.scripts.parse_h2:main"
-mean_h2 = "h2py.scripts.mean_h2:main"
-bootstrap_h2 = "h2py.scripts.bootstrap_h2:main"
-fit_h2 = "h2py.scripts.fit_h2:main"
-compute_uncerts = "h2py.scripts.compute_stderrs:main"
-plot_h2 = "h2py.scripts.plot_h2:main"
-plot_params = "h2py.scripts.plot_params:main"
-timeseries_h2 = "h2py.scripts.plot_params:timeseries_h2"
+parse_Dplus = "dpluspy.scripts.parse:main"
+bootstrap_Dplus = "dpluspy.scripts.bootstrap:main"
+fit_Dplus = "dpluspy.scripts.fit:main"
+uncerts_Dplus = "dpluspy.scripts.uncerts:main"
+

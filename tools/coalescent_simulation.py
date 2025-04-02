@@ -5,7 +5,7 @@ import demes
 import msprime
 import numpy as np
 
-from h2py import util, simulation
+from h2py import simulation, utils
 
 
 def get_args():
@@ -60,7 +60,7 @@ def get_args():
 
 def load_rec_map(rec_map_file, seq_length):
     ##
-    edges, map_vals = util.read_hapmap_rec_map(rec_map_file)
+    edges, map_vals = utils.read_hapmap_rec_map(rec_map_file)
     map_rates = np.diff(map_vals) / np.diff(edges)  # cM/bp
     map_rates /= 100
     edges[0] = 0
@@ -73,11 +73,11 @@ def load_rec_map(rec_map_file, seq_length):
 
     discret = 50000
     edges = np.concatenate((np.arange(0, seq_length, discret), [seq_length]))
-    map_coords = util.read_recombination_map(rec_map_file, edges)
+    map_coords = utils.read_recombination_map(rec_map_file, edges)
     map_rates = np.diff(map_coords) / np.diff(edges) / 100
     print(np.mean(map_rates), len(map_rates))
     rec_map = msprime.RateMap(position=edges, rate=map_rates)
-    print(util.get_time(), 'loaded rec-map')
+    print(utils.get_time(), 'loaded rec-map')
 
     return rec_map
 
@@ -86,21 +86,21 @@ def load_mut_map(mut_map_file, seq_length, mask_file=None):
     ## load a mutation .bedgraph file.
 
     if mut_map_file.endswith(".npy"):
-        print(util.get_time(), "discretizing mutation map")
+        print(utils.get_time(), "discretizing mutation map")
         raw_muts = np.load(mut_map_file)
         discret = 50000
         edges = np.concatenate((np.arange(0, seq_length, discret), [seq_length]))
         windows = np.stack((edges[:-1], edges[1:]), axis=1)
 
         if mask_file is not None:
-            mask = util.regions_to_mask(util.read_bedfile(mask_file))
+            mask = utils.regions_to_mask(utils.read_bedfile(mask_file))
         else:
             mask = np.zeros(len(raw_muts))
 
         muts = simulation.discretize_mut_map(raw_muts, mask, windows)
 
     else:
-        regions, data = util.read_bedgraph(mut_map_file)
+        regions, data = utils.read_bedgraph(mut_map_file)
         muts = data['mut_rate']
 
         coords = regions[:, 0]
@@ -113,7 +113,7 @@ def load_mut_map(mut_map_file, seq_length, mask_file=None):
             edges = np.append(coords[coords < seq_length], seq_length)
 
     mut_map = msprime.RateMap(position=edges, rate=muts)
-    print(util.get_time(), 'loaded mut-map')
+    print(utils.get_time(), 'loaded mut-map')
 
     return mut_map
 
@@ -134,7 +134,7 @@ def main():
     if args.seq_length is not None:
         seq_length = args.seq_length
     elif args.bed_file is not None:
-        seq_length = util.read_bedfile(args.bed_file)[-1, 1] + 1
+        seq_length = utils.read_bedfile(args.bed_file)[-1, 1] + 1
     else:
         raise ValueError("sequence length argument required")
 
@@ -172,7 +172,7 @@ def main():
     else:
         model=msprime.StandardCoalescent()
 
-    print(util.get_time(), "simulating ancestry")
+    print(utils.get_time(), "simulating ancestry")
     ts = msprime.sim_ancestry(
         samples=config,
         ploidy=2,
@@ -183,13 +183,13 @@ def main():
         sequence_length=seq_length,
         model=model
     )
-    print(util.get_time(), "completed ancestry simulation")
+    print(utils.get_time(), "completed ancestry simulation")
     mts = msprime.sim_mutations(
         ts,
         rate=mut_rate,
         record_provenance=False
     )
-    print(util.get_time(), "completed mutation simulation")
+    print(utils.get_time(), "completed mutation simulation")
 
     sample_names = []
     for deme in sampled_demes:

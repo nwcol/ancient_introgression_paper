@@ -3,7 +3,7 @@
 import argparse
 import numpy as np
 
-from h2py import util
+from h2py import utils
 
 
 def get_args():
@@ -26,7 +26,7 @@ def main():
     args = get_args()
     slop = args.slop
     
-    in_regions = util.read_bedfile(args.in_file)
+    in_regions = utils.read_bedfile(args.in_file)
     chrom_num =  str(np.loadtxt(args.in_file, usecols=0, skiprows=1, dtype=str)[0])
 
     mask = np.ones(in_regions[-1, 1] + slop, dtype=bool)
@@ -34,8 +34,8 @@ def main():
     for (start, end) in in_regions:
         mask[start - slop:end + slop] = False
         
-    regions = util.mask_to_regions(mask)
-    util.write_bedfile(args.out_file, regions, chrom_num=chrom_num)
+    regions = utils.mask_to_regions(mask)
+    utils.write_bedfile(args.out_file, regions, chrom_num=chrom_num)
 
     return 
 

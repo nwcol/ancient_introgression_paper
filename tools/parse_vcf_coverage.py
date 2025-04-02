@@ -5,7 +5,7 @@ import gzip
 import numpy as np
 import warnings
 
-from h2py import util
+from h2py import utils
 
 
 def get_args():
@@ -75,7 +75,7 @@ def read_and_write(vcf_file, out_file, min_GQ=None, verbosity=1e6):
             i += 1
 
             if i % verbosity == 0:
-                print(util.get_time(), f"parsed coverage for {i} sites")
+                print(utils.get_time(), f"parsed coverage for {i} sites")
 
     end = last_position 
     start0 = start - 1
@@ -89,9 +89,9 @@ def main():
     # get positions and convert to regions; save
     args = get_args() 
 
-    print(util.get_time(), f'parsing coverage from {args.in_file}')
+    print(utils.get_time(), f'parsing coverage from {args.in_file}')
     read_and_write(args.in_file, args.out_file, verbosity=args.verbosity)
-    print(util.get_time(), f'coverage written at {args.out_file}')
+    print(utils.get_time(), f'coverage written at {args.out_file}')
     return 0
 
 

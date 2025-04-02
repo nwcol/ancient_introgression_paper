@@ -183,7 +183,8 @@ def compute_weighted_denoms(mut_facs, denoms):
     num_sites = denoms[-1]
     mut_prods = mut_facs[:-1]
     locus_pairs = denoms[:-1]
-    factor = mut_prods.sum() / locus_pairs.sum()
+    #factor = mut_prods.sum() / locus_pairs.sum()
+    factor = (mut_facs[-1] / num_sites) ** 2
     _weighted_denoms = mut_prods / factor 
     weighted_denoms = np.append(_weighted_denoms, num_sites)
 

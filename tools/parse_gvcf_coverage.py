@@ -4,7 +4,7 @@ import argparse
 import gzip
 import numpy as np
 
-from h2py import util
+from h2py import utils
 
 
 def get_args():
@@ -67,7 +67,7 @@ def read_and_write(
                 continue
                 
             if i % verbosity == 0:
-                print(util.get_time(), f"parsing line {i}")
+                print(utils.get_time(), f"parsing line {i}")
             i += 1
     
             split_line = line.split()
@@ -134,7 +134,7 @@ def main():
     # get positions and convert to regions; save
     args = get_args() 
 
-    print(util.get_time(), f'parsing coverage from {args.in_file}')
+    print(utils.get_time(), f'parsing coverage from {args.in_file}')
     read_and_write(
         args.in_file, 
         args.out_file, 
@@ -143,7 +143,7 @@ def main():
         passing=args.pass_filters,
         min_GQ=args.min_GQ
     )
-    print(util.get_time(), f'coverage written at {args.out_file}')
+    print(utils.get_time(), f'coverage written at {args.out_file}')
     return 0
 
 

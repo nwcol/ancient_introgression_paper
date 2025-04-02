@@ -3,7 +3,7 @@
 import argparse
 import numpy as np
 
-from h2py import util
+from h2py import utils
 
 
 def get_args():
@@ -25,7 +25,7 @@ def main():
     regionss = []
     
     for file in args.in_files:
-        regions = util.read_bedfile(file)
+        regions = utils.read_bedfile(file)
         regionss.append(regions)
 
     chrom_nums = []
@@ -43,9 +43,9 @@ def main():
             coverage[start:end] += 1
         
     mask = coverage < len(regionss)
-    intersected_regions = util.mask_to_regions(mask)
+    intersected_regions = utils.mask_to_regions(mask)
 
-    util.write_bedfile(args.out_file, intersected_regions, chrom_num=chrom_num)
+    utils.write_bedfile(args.out_file, intersected_regions, chrom_num=chrom_num)
     return 
 
 

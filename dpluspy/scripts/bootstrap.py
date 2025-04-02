@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 import pickle
 
-from h2py import bootstrapping
+from dpluspy import bootstrapping
 
 
 def get_args():
@@ -58,16 +58,16 @@ def main():
                 stats = raw[region]
             regions[region] = stats
 
-    means, varcovs, reps = bootstrapping.bootstrap(
+    means, varcovs = bootstrapping.bootstrap(
         regions, 
         num_reps=args.num_reps, 
-        weighted=args.weighted,
-        get_reps=True
+        # weighted=args.weighted,
+        get_reps=False
     )
     bootstrap_data = {}
     bootstrap_data["means"] = means
     bootstrap_data["varcovs"] = varcovs
-    bootstrap_data["reps"] = reps
+    # bootstrap_data["reps"] = reps
     bootstrap_data["pop_ids"] = regions[next(iter(regions))]["pop_ids"]
     bootstrap_data["bins"] = regions[next(iter(regions))]["bins"]
 

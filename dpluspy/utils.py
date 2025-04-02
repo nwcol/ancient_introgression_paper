@@ -1,5 +1,6 @@
 ## utilities, mostly for reading and writing common types of file
 
+import copy
 from datetime import datetime
 import gzip
 import numpy as np
@@ -218,11 +219,11 @@ def subset_statistics(
         if isinstance(graph, str):
             graph = demes.load(graph)
         graph_demes = [d.name for d in graph.demes]
-        pops = data['pops']
+        pops = data['pop_ids']
         to_pops = [d for d in pops if d in graph_demes]
 
     if to_pops is not None:
-        pops = data['pops']
+        pops = data['pop_ids']
 
         # sort `to_pops` so it's in the same order as `pops`
         indices = [pops.index(p) for p in to_pops]

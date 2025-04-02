@@ -2,7 +2,7 @@
 
 import argparse
 
-from h2py import inference
+from dpluspy import inference
 
 
 def get_args():
@@ -51,11 +51,15 @@ def get_args():
 def main():
 
     args = get_args()
-    data = inference.load_statistics(args.data_file, graph=args.graph_file)
+    data = inference.load_statistics(args.data_file, args.graph_file)
+    pop_ids, bins, means, varcovs = data
     inference.optimize(
         args.graph_file,
         args.param_file,
-        data,
+        means,
+        varcovs,
+        pop_ids=pop_ids,
+        bins=bins,
         u=args.u,
         verbose=args.verbose,
         method=args.method,

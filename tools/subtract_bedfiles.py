@@ -3,7 +3,7 @@
 import argparse
 import numpy as np
 
-from h2py import util
+from h2py import utils
 
 
 def get_args():
@@ -25,8 +25,8 @@ def main():
     #
     args = get_args()
     
-    in_regions = util.read_bedfile(args.in_file)
-    sub_regions = util.read_bedfile(args.subtrahend_file)
+    in_regions = utils.read_bedfile(args.in_file)
+    sub_regions = utils.read_bedfile(args.subtrahend_file)
     chrom_num =  str(np.loadtxt(args.in_file, usecols=0, skiprows=1, dtype=str)[0])
 
     max_length = max([in_regions[-1, 1], sub_regions[-1, 1]])
@@ -39,8 +39,8 @@ def main():
     for (start, end) in sub_regions:
         mask[start:end] = True  
         
-    regions = util.mask_to_regions(mask)
-    util.write_bedfile(args.out_file, regions, chrom_num=chrom_num)
+    regions = utils.mask_to_regions(mask)
+    utils.write_bedfile(args.out_file, regions, chrom_num=chrom_num)
 
     return 
 

@@ -7,7 +7,7 @@ import gzip
 import numpy as np
 import numpy.ma as ma
 import re
-from h2py import util
+from h2py import utils
 
 
 # This the coefficient for converting roulette 'MR' rates into haploid
@@ -102,9 +102,9 @@ def read_vcf_file(vcf_file, seq_len, verbosity):
 
             i += 1
             if i % verbosity == 0:
-                print(util.get_time(), f'parsed rate for {i} rows')
+                print(utils.get_time(), f'parsed rate for {i} rows')
 
-    print(util.get_time(), f'parsed rates for ~{i//3} positions from .vcf')
+    print(utils.get_time(), f'parsed rates for ~{i//3} positions from .vcf')
     rates = rates * coeff
     rates[mask] = np.nan
     return rates, mask
@@ -115,13 +115,13 @@ def main():
     args = get_args()
 
     chrom_num, seq_len = read_seq_len(args.in_file)
-    print(util.get_time(), f'parsing rates on {chrom_num}')
+    print(utils.get_time(), f'parsing rates on {chrom_num}')
     rates, mask = read_vcf_file(args.in_file, seq_len, args.verbosity)
     
     np.save(args.out_file, rates)
-    regions = util.mask_to_regions(mask)
-    util.write_bedfile(args.out_bed_file, chrom_num, regions)
-    print(util.get_time(), f'wrote mutation rates to {args.out_file}')
+    regions = utils.mask_to_regions(mask)
+    utils.write_bedfile(args.out_bed_file, chrom_num, regions)
+    print(utils.get_time(), f'wrote mutation rates to {args.out_file}')
 
 
 if __name__ == '__main__':

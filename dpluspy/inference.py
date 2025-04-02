@@ -7,6 +7,8 @@ import moments
 from moments.Demes import Inference
 import scipy
 import sys
+import os
+import pickle
 
 from . import utils
 from .datastrucs import DplusStats
@@ -19,13 +21,14 @@ _out_of_bounds = 1e10
 _counter = 0
 
 
-def load_stats(data_file, graph_file):
+def load_statistics(data_file, graph_file):
 
-    import pickle
-    data = list(pickle.load(open(data_file, "rb+")).values())[0]
+    data = pickle.load(open(data_file, "rb+"))
     pop_ids = data["pop_ids"]
     to_pops = graph_data_overlap(graph_file, pop_ids)
-    bins, means, varcovs = utils.subset_oldstyle_stats(data, to_pops=to_pops) 
+    bins = data["bins"]
+    means = utils.subset_means(data["means"], pop_ids, to_pops)
+    varcovs = utils.subset_varcovs(data["varcovs"], pop_ids, to_pops)
 
     return to_pops, bins, means, varcovs
 
@@ -53,7 +56,7 @@ def compute_bin_stats(
 
     if approx == "midpoint":
         rs = bins[:-1] + (bins[1:] - bins[:-1]) / 2
-        model = DPlusStats.from_moments(
+        model = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times, 
@@ -63,7 +66,7 @@ def compute_bin_stats(
         )
     elif approx == "trapezoid":
         rs = bins
-        y_edges = DPlusStats.from_moments(
+        y_edges = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times, 
@@ -73,9 +76,9 @@ def compute_bin_stats(
         )
         y = [(y_edges[i] + y_edges[i + 1]) / 2 for i in range(len(rs) - 1)]
         y.append(y_edges[-1])
-        model = DPlusStats(y, pop_ids=sampled_demes)
+        model = DplusStats(y, pop_ids=sampled_demes)
     elif approx == "simpsons":
-        y_edges = DPlusStats.from_moments(
+        y_edges = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times, 
@@ -84,7 +87,7 @@ def compute_bin_stats(
             phased=phased
         )       
         r_mids = (bins[1:] - bins[:-1]) / 2
-        y_mids = DPlusStats.from_moments(
+        y_mids = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times,
@@ -95,7 +98,7 @@ def compute_bin_stats(
         y = [(y_edges[i] + 4 * y_mids[i] + y_edges[i + 1]) / 6 
              for i in range(len(r_mids))]
         y.append(y_edges[-1])
-        model = DPlusStats(y, pop_ids=sampled_demes)
+        model = DplusStats(y, pop_ids=sampled_demes)
     else:
         return None
 
@@ -126,11 +129,11 @@ def _object_func(
 ):
     
     if lower_bounds is not None and np.any(params < lower_bounds):
-        return _out_of_bounds
+        return -_out_of_bounds
     elif upper_bounds is not None and np.any(params > upper_bounds):
-        return _out_of_bounds
+        return -_out_of_bounds
     elif constraints is not None and np.any(constraints(params) <= 0):
-        return _out_of_bounds
+        return -_out_of_bounds
 
     global _counter
     _counter += 1    
@@ -183,7 +186,8 @@ def optimize(
     max_calls=None,
     log=False,
     verbose=1,
-    out_file=None,
+    overwrite=False,
+    output=None,
     one_locus=False,
     perturb=False,
     stream=sys.stdout
@@ -262,7 +266,7 @@ def optimize(
         raise ValueError(f"{method} is not a valid method")
     
     if method == 'fmin':
-        output = scipy.optimize.fmin(
+        ret = scipy.optimize.fmin(
             objective,
             params_0,
             args=args,
@@ -270,24 +274,24 @@ def optimize(
             maxfun=max_calls,
             full_output=True
         )
-        popt, fopt, num_iter, func_calls, flag = output[:5]
+        fit_params, fopt, num_iter, func_calls, flag = ret[:5]
 
     elif method == 'powell':
-        output = scipy.optimize.fmin_powell(
+        ret = scipy.optimize.fmin_powell(
             objective,
             params_0,
             args=args,
             maxiter=max_iter,
             full_output=True,
         )
-        popt, fopt, _, num_iter, func_calls, flag = output[:6]
+        fit_params, fopt, _, num_iter, func_calls, flag = ret[:6]
 
     elif method == 'bfgs':
         if log:
             epsilon = 1e-3
         else:
             epsilon = None
-        output = scipy.optimize.fmin_bfgs(
+        ret = scipy.optimize.fmin_bfgs(
             objective,
             params_0,
             args=args,
@@ -296,7 +300,7 @@ def optimize(
             disp=False,
             full_output=True
         )
-        popt, fopt, _, __, func_calls, grad_calls, flag = output[:7]
+        fit_params, fopt, _, __, func_calls, grad_calls, flag = ret[:7]
         num_iter = grad_calls
 
     elif method == 'lbfgsb':
@@ -310,7 +314,7 @@ def optimize(
             bounds = list(zip(lower_bounds, upper_bounds))
             epsilon = 1e-8
             pgtol = 1e-5
-        output = scipy.optimize.fmin_l_bfgs_b(
+        ret = scipy.optimize.fmin_l_bfgs_b(
             objective,
             params_0,
             args=args,
@@ -320,9 +324,8 @@ def optimize(
             pgtol=pgtol,
             approx_grad=True
         )
-        popt, fopt, output_dict = output
+        fit_params, fopt, output_dict = ret
         num_iter = output_dict['nit']
-        func_calls = output_dict['funcalls']
         flag = output_dict['warnflag']
         warn = output_dict["task"]
 
@@ -330,38 +333,40 @@ def optimize(
         return
 
     if log: 
-        popt = np.exp(popt - 1)
+        fit_params = np.exp(fit_params - 1)
 
-    print("\nFit parameters:")
-    formatted_popt = format_params(popt)
-    print("\n".join(["    {n}: {p}".format(n=name, p=p) 
-          for name, p in zip(param_names, formatted_popt)]))
+    ll = -fopt
+
+    print(f"Log-likelihood:\t{ll:.3}")
+    print("Fitted parameters:")
+    for name, value in zip(param_names, fit_params):
+        print(f"{name}\t{value:.3}")
+
     global _counter
-    info = dict(
-        method=method,
-        objective_func=objective.__name__,
-        fopt=-fopt,
-        max_iter=max_iter,
-        num_iter=num_iter,
-        func_calls=func_calls,
-        flag=flag,
-        warn=warn,
-        u=u
-    )
-    print("\nConvergence information:")
-    print("\n".join(["    {field}: {x}".format(field=field, x=str(x)) 
-          for field, x in zip(info.keys(), info.values())]))
-    
-    builder = Inference._update_builder(builder, options, popt)
-    graph = demes.Graph.fromdict(builder)
-    graph.metadata['opt_info'] = info
 
-    if out_file is not None: 
-        demes.dump(graph, out_file)
-    else:
-        print("\n" + str(graph))
+    if output is not None:
+        builder = Inference._update_builder(builder, options, fit_params)
+        graph = demes.Graph.fromdict(builder)
+        if overwrite is False and os.path.isfile(output):
+            print(f"{output} already exists: printing model")
+            print(str(graph))
+        else:
+            info = dict(
+                method=method,
+                objective_func=objective.__name__,
+                fopt=-ll,
+                max_iter=max_iter,
+                num_iter=num_iter,
+                flag=flag,
+                warn=warn,
+                u=u
+            )
+            graph.metadata['opt_info'] = info
+            demes.dump(graph, output)
+
+    _counter = 0
     
-    return param_names, popt, fopt, graph
+    return param_names, fit_params, ll
 
 
 def print_status(n_calls, ll, params):
