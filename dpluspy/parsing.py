@@ -19,7 +19,7 @@ def compute_statistics(
     L=None,
     r=None,
     map_type="linear",
-    interval_within=None,
+    interval=None,
     interval_between=None,
     r_bins=None,
     phased=False,
@@ -29,10 +29,9 @@ def compute_statistics(
     Compute the D+ and H statistics from a .vcf file. 
 
     """
-    if interval_within is not None:
+    if interval is not None:
         within = True
-        assert len(interval_within) == 2
-        interval = interval_within
+        assert len(interval) == 2
     elif interval_between is not None:
         within = False
         assert len(interval_between) == 2
@@ -44,7 +43,6 @@ def compute_statistics(
     else:
         within = True
         warnings.warn("no interval given; parsing all sites")
-        interval = None
 
     if r is not None:
         if L is None:
@@ -94,7 +92,7 @@ def compute_statistics(
         )
         pop_ids = list(pop_genotypes_left.keys())
 
-    return sums, pop_ids
+    return sums
 
 
 def compute_denominators(
@@ -104,7 +102,7 @@ def compute_denominators(
     mut_map_file=None,
     L=None,
     r=None,
-    interval_within=None,
+    interval=None,
     interval_between=None,
     r_bins=None
 ):
@@ -113,10 +111,9 @@ def compute_denominators(
 
 
     """
-    if interval_within is not None:
+    if interval is not None:
         within = True
-        assert len(interval_within) == 2
-        interval = interval_within
+        assert len(interval) == 2
     elif interval_between is not None:
         within = False
         assert len(interval_between) == 2
@@ -128,7 +125,6 @@ def compute_denominators(
     else:
         within = True
         warnings.warn("no interval given; parsing all sites")
-        interval = None
 
     if r is not None:
         if L is None:
@@ -907,7 +903,7 @@ def read_genotypes(
 
     with open_func(vcf_file, "rb") as fin:
         for lineb in fin:
-            line = lineb.decode()
+            line = lineb.decode().strip()
             if line.startswith('#'):
                 if line.startswith('#CHROM'):
                     sample_ids = line.split()[9:]
@@ -941,6 +937,69 @@ def read_genotypes(
             gts = [re.split("/|\\|", gt) for gt in _gts]           
             _genotypes.append(np.array(gts, dtype=np.int64))
             _sites.append(pos)
+
+    sites = np.array(_sites, dtype=np.int64)
+    genotypes = np.array(_genotypes, dtype=np.int64)
+
+    return sites, genotypes, sample_ids
+
+
+def _genotypes_from_str(
+    vcf_str, 
+    bed_file=None, 
+    multiallelic=False,
+    missing_to_ref=True,
+    interval=None
+):
+    """
+
+    """
+    if bed_file is not None:
+        regions = utils.read_bedfile(bed_file)
+        mask = utils.regions_to_mask(regions)
+        masked = True
+    else:
+        masked = False
+
+    _sites = []
+    _genotypes = []
+
+    for line in vcf_str.split("\n"):
+        if line == "":
+            continue
+        if line.startswith('#'):
+            if line.startswith('#CHROM'):
+                sample_ids = line.split()[9:]
+            continue
+        split_line = line.split()
+        pos, __, ref, alts = split_line[1:5]
+        position = int(pos) - 1
+        if masked:
+            if position >= len(mask) or mask[position] == 1:
+                continue
+        if interval is not None:
+            if position < interval[0] or position >= interval[1]:
+                continue
+        split_alts = alts.split(',')
+        if "<NON_REF>" in split_alts:
+            split_alts.pop(split_alts.index("<NON_REF>"))
+        if len(ref) > 1:
+            continue  
+        if np.any([len(alt) > 1 for alt in split_alts]):
+            continue
+        if not multiallelic:
+            if len(split_alts) > 1:
+                continue
+        _gts = [sample.split(':')[0] for sample in split_line[9:]]
+        if '.' in "".join(_gts):
+            if missing_to_ref:
+                _gts = ['0/0' if '.' in x else x for x in _gts]
+            else:
+                warnings.warn("skipping site with missing data")
+                continue
+        gts = [re.split("/|\\|", gt) for gt in _gts]           
+        _genotypes.append(np.array(gts, dtype=np.int64))
+        _sites.append(pos)
 
     sites = np.array(_sites, dtype=np.int64)
     genotypes = np.array(_genotypes, dtype=np.int64)
