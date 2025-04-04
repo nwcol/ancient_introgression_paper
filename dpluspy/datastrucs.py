@@ -85,17 +85,13 @@ class DplusStats(list):
         if isinstance(graph, str):
             graph = demes.load(graph)
         y = moments.Demes.LD(
-            graph,
-            sampled_demes,
-            sample_times=sample_times,
-            theta=None,
-            r=rs,
-            u=u
+            graph, sampled_demes, sample_times=sample_times,
+            theta=None, r=rs, u=u
         )
         num_demes = len(sampled_demes)
         num_stats = (num_demes ** 2 + num_demes) // 2 
         stats = [np.zeros(num_stats, dtype=np.float64) for _ in rs]
-        pairs = utils.generate_pairs(sampled_demes)
+        pairs = utils.generate_pairs(list(range(num_demes)))
         for i, (j, k) in enumerate(pairs):
             if j == k:
                 phasing = True

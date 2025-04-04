@@ -1,4 +1,4 @@
-# tests a few imports from h2py Apptainer container
+# test imports from apptainer container
 
 universe = vanilla
 log = reports/job_$(Cluster).log
@@ -6,11 +6,11 @@ error = reports/job_$(Cluster).err
 output = reports/job_$(Cluster).out
 
 requirements = (Target.HasCHTCStaging == true)
-container_image = file:///staging/nwcollier/h2py-container.sif
+container_image = file:///staging/nwcollier/dplus-container.sif
 
-executable = test_h2py_container.sh
+executable = test_container.sh
 
-transfer_input_files = test_h2py_container.py
+transfer_input_files = test_container.py
 
 request_cpus = 1
 request_memory = 1GB

@@ -7,7 +7,7 @@ output = reports/build_$(Cluster).out
 
 executable = /usr/bin/hostname
 
-transfer_input_files = h2py_image.def
+transfer_input_files = dplus_image.def
 
 +IsBuildJob = true
 request_cpus = 4

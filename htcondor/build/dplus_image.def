@@ -3,5 +3,5 @@ From: python:3.11
 
 %post
 	python3 -m pip install moments-popgen
-	python3 -m pip install git+https://github.com/nwcol/archaic.git
+	python3 -m pip install git+https://github.com/nwcol/structure_two_locus.git
 

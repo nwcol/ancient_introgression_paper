@@ -39,7 +39,7 @@ def compute_bin_stats(
     sample_times=None, 
     u=None,
     bins=None,
-    approx="trapezoid",
+    approx="simpsons",
     phased=False
 ):
     """
@@ -55,28 +55,30 @@ def compute_bin_stats(
         graph = demes.load(graph)
 
     if approx == "midpoint":
-        rs = bins[:-1] + (bins[1:] - bins[:-1]) / 2
+        midpoints = (bins[:-1] + bins[1:]) / 2
         model = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times, 
-            r=rs,
+            rs=midpoints,
             u=u,
             phased=phased
         )
+
     elif approx == "trapezoid":
-        rs = bins
+        raise ValueError("this method is too inaccurate")
         y_edges = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times, 
-            rs=rs, 
+            rs=bins, 
             u=u,
             phased=phased
         )
-        y = [(y_edges[i] + y_edges[i + 1]) / 2 for i in range(len(rs) - 1)]
+        y = [(y0 + y1) / 2 for y0, y1 in zip(y_edges[:-2], y_edges[1:-1])]
         y.append(y_edges[-1])
         model = DplusStats(y, pop_ids=sampled_demes)
+
     elif approx == "simpsons":
         y_edges = DplusStats.from_moments(
             graph, 
@@ -85,22 +87,25 @@ def compute_bin_stats(
             rs=bins, 
             u=u,
             phased=phased
-        )       
-        r_mids = (bins[1:] - bins[:-1]) / 2
+        )
+        midpoints = (bins[:-1] + bins[1:]) / 2
         y_mids = DplusStats.from_moments(
             graph, 
             sampled_demes, 
             sample_times=sample_times,
-            rs=r_mids, 
+            rs=midpoints, 
             u=u,
             phased=phased
         )        
-        y = [(y_edges[i] + 4 * y_mids[i] + y_edges[i + 1]) / 6 
-             for i in range(len(r_mids))]
+        y = [
+            (y_edges[i] + 4 * y_mids[i] + y_edges[i + 1]) / 6 
+            for i in range(len(midpoints))
+        ]
         y.append(y_edges[-1])
         model = DplusStats(y, pop_ids=sampled_demes)
+
     else:
-        return None
+        raise ValueError("invalid approximation method!")
 
     return model
 
@@ -146,7 +151,6 @@ def _object_func(
         sample_times=sample_times,
         u=u,
         bins=bins,
-        approx="trapezoid",
         phased=False
     )
     ll = composite_ll(model, means, varcovs, one_locus=one_locus)
@@ -542,7 +546,6 @@ def compute_uncerts(
             sample_times=sample_times,
             u=u,
             bins=bins,
-            approx="trapezoid",
             phased=False
         )
 
