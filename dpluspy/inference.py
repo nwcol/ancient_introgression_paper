@@ -130,7 +130,7 @@ def _object_func(
     one_locus=False,
     use_afs=False,
     afs=None,
-    stream=sys.stdout
+    fit_mutation_rate=False
 ):
     
     if lower_bounds is not None and np.any(params < lower_bounds):
@@ -142,6 +142,9 @@ def _object_func(
 
     global _counter
     _counter += 1    
+
+
+
 
     builder = Inference._update_builder(builder, options, params)
     graph = demes.Graph.fromdict(builder)
@@ -194,7 +197,8 @@ def optimize(
     output=None,
     one_locus=False,
     perturb=False,
-    stream=sys.stdout
+    fit_mutation_rate=False,
+    u_guess=None
 ):
     """
 
@@ -205,10 +209,21 @@ def optimize(
     param_names, params_0, lower_bounds, upper_bounds = params_bounds
     constraints = Inference._set_up_constraints(options, param_names)
 
-    if u is None:
+    if u is None and not fit_mutation_rate:
         raise ValueError("you must provide `u`")
     if pop_ids is None:
         raise ValueError("you must provide `pop_ids`")
+    
+    if fit_mutation_rate:
+        if u_guess is None:
+            if u is not None:
+                u_guess = u
+            else:
+                u_guess = 1e-8
+        param_names.append("u")
+        params_0 = np.concatenate((params_0, [u_guess]))
+        lower_bounds = np.concatenate((lower_bounds, [0]))
+        upper_bounds = np.concatenate((upper_bounds, [1]))
     
     if perturb > 0: 
         params_0 = Inference._perturb_params_constrained(
@@ -262,7 +277,6 @@ def optimize(
         one_locus,
         False,
         None,
-        stream
     )
     
     methods = ['fmin', 'powell', 'bfgs', 'lbfgsb']

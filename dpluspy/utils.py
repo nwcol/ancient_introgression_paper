@@ -1,4 +1,4 @@
-## utilities, mostly for reading and writing common types of file
+## Houses utilities, mostly for reading and writing common types of file
 
 import copy
 from datetime import datetime
@@ -9,13 +9,7 @@ import pickle
 import warnings
 
 
-
-
-#### NEW STUFF
-
-
-
-## Generating names of statistics
+## Generating the names of statistics
 
 
 def generate_pairs(pop_ids):
@@ -28,7 +22,7 @@ def generate_pairs(pop_ids):
     return pairs
 
 
-def h_names(pop_ids):
+def H_names(pop_ids):
 
     hs = []
     for i, pop_id0 in enumerate(pop_ids):
@@ -38,7 +32,7 @@ def h_names(pop_ids):
     return hs
 
 
-def d_plus_names(pop_ids):
+def Dplus_names(pop_ids):
 
     ds = []
     for i, pop_id0 in enumerate(pop_ids):
@@ -49,31 +43,20 @@ def d_plus_names(pop_ids):
 
 
 def stat_names(pop_ids):
+    """
+    Get the names of all the D+ and H statistics for populations `pop_ids`.
+    Statistic names have the form 'D+_{pop_i}_{pop_j}'.
 
-    ds = d_plus_names(pop_ids)
-    hs = h_names(pop_ids)
+    :param pop_ids: List of population names.
+    :type pop_ids: list 
+
+    :returns: Lists of names for D+ and H statistics.
+    :rtype: tuple
+    """
+    ds = Dplus_names(pop_ids)
+    hs = H_names(pop_ids)
 
     return (ds, hs)
-
-
-def h_idxs(num_pops):
-
-    hs = []
-    for i in range(num_pops):
-        for j in range(i, num_pops):
-            hs.append(f"H_{i}_{j}")
-
-    return hs
-
-
-def d_plus_idxs(num_pops):
-
-    ds = []
-    for i in range(num_pops):
-        for j in range(i, num_pops):
-            ds.append(f"D+_{i}_{j}")
-
-    return ds
 
 
 def get_latex_names(pop_ids, statistic="D^+"):
@@ -187,16 +170,6 @@ def subset_varcovs(varcovs, pop_ids, to_pops):
     return new_varcovs
 
 
-
-
-
-
-
-
-
-
-
-
 ### functions moved here from parsing module
 
 
@@ -263,22 +236,6 @@ def subset_statistics(
             ret['covs'] = ret['covs'][min_bin:max_bin + 1]
 
     return ret
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ## .bed files and genetic masks

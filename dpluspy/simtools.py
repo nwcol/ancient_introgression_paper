@@ -1,10 +1,79 @@
+"""
+Utility functions for setting up coalescent and forward-in-time simulations
+"""
 
 import gzip
+import msprime
 import numpy as np
 import scipy
 
+from dpluspy import utils
 
-## functions for creating synthetic vcf files
+
+def build_map(shape, scale, mean_interval, L):
+    """
+    Build a map (probably a mutation or recombination map) by sampling interval
+    lengths from a geometric distribution up to length `L` and assigning each
+    interval a Gamma(shape, scale) rate.
+    
+    :param shape: Shape of the Gamma distribution to sample map rates from.
+    :param scale: Scale parameter of the Gamma distribution to sample map rates
+        from. 
+    :param window_size: Mean window size; windows are drawn from a geometric
+        distribution with rate equal to the inverse. 
+    :param L: Length of map to construct. 
+    :returns: Array of sequence intervals, array of map values
+    """
+    rate = 1 / mean_interval
+    intervals = []
+    end = 0
+    reached_end = False
+    while not reached_end:
+        start = end
+        end = start + np.random.geometric(rate)
+        if end >= L:
+            reached_end = True
+            end = L
+        intervals.append([start, end])
+    intervals = np.asarray(intervals, dtype=np.int64)
+    num_intervals = len(intervals)
+    values = np.random.gamma(shape, scale=scale, size=num_intervals)
+
+    return intervals, values
+
+
+def write_random_map(filename, shape, scale, mean_interval, L):
+    """
+    Generate a random genomic map and save it as a .bedgraph file.
+    
+    :param filename: Pathname for output file.
+    See `build_map` for other parameters:
+    :returns: None
+    """
+    intervals, values = build_map(shape, scale, mean_interval, L)
+    data = {'map': values}
+    utils.write_bedgraph(filename, '0', intervals, data, sep='\t')
+
+    return
+
+
+def load_ratemap(filename):
+    """
+    Load a ratemap specified in a BEDGRAPH file and use it to construct an 
+    msprime.RateMap object. 
+    
+    """
+    # right now: has to have exact sequence length
+    intervals, data = utils.read_bedgraph(filename)
+    positions = np.append(intervals[:, 0], intervals[-1, 1])
+    rate = data['map']
+    ratemap = msprime.RateMap(position=positions, rate=rate)
+
+    return ratemap
+
+
+
+## Old functions for creating synthetic vcf files
 
 
 def write_random_vcf(

@@ -73,7 +73,7 @@ def load_bootstrap_means(filename, to_pops=None, size=None):
     return ret_means, bins, ret_pop_ids
 
 
-def bootstrap(regions, num_reps=1000, get_reps=False):
+def bootstrap(regions, num_reps=None, get_reps=False):
     """
     Perform a bootstrap to obtain covariance matrices for D+ and H statistics,
     estimated in genomic blocks. Operates upon sums of D+, H, and their
@@ -82,7 +82,8 @@ def bootstrap(regions, num_reps=1000, get_reps=False):
     :param regions: A dictionary with sums of D+ and H statistics from genomic
         regions as values, with arbitrary keys specifying region names.
     :type regions: dict
-    :param num_reps: Number of bootstrap replicates to perform (default 1000).
+    :param num_reps: Number of bootstrap replicates to perform; if None, then 
+        uses the number of regions (default None).
     :type num_reps: int
     :param get_reps: If True, return a list of bootstrap replicate means in 
         addition to means and covariances (default False).
@@ -92,6 +93,8 @@ def bootstrap(regions, num_reps=1000, get_reps=False):
         statistics. Optionally also a list of bootstrap replicate means.
     :rtype: tuple (2 or 3-tuple of lists)
     """
+    if num_reps is None:
+        num_reps = len(regions)
     means = means_across_regions(regions)
     labels = list(regions.keys())
     sample_size = len(regions)
@@ -160,6 +163,90 @@ def means_across_replicates(replicates):
 
     return means
 
+
+
+def weighted_bootstrap(
+    regions,
+    num_reps=None, 
+    sample_size=None, 
+    get_reps=False
+):
+    """
+    Perform a bootstrap on a dictionary of region-specific D+ and H sums, 
+    using the mutation rate-weighted estimator to de-distort the shape of the
+    D+ curve. 
+
+    Each region should be represented by a weighted dictionary in `regions`,
+    minimally containing 'sums', 'num_sites' and 'mut_facs'. 
+    """
+    if num_reps is None:
+        num_reps = len(regions)
+    if sample_size is None:
+        sample_size = len(regions)
+    means = weighted_means_across_regions(regions)
+    labels = list(regions.keys())
+    sample_size = len(regions)
+    bootstrap_means = []
+    for i in range(num_reps):
+        samples = np.random.choice(labels, sample_size, replace=True)
+        sampled_regions = [regions[sample] for sample in samples]
+        _means = weighted_means_across_replicates(sampled_regions)
+        bootstrap_means.append(_means)
+    varcovs = []
+    for i in range(len(means)):
+        bin_means = np.array([_means[i] for _means in bootstrap_means])
+        varcov_matrix = np.cov(bin_means.T)
+        # this occurs when the bootstrap involves only one statistic
+        if varcov_matrix.shape == ():
+            varcov_matrix = varcov_matrix.reshape((1, 1))
+        varcovs.append(varcov_matrix)
+    if get_reps:
+        ret = (means, varcovs, bootstrap_means)
+    else:
+        ret = (means, varcovs)
+
+    return ret
+
+
+def weighted_means_across_regions(regions):
+    """
+    Compute mutation-rate weighted D+ across a set of regions.
+    """
+    sums = 0.0
+    mut_prods = 0.0
+    mut_sum = 0.0
+    num_sites = 0
+    for key in regions:
+        sums += regions[key]['sums']
+        mut_prods += regions[key]['mut_facs'][:-1]
+        mut_sum += regions[key]['mut_facs'][-1]
+        num_sites += regions[key]['num_sites']
+    mean_mut = mut_sum / num_sites 
+    weighted_denoms = mut_prods / mean_mut ** 2
+    denoms = np.append(weighted_denoms, num_sites)
+    ext_denoms = np.repeat(denoms[:, np.newaxis], sums.shape[1], axis=1)
+    raw_means = np.full(sums.shape, np.nan, dtype=np.float64)
+    np.divide(sums, ext_denoms, where=ext_denoms > 0, out=raw_means)
+    if np.any(np.isnan(raw_means)):
+        warnings.warn("NaN means exist in output")
+    means = [raw_means[i] for i in range(len(raw_means))]
+
+    return means
+
+
+def weighted_means_across_replicates(replicates):
+    """
+    Operates on a list of dictionaries; wraps `weighted_means_across_regions`.
+    """
+    rep_dict = {i: replicate for i, replicate in enumerate(replicates)}
+    means = weighted_means_across_regions(rep_dict)
+
+    return means
+
+
+
+
+### DEPRECATED. this stuff doesn't work well!!
 
 
 def compute_weighted_denoms(mut_facs, denoms):

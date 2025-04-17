@@ -51,7 +51,8 @@ class DplusStats(list):
         """
         return self[-1]
     
-    def names(self):
+    @property
+    def stat_names(self):
         """
         Return the full names of the statistics stored in an instance, in the
         format ((D+_{pop0}_{pop0}, ...), (H_{pop0}_{pop0}, ...).

@@ -9,10 +9,10 @@ from scipy import stats
 from . import parsing, inference, utils
 
 
-mpl.rcParams["xtick.labelsize"] = 8
-mpl.rcParams["ytick.labelsize"] = 8
-mpl.rcParams["font.size"] = 10
-mpl.rcParams["axes.titlesize"] = 10
+mpl.rcParams["xtick.labelsize"] = 10
+mpl.rcParams["ytick.labelsize"] = 10
+mpl.rcParams["font.size"] = 11
+mpl.rcParams["axes.titlesize"] = 11
 mpl.rcParams["font.style"] = "normal"
 mpl.rcParams["font.family"] = "sans-serif"
 mpl.rcParams["savefig.bbox"] = "tight"
@@ -79,29 +79,103 @@ def plot_d_plus_curves(
 
 
 def plot_d_plus_curves_comparison(
-    model,
-    means,
-    varcovs,
+    models=[],
+    means=[],
+    varcovs=[],
+    pop_ids=None,
+    bins=None,
     stats_to_plot=[],
+    labels=[],
     fill=True,
     rows=None,
     cols=None,
-    ax_size=2,
-    dpi=244,
-    bins=None,
-    rs=None,
+    ax_size=4,
+    plot_H=False,
     cM=False,
-    out_file=None,
+    out=None,
     show=True
 ):
     """
-    
+    Plot any number of model expectations and empirical data sets alongside
+    each other. It is expected that all sets have the same number of populations
+    and the same configuration of bins.
+
+    :param models: One or more models to plot (default None). Models should be
+        specified as DplusStats instances.
+    :type models: list, optional
+    :param means: One or more sets of D+ means.
+    :type means: list, optional
+    :type varcovs: One or more sets of D+ varcovs, given in the same order as
+        `means`.
+    :type varcovs: list, optional
+    :param pop_ids: Population IDs of model/data statistics. If not given 
+        (default None), uses IDs from the first `models` entry. If no `models`
+        were passed, uses integers.
+    :type pop_ids: list, optional
+    :param stats_to_plot: If given, plots only these statistics. Note that
+        labels assigned to populations should match whatever set of `pop_ids`
+        is being used, as discussed above.
+    :type stats_to_plot: list of str
+    :param labels: Optional list of labels for models, data, in that order. 
+
+    :returns: None
     """
-    statistics = model.names()
-    labels = utils.get_latex_names(model.pop_ids)
+    if bins is None:
+        raise ValueError('You must provide `bins`')
+
+    if len(models) == 0 and len(means) == 0:
+        raise ValueError('No models or data were passed')
+
+    # if one model is given; nest it in a list
+    if type(models) != list:
+        models = [models]
+    # do the same with data
+    if len(varcovs) != len(means):
+        raise ValueError('Lengths of `means` and `varcovs` mismatch')
+    if type(means[0]) != list:
+        means = [means]
+        varcovs = [varcovs] 
+
+    # check labels and build them if necessary
+    if len(labels) == 0:
+        if len(models) == 1:
+            labels = ["Model"]
+        else:
+            labels = [f"Model {i}" for i in range(len(models))]
+        if len(means) == 1:
+            labels += ["Data"]
+        else:
+            labels += [f"Data {i}" for i in range(len(means))]
+
+    if len(labels) != len(models) + len(means):
+        raise ValueError('Label length mismatches models, data')
+
+    # figure out pop_ids
+    if pop_ids is None:
+        if len(models) > 0:
+            pop_ids = models[0].pop_ids
+            statistics = models[0].stat_names[0]
+        else:
+            raise ValueError('You must provide `pop_ids`')
+    else:
+        statistics = utils.Dplus_names(pop_ids)
+        if len(models) > 0:
+            assert len(statistics) == len(models[0][0])
+        if len(means) > 0:
+            assert len(statistics) == len(means[0][0])
+    
+    stat_names = utils.get_latex_names(pop_ids)
+
+    # if no stats_to_plot were given: plot all statistics
     if len(stats_to_plot) == 0:
-        stats_to_plot = model.names()[0]
+        stats_to_plot = statistics
+
     num_stats = len(stats_to_plot)
+    
+    if plot_H:
+        num_stats += 1
+        Hs_to_plot = utils.H_names(pop_ids)
+
     if not cols:
         cols = min(5, num_stats)
     if not rows:
@@ -109,68 +183,129 @@ def plot_d_plus_curves_comparison(
     figsize = (cols * ax_size, rows * ax_size)
 
     bins = np.asarray(bins)
-    mids = (bins[1:] + bins[:-1]) / 2
+    x = (bins[1:] + bins[:-1]) / 2
+
     x_label = "$r$"
     if cM == True:
         mids = utils.map_function(mids)
         x_label = "cM"
 
     fig, axs = plt.subplots(rows, cols, figsize=figsize, layout="constrained")
-    axs = axs.flat
+    
+    if rows > 1:
+        axs = axs.flat
+    elif cols == 1:
+        axs = [axs]
+
     for ax in axs[num_stats:]:
         ax.remove()
 
-    color = palettes.Category10_10[0]
+    # special cases for color assignment
+    if len(models) == 1 and len(means) == 1:
+        colors = ['tab:blue', 'tab:blue']
+    else:
+        colors = palettes.Category10_10
 
     for i, stat in enumerate(stats_to_plot):
         ax = axs[i]
-        k = statistics[0].index(stat)
-        y_err = np.array(
-            [varcovs[j][k, k] ** 0.5 * 1.96 for j in range(len(mids))]
-        )
-        y_data = np.array([means[j][k] for j in range(len(mids))])
-        ax.fill_between(mids, y_data - y_err, y_data + y_err, alpha=0.30)
-        ax.plot(mids, y_data, linestyle="dotted", color=color)
+        j = 0
+        k = statistics.index(stat)
+        for model in models:    
+            y = [model[l][k] for l in range(len(x))]
+            ax.plot(x, y, color=colors[j], label=labels[j])
+            j += 1
+        for mean, v in zip(means, varcovs):
+            err = np.array([v[l][k, k] ** 0.5 * 1.96 for l in range(len(x))])
+            y = np.array([mean[j][k] for j in range(len(x))])
+            if fill:
+                ax.fill_between(
+                    x, y - err, y + err, alpha=0.30, color=colors[j]
+                )
+                ax.plot(
+                    x, y, linestyle="dotted", color=colors[j], label=labels[j]
+                )
+            else:
+                ax.errorbar(
+                    x, y, yerr=err, marker='o', mfc='none', mec=colors[j],
+                    label=labels[j]
+                )
+            j += 1
 
-        y_exp = [model[j][k] for j in range(len(mids))]
-        ax.plot(mids, y_exp, color=color)
+            ax.legend(framealpha=0)
+
+        # ax setup
         ax.set_xscale("log")
         if i >= (cols * rows - rows):
             ax.set_xlabel(x_label)
         if i % cols == 0:
             ax.set_ylabel("$D^+$")
-        label = labels[k]
-        ax.set_title(label, y=0.85)
+        stat_name = stat_names[k]
+        ax.set_title(stat_name, y=0.85)
 
-    if out_file:
-        plt.savefig(out_file, dpi=dpi)
+    if plot_H:
+        ax = axs[num_stats - 1]
+        for k, label in enumerate(Hs_to_plot):
+            j = 0
+            for model in models:    
+                if k == 0:
+                    label = labels[j]
+                else:
+                    label = None
+                y = [model[-1][k]]
+                ax.scatter(
+                    k, y, color=colors[j], marker='x', label=label
+                )
+                j += 1
+            for mean, v in zip(means, varcovs):
+                if k == 0:
+                    label = labels[j]
+                else:
+                    label = None
+                err = [v[-1][k, k] ** 0.5 * 1.96]
+                y = [mean[-1][k]]
+                ax.errorbar(
+                    k, y, yerr=err, fmt='o', mfc='none', mec=colors[j],
+                    label=label, ecolor=colors[j], capsize=2
+                )
+                j += 1
+        ax.legend(framealpha=0)
+        ax.set_xticks(list(range(len(Hs_to_plot))), labels=Hs_to_plot)
+
+    #fig.legend(
+    #   placed_labels, labels, framealpha=0, ncols=2, loc='lower center',
+    #    bbox_to_anchor=(0.5, -0.15)
+    #)
+
+    if out:
+        plt.savefig(out, dpi=244, bbox_inches='tight')
     if show:
-        fig.show()
+        plt.show()
 
-    return fig
+    return 
 
 
 def plot_empirical_d_plus_curves(
     means,
     varcovs,
-    pop_ids,
+    pop_ids=None,
     stats_to_plot=[],
     pops_to_plot=[],
     fill=True,
     rows=None,
     cols=None,
     ax_size=2,
-    dpi=244,
     bins=None,
     rs=None,
     cM=False,
-    out_file=None,
+    out=None,
     show=True,
     labels=None
 ):
     """
     
     """
+    if pop_ids is None:
+        raise ValueError('please provide pop_ids')
     statistics = utils.stat_names(pop_ids)
     stat_labels = utils.get_latex_names(pop_ids)
     if len(stats_to_plot) == 0 and len(pops_to_plot) == 0:
@@ -244,9 +379,21 @@ def plot_empirical_d_plus_curves(
             stat_label = stat_labels[i]
             ax.set_title(stat_label, y=0.85)
 
-    if out_file:
-        plt.savefig(out_file, dpi=dpi)
+    if out:
+        plt.savefig(out, dpi=244)
     if show:
-        fig.show()
+        plt.show()
 
-    return fig
+    return
+
+
+def plot_gamma_pdf(shape, scale):
+
+    fig, ax = plt.subplots(layout='constrained')
+    cutoff = scipy.stats.gamma.ppf(1-1e-5, shape, scale=scale)
+    x = np.linspace(0, cutoff, 1000)
+    y = scipy.stats.gamma.pdf(x, shape, scale=scale)
+    ax.plot(x, y)
+    plt.show()
+
+    return 

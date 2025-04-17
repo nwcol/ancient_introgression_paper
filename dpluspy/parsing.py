@@ -15,6 +15,7 @@ def compute_statistics(
     vcf_file,
     bed_file=None,
     pop_file=None,
+    pop_mapping=None,
     rec_map_file=None,
     L=None,
     r=None,
@@ -28,6 +29,9 @@ def compute_statistics(
     """
     Compute the D+ and H statistics from a .vcf file. 
 
+    :param interval_between: 2-tuple or list of 2-tuples or lists, specifying
+        the interval of the left and right loci when parsing D+ between two
+        windows. H is left as 0 in this case (default None).
     """
     if interval is not None:
         within = True
@@ -43,6 +47,11 @@ def compute_statistics(
     else:
         within = True
         warnings.warn("no interval given; parsing all sites")
+
+    if pop_file is not None and pop_mapping is not None:
+        raise ValueError('You cannot use both `pop_file` and `pop_mapping`')
+    if pop_file is not None:
+        pop_mapping = load_pop_file(pop_file)
 
     if r is not None:
         if L is None:
@@ -63,7 +72,7 @@ def compute_statistics(
             vcf_file, bed_file=bed_file, interval=interval
         )
         pop_genotypes = build_pop_genotypes(
-            genotype_matrix, sample_ids, pop_file=pop_file
+            genotype_matrix, sample_ids, pop_mapping=pop_mapping
         )
         site_map = rec_map(sites)
         sums = compute_stats_within(
@@ -75,13 +84,13 @@ def compute_statistics(
             vcf_file, bed_file=bed_file, interval=left_interval
         )
         pop_genotypes_left = build_pop_genotypes(
-            genotype_matrix_left, sample_ids, pop_file=pop_file
+            genotype_matrix_left, sample_ids, pop_mapping=pop_mapping
         )
         sites_right, genotype_matrix_right, _ = read_genotypes(
             vcf_file, bed_file=bed_file, interval=right_interval
         )
         pop_genotypes_right = build_pop_genotypes(
-            genotype_matrix_right, sample_ids, pop_file=pop_file
+            genotype_matrix_right, sample_ids, pop_mapping=pop_mapping
         )
         site_map_left = rec_map(sites_left)
         site_map_right = rec_map(sites_right)
@@ -100,6 +109,7 @@ def compute_denominators(
     rec_map_file=None,
     map_type="linear",
     mut_map_file=None,
+    mut_map_col='u',
     L=None,
     r=None,
     interval=None,
@@ -164,7 +174,7 @@ def compute_denominators(
                 mut_map = _mut_map[positions]
             elif ".bedgraph" in mut_map_file:
                 windows, mut_data = utils.read_bedgraph(mut_map_file)
-                avg_mut = mut_data["u"]
+                avg_mut = mut_data[mut_map_col]
                 mut_map = mut_map_discretized(windows, avg_mut, positions)
             mut_facs= count_locus_pairs(
                 pos_map, bins, weights=mut_map, verbose=True
@@ -195,7 +205,7 @@ def compute_denominators(
                 mut_map_right = _mut_map[right_positions]
             elif ".bedgraph" in mut_map_file:
                 windows, mut_data = utils.read_bedgraph(mut_map_file)
-                avg_mut = mut_data["u"]
+                avg_mut = mut_data[mut_map_col]
                 mut_map_left = mut_map_discretized(
                     windows, avg_mut, left_positions
                 )
@@ -214,30 +224,28 @@ def compute_denominators(
         return denoms
     else:
         return denoms, mut_facs
+    
+
+def load_pop_file(pop_file):
+    """
+    Load a population file.
+    """
+    pop_mapping = defaultdict(list)
+    with open(pop_file, 'r') as fin:
+        for line in fin:
+            sample, pop = line.split()
+            pop_mapping[pop].append(sample)
+    return pop_mapping
 
 
-def build_pop_genotypes(
-    gt_matrix, 
-    sample_ids,
-    pop_mapping=None,
-    pop_file=None
-):
+def build_pop_genotypes(gt_matrix, sample_ids, pop_mapping=None):
     """
     From an array of genotypes encoding 
     
     :param pop_mapping: Dictionary, mapping population IDs to lists of sample
         IDs. 
     """
-    if pop_file is not None: 
-        if pop_mapping is not None:
-            warnings.warn("`pop_file` provided, overriding `pop_mapping`")
-        pop_mapping = defaultdict(list)
-        with open(pop_file, 'r') as fin:
-            for line in fin:
-                sample, pop = line.split()
-                pop_mapping[pop].append(sample)
-    elif pop_mapping is None:
-        # use sample ids as pop ids
+    if pop_mapping is None:
         pop_mapping = {sample_id: [sample_id] for sample_id in sample_ids}
     pop_ids = list(pop_mapping.keys())
     pop_indices = {}
@@ -681,16 +689,16 @@ def compute_mut_facs(pos_map, bins, mut_map):
     return mut_facs
 
 
-def mut_map_discretized(windows, avg_mut, positions):
+def mut_map_discretized(intervals, rates, positions):
     """
     Assign mutation rates to `positions`
     """
-    ends = windows[:, 1]
-    assert np.all(positions < ends[-1])
-    indices = np.searchsorted(ends, positions)
-    mut_map = avg_mut[indices]
+    site_rates = np.zeros(intervals[-1, 1])
+    for rate, (start, end) in zip(rates, intervals):
+        site_rates[start:end] = rate
+    subset_site_rates = site_rates[positions]
 
-    return mut_map
+    return subset_site_rates
 
 
 ## Locus pair-counting functions
@@ -833,7 +841,7 @@ def get_uniform_recombination_map(L, r, kind="linear"):
     """
     if kind not in ("nearest", "linear", "previous", "next"):
         raise ValueError("Invalid `kind`")
-    x = np.arange(1, L)
+    x = np.arange(L)
     y = r * 100 * x
     mapfunc = scipy.interpolate.interp1d(
         x, y, kind=kind, bounds_error=False, fill_value=(y[0], y[-1])
@@ -940,6 +948,9 @@ def read_genotypes(
 
     sites = np.array(_sites, dtype=np.int64)
     genotypes = np.array(_genotypes, dtype=np.int64)
+    if genotypes.shape == ():
+        warnings.warn('Empty genotypes load')
+        genotypes = genotypes[:, None]
 
     return sites, genotypes, sample_ids
 
