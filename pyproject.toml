@@ -18,11 +18,5 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["dpluspy", "dpluspy.scripts"]
-
-[project.scripts]
-parse_Dplus = "dpluspy.scripts.parse:main"
-bootstrap_Dplus = "dpluspy.scripts.bootstrap:main"
-fit_Dplus = "dpluspy.scripts.fit:main"
-uncerts_Dplus = "dpluspy.scripts.uncerts:main"
+packages = ["dpluspy"]
 

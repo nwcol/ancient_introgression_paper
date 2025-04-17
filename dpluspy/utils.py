@@ -1,4 +1,6 @@
-## Houses utilities, mostly for reading and writing common types of file
+"""
+Utilities for reading/writing files and manipulating statistics, arrays
+"""
 
 import copy
 from datetime import datetime
@@ -13,7 +15,13 @@ import warnings
 
 
 def generate_pairs(pop_ids):
+    """
+    Generate a list of 2-tuples holding the (n choose 2) unique pairs that may
+    be drawn from `pop_ids`. 
 
+    :dtype pop_ids: list
+    :rtype: list of tuples
+    """
     pairs = []
     for i, pop_i in enumerate(pop_ids):
         for pop_j in pop_ids[i:]:
@@ -23,46 +31,58 @@ def generate_pairs(pop_ids):
 
 
 def H_names(pop_ids):
+    """
+    Generate a list of names of the unique one and two-population H statistics 
+    corresponding to a list of population IDs. 
 
-    hs = []
+    :dtype pop_ids: list of strings
+    :rtype: list of strings
+    """
+    names = []
     for i, pop_id0 in enumerate(pop_ids):
         for pop_id1 in pop_ids[i:]:
-            hs.append(f"H_{pop_id0}_{pop_id1}")
+            names.append(f"H_{pop_id0}_{pop_id1}")
 
-    return hs
+    return names
 
 
 def Dplus_names(pop_ids):
+    """
+    Get a list of the unique one and two-population D+ statistics corresponding
+    to a list of population IDs.
 
-    ds = []
+    :dtype pop_ids: list of strings
+    :rtype: list of strings
+    """
+    names = []
     for i, pop_id0 in enumerate(pop_ids):
         for pop_id1 in pop_ids[i:]:
-            ds.append(f"D+_{pop_id0}_{pop_id1}")
+            names.append(f"D+_{pop_id0}_{pop_id1}")
 
-    return ds
+    return names
 
 
 def stat_names(pop_ids):
     """
     Get the names of all the D+ and H statistics for populations `pop_ids`.
-    Statistic names have the form 'D+_{pop_i}_{pop_j}'.
+    Statistic names have the form 'D+_{pop_i}_{pop_j}' and 'H_{pop_i}_{pop_j}'.
 
     :param pop_ids: List of population names.
-    :type pop_ids: list 
+    :type pop_ids: list of str
 
     :returns: Lists of names for D+ and H statistics.
-    :rtype: tuple
+    :rtype: tuple of lists of strings
     """
-    ds = Dplus_names(pop_ids)
-    hs = H_names(pop_ids)
+    Dplus_names = Dplus_names(pop_ids)
+    H_names = H_names(pop_ids)
 
-    return (ds, hs)
+    return (Dplus_names, H_names)
 
 
 def get_latex_names(pop_ids, statistic="D^+"):
     """
     From a list of population names, get a list of strings of the form 
-    '$statistic_{pop0,pop1}$' for each pair of populations.
+    '${statistic}_{pop0,pop1}$' for each pair of populations.
 
     :param pop_ids: List of population names.
     :type pop_ids: list
@@ -70,7 +90,7 @@ def get_latex_names(pop_ids, statistic="D^+"):
     :type statistic: str
 
     :returns: A list of string statistic names in a LaTeX-friendly format.
-    :rtype: list
+    :rtype: list of strings
     """
     names = []
     for i, pop0 in enumerate(pop_ids):
@@ -86,22 +106,67 @@ def get_latex_names(pop_ids, statistic="D^+"):
 ## Subsetting empirical statistics
 
 
-def subset_oldstyle_stats(statistics, to_pops, min_r=None, max_r=None):
-    # for old format. stats is a dictionary
-    means = statistics["means"]
-    varcovs = statistics["covs"]
-    pop_ids = statistics["pops"]
+def subset_statistics(
+    statistics, 
+    to_pops=None, 
+    min_r=None, 
+    max_r=None,
+    return_dict=False
+):
+    """
+    Subset a dictionary holding statistics by populations or bins. 
+
+    :param statistics: A dictionary with fields 'means', 'varcovs', 'pop_ids',
+        and 'bins'.
+    :type statistics: dict
+    :param to_pops: List of population IDs to subset to (default None).
+    :param min_r: Minimum lower bin edge, inclusive (default None).
+    :param max_r: Maximum upper bin edge, inclusive (default None).
+    :param return_dict: If True, return a dictionary with the same fields as
+        required for the input- otherwise return bins, means and varcovs in a 
+        tuple (default False).
+
+    :returns: Dictionary of subsetted statistics.
+    :rtype: dict
+    """
+    means = statistics['means']
+    varcovs = statistics['varcovs']
+    pop_ids = statistics['pop_ids']
+    if to_pops is None:
+        to_pops = pop_ids
+    for pop_id in to_pops:
+        if pop_id not in pop_ids:
+            raise ValueError(f'"{pop_id}" is not represented in the data')
     if min_r is not None or max_r is not None:
-        raise ValueError("not implemented")
+        if min_r is not None:
+            min_idx = np.where(bins >= min_r)[0][0]
+        else:
+            min_idx = 0
+        if max_r is not None:
+            max_idx = np.where(bins <= max_r)[0][-1]
+        else:
+            max_idx = len(bins) - 1
+        means = means[min_idx:max_idx] + [means[-1]]
+        varcovs = varcovs[min_idx:max_idx] + [varcovs[-1]]
+    else:
+        bins = statistics['bins']
     new_means = subset_means(means, pop_ids, to_pops)
     new_varcovs = subset_varcovs(varcovs, pop_ids, to_pops)
-    bins = statistics["bins"]
 
-    return bins, new_means, new_varcovs
+    if return_dict:
+        subset_stats = {
+            'pop_ids': pop_ids,
+            'bins': bins,
+            'means': new_means,
+            'varcovs': new_varcovs
+        }
+        return subset_stats
+    else:
+        return bins, new_means, new_varcovs
 
 
 def load_statistics(filename, to_pops=None):
-    
+    # deprecated
     stats = pickle.load(open(filename, "rb"))
     bins = stats["bins"]
     if to_pops is not None:
@@ -119,22 +184,23 @@ def load_statistics(filename, to_pops=None):
 
 def subset_means(means, pop_ids, to_pops):
     """
-    Marginalize statistics for `pop_ids` to `pops`. 
+    Subset a list of binned statistics representing `pop_ids` to `to_pops`. 
 
     :param means: List of 1d arrays to subset.  
-    :type means: list
+    :type means: list of np.ndarray
     :param pop_ids: List of populations represented in `means`.
-    :type pop_ids: list
+    :type pop_ids: list of str
     :param to_pops: List of populations to subset to. One and two-population
         statistics from this list will be returned.
-    :typr to_pops: list
+    :typr to_pops: list of str
 
     :returns: A list of 1d arrays subset to `to_pops`.
+    :rtype: list of np.ndarray
     """
     for pop in to_pops:
         if pop not in pop_ids:
-            raise ValueError(f"{pop} not in `pop_ids`")
-    stats = d_plus_idxs(len(pop_ids))
+            raise ValueError(f'"{pop}" not in `pop_ids`')
+    stats = Dplus_names(len(pop_ids))
     to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
     to_stats = []
     for i, idx0 in enumerate(to_pop_idx):
@@ -149,14 +215,15 @@ def subset_means(means, pop_ids, to_pops):
 
 def subset_varcovs(varcovs, pop_ids, to_pops):
     """
-    Marginalize covariance matrices from `pop_ids` to `pops`.
+    Marginalize a list of bin-wise covariance matrices from `pop_ids` to `pops`.
 
     :returns: A list of 2d covariance matrices subset to `to_pops`.
+    :rtype: list of np.ndarray
     """
     for pop in to_pops:
         if pop not in pop_ids:
-            raise ValueError(f"{pop} not in `pop_ids`")
-    stats = d_plus_idxs(len(pop_ids))
+            raise ValueError(f'"{pop}" not in `pop_ids`')
+    stats = Dplus_names(len(pop_ids))
     to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
     to_stats = []
     for i, idx0 in enumerate(to_pop_idx):
@@ -170,152 +237,98 @@ def subset_varcovs(varcovs, pop_ids, to_pops):
     return new_varcovs
 
 
-### functions moved here from parsing module
+## BED files and genetic masks
 
 
-def subset_statistics(
-    data, 
-    graph=None, 
-    to_pops=None, 
-    min_dist=None, 
-    max_dist=None
-):
+def read_bed_file(filename):
     """
-    Subset a dictionary of statistics by `pop`. If a graph is provided, subsets
-    to the set of names which occur in both the data set and the graph.
+    Load regions from a BED file as an array. Expects the structure 
+        CHROM\tSTART\tEND...\n
+    on each line, and skips any comment/header lines that begin with '#'. 
+    Raises an error if the BED file has more than one unique CHROM entry.
+
+    :param filename: Pathname of the BED file to load. 
+    :type filename: str
+
+    :returns: ndarray of BED file regions, BED chromosome ID
+    :rtype: np.ndarray, str
     """
-    ret = copy.deepcopy(data)
-    
-    if graph is not None:
-        if to_pops is not None:
-            warnings.warn('argument `to_pops` overriden by `graph`')
-        if isinstance(graph, str):
-            graph = demes.load(graph)
-        graph_demes = [d.name for d in graph.demes]
-        pops = data['pop_ids']
-        to_pops = [d for d in pops if d in graph_demes]
-
-    if to_pops is not None:
-        pops = data['pop_ids']
-
-        # sort `to_pops` so it's in the same order as `pops`
-        indices = [pops.index(p) for p in to_pops]
-        to_pops = [pops[i] for i in sorted(indices)]
-
-        two_pop = False if data['means'].shape[1] == len(pops) else True
-        labels = enumerate_labels(pops=pops, two_pop=two_pop)
-        to_labels = enumerate_labels(pops=to_pops, two_pop=two_pop)
-        keep = np.array([labels.index(label) for label in to_labels])
-
-        for key in ['sums', 'means']:
-            if key in data:
-                ret[key] = data[key][:, keep]
-        
-        if 'covs' in data and data['covs'] is not None:
-            covs = data['covs']
-            ret['covs'] = np.stack([cov[np.ix_(keep, keep)] for cov in covs])
-        
-        ret['pops'] = to_pops
-
-    if min_dist is not None or max_dist is not None:
-        bins = data['bins']
-        if min_dist is None:
-            min_dist = 0
-        if max_dist is None:
-            max_dist = np.inf
-        min_bin = np.searchsorted(bins, min_dist)
-        max_bin = np.searchsorted(bins, max_dist)
-        
-        data['bins'] = bins[min_bin:max_bin + 1]
-
-        for key in ['sums', 'means', 'denom']:
-            if key in data:
-                ret[key] = ret[key][min_bin:max_bin + 1]
-        
-        if 'covs' in data:
-            ret['covs'] = ret['covs'][min_bin:max_bin + 1]
-
-    return ret
-
-
-## .bed files and genetic masks
-
-
-def read_bedfile(bed_file, return_chrom=False):
-    """
-    Load the regions in a .bed file as a (num_regions, 2) shape numpy array.
-    """
-    open_func = gzip.open if bed_file.endswith('.gz') else open
-
-    with open_func(bed_file, 'rb') as fin:
-        split_line = fin.readline().decode().split()
-        if split_line[1].isnumeric():
-            skiprows = 0
-        else:
-            skiprows = 1
-
-        if return_chrom:
-            if skiprows == 0:
-                chrom_num = split_line[0]
-            else:
-                chrom_num = fin.readline().decode().split()[0]
-
-    regions = np.loadtxt(bed_file, usecols=(1, 2), dtype=int, skiprows=skiprows)
-
-    if regions.ndim == 1:
-        regions = regions[np.newaxis, :]
-
-    if return_chrom:
-        ret = (regions, chrom_num)
+    if filename.endswith('.gz'):
+        openfunc = gzip.open 
     else:
-        ret = regions
+        openfunc = open
+    chroms = []
+    starts = []
+    ends = []
+    with openfunc(filename, "rb") as fin:
+        for lineb in fin:
+            line = lineb.decode()
+            if line.startswith('#'):
+                continue
+            split_line = line.split()
+            chroms.append(split_line[0])
+            starts.append(split_line[1])
+            ends.append(split_line[2])
+    chrom_set = set(chroms)
+    # check that there is one unique CHROM
+    if len(chrom_set) > 1:
+        raise ValueError('BED files must describe one chromosome only')
+    # check to make sure one or more lines were read
+    elif len(chrom_set) == 0:
+        raise ValueError('BED file has no valid contents')
+    chrom = list(chrom_set)[0]
+    regions = np.array([[start, end] for start, end in zip(starts, ends)])
 
-    return ret
+    return regions, chrom
 
 
-def read_bedfile_positions(bed_file, return_chrom=False):
+def read_bed_file_positions(bed_file):
     """
-    Get the vector of 0-indexed positions within the regions specified in 
-    `bed_file`.
+    Read a BED file and return a vector of the positions recorded in its
+    intervals (0-indexed).
     """
-    regions = read_bedfile(bed_file, return_chrom=False)
+    regions = read_bed_file(bed_file)[0]
     mask = regions_to_mask(regions)
     positions = np.nonzero(~mask)[0]
     
     return positions
 
 
-def write_bedfile(file, regions, chrom_num=None, chrom_nums=None, header=False):
+def write_bed_file(filename, regions, chrom):
     """
-    
+    Write a BED file. Does not write a header.
+
+    :param filename: Pathname of output file. Should end in .bed or .bed.gz. 
+    :type filename: str
+    :param regions: Array of BED regions to save.
+    :type regions: np.ndarray
+    :param chrom: Chromosome number to use in the CHROM column. All regions are 
+        assigned to the same chromosome. 
+    :type chrom: str
+
+    :returns: None
     """
-    open_func = gzip.open if file.endswith('.gz') else open
-
-    if chrom_num is not None:
-        chr_col = [chrom_num] * len(regions)
-
-    elif chrom_nums is not None:
-        assert len(chrom_nums) == len(regions)
-        chr_col = chrom_nums
-
+    if filename.endswith('.gz'):
+        openfunc = gzip.open 
     else:
-        raise ValueError('please provide chromosome numbers')
+        openfunc = open
+    with openfunc(filename, 'wb') as fout:
+        fout.write('#CHROM\tSTART\tEND\n'.encode())
+        for start, end in regions:
+            fout.write(f'{chrom}\t{start}\t{end}\n'.encode())
 
-    with open_func(file, "wb") as file:
-        if header:
-            header = b'#chrom\tchromStart\tchromEnd\n'
-            file.write(header)
-            
-        for i, (start, stop) in enumerate(regions):
-            line = f'{chr_col[i]}\t{start}\t{stop}\n'.encode()
-            file.write(line)
     return 
 
 
 def regions_to_mask(regions, length=None):
     """
-    Return a boolean mask array that equals 0 within `regions` and 1 
-    elsewhere.
+    Return a boolean mask array that equals False within intervals in `regions` 
+    and True elsewhere.
+
+    :param regions: Array of intervals.
+    :param length: Optional maximum mask length (default None).
+
+    :returns: Boolean mask array.
     """
     if length is None:
         length = regions[-1, 1]
@@ -326,82 +339,120 @@ def regions_to_mask(regions, length=None):
         elif end > length:
             end = length
         mask[start:end] = 0
+
     return mask
 
 
 def mask_to_regions(mask):
     """
-    Return an array representing the regions that are not masked in a boolean
-    array (0s).
+    Return an array of intervals that equal False in a boolean mask array
+    (0-indexed).
     """
     jumps = np.diff(np.concatenate(([1], mask, [1])))
     starts = np.where(jumps == -1)[0]
     ends = np.where(jumps == 1)[0]
     regions = np.stack([starts, ends], axis=1)
+
     return regions
 
 
-def intersect_regions(*regionss):
+def intersect_regions(regions_arrs):
     """
+    Build an array of intervals where every input regions array has coverage.
 
+    :param regions_arrs: List of BED region arrays.
+    :type regions_arrs: list of np.ndarray
+
+    :returns: Region array representing intersection of sites in inputs.
+    :rtype: np.ndarray
     """
-    length = max([reg[-1, 1] for reg in regionss])
-    masks = [regions_to_mask(reg, length=length) for reg in regionss]
+    length = max([reg[-1, 1] for reg in regions_arrs])
+    masks = [regions_to_mask(region, length=length) for region in regions_arrs]
     sums = np.sum(masks, axis=1)
     overlap_mask = sums < 0
     regions = mask_to_regions(overlap_mask)
+
     return regions
 
 
-def collapse_regions(elements):
+def collapse_regions(regions):
     """
-    Collapse any overlapping elements in an array together.
+    Collapse any overlapping intervals in an array together.
     """
-    return mask_to_regions(regions_to_mask(elements))
+    return mask_to_regions(regions_to_mask(regions))
 
 
-def read_bedgraph(file, sep='\t'):
-    """
-    From a bedgraph-format file, read and return chromosome number(s), an 
-    array of genomic regions and a dictionary of data columns. 
+# BEDGRAPH files and recombination maps
 
-    If the file has one unique chromosome number, returns it as a string of
-    the form `chr00`; if there are several, returns an array of string
-    chromosome numbers of this form for each row.
-    Possible file extensions include but are not limited to .bedgraph, .csv,
-    and .tsv, with column seperator determined by the `sep` argument.
+
+def read_bedgraph_file(filename, sep=None, override_cols=None):
     """
-    open_func = gzip.open if file.endswith('.gz') else open
-    with open_func(file, 'rb') as fin:
-        header_line = fin.readline().decode().strip().split(sep)
-    fields = header_line[3:]
-    # handle the return of the chromosome number(s)
-    chrom_nums = np.loadtxt(
-        file, usecols=0, dtype=str, skiprows=1, delimiter=sep
-    )
-    if len(set(chrom_nums)) == 1:
-        ret_chrom = chrom_nums[0]
+    From a bedgraph-format file, read and return an array of genomic intervals,
+    a dictionary of data and the associated chromosome number. There must be
+    a header with format corresponding to
+        Chrom\tchromStart\tchromEnd\tdata_col1\t...\n
+    in the first line. Other commented or header lines beginning with '#' will
+    be ignored.
+
+    :param filename: Pathname of the file to load.
+    :param sep: File seperator to expect (default None uses \t).
+    :param override_cols: If given, overrides the data field names in the file 
+        header (default None).
+
+    :returns: Array of intervals, dictionary of data arrays, and chromosome ID
+    """
+    if sep is None:
+        sep = '\t'
+    if filename.endswith('.gz'):
+        openfunc = gzip.open 
     else:
-        # return the whole vector if there are >1 unique chromosome
-        ret_chrom = chrom_nums
-    windows = np.loadtxt(
-        file, usecols=(1, 2), dtype=int, skiprows=1, delimiter=sep
+        openfunc = open
+    chroms = []
+    starts = []
+    ends = []
+    with openfunc(filename, "rb") as fin:
+        header_line = fin.readline().decode()
+        if header_line[0] != '#':
+            raise ValueError('Input file lacks a header line')
+        split_header = header_line.strip().split(sep)
+        if override_cols is not None:
+            if len(override_cols) != len(split_header) - 3:
+                raise ValueError('Invalid `override_cols`')
+        raw_data = {i: [] for i in range(3, len(split_header))}
+        for lineb in fin:
+            line = lineb.decode()
+            if line.startswith('#'):
+                continue
+            split_line = line.strip().split(sep)
+            for idx in raw_data:
+                raw_data[idx].append(split_line[idx])
+            chroms.append(split_line[0])
+    chrom_set = set(chroms)
+    # check that there is one unique CHROM
+    if len(chrom_set) > 1:
+        raise ValueError('BED files must describe one chromosome only')
+    # check to make sure one or more lines were read
+    elif len(chrom_set) == 0:
+        raise ValueError('BED file has no valid contents')
+    chrom = list(chrom_set)[0]
+    data = {}
+    for idx in raw_data:
+        if override_cols is None:
+            field = split_header[idx]
+        else:
+            field = override_cols[idx - 3]
+        if '.' in raw_data[idx][0]:
+            arr = np.array(raw_data[idx], dtype=np.float64)
+        else:
+            arr = np.array(raw_data[idx], dtype=np.int64)
+        data[field] = arr
+    regions = np.array(
+        [[start, end] for start, end in zip(starts, ends)], dtype=np.int64
     )
-    cols_to_load = tuple(range(3, len(header_line)))
-    arr = np.loadtxt(
-        file,
-        usecols=cols_to_load,
-        dtype=float,
-        skiprows=1,
-        unpack=True,
-        delimiter=sep
-    )
-    dataT = [arr] if arr.ndim == 1 else [col for col in arr]
-    data = dict(zip(fields, dataT))
-    return windows, data
+    return regions, data, chrom
 
 
-def write_bedgraph(file, chrom_num, regions, data, sep='\t'):
+def write_bedgraph_file(filename, regions, data, chrom_num, sep=None):
     """
     Write a .bedgraph-format file from an array of regions/windows and a 
     dictionary of data columns.
@@ -409,268 +460,66 @@ def write_bedgraph(file, chrom_num, regions, data, sep='\t'):
     for field in data:
         if len(data[field]) != len(regions):
             raise ValueError(f'data field {data} mismatches region length!')
-    open_func = gzip.open if file.endswith('.gz') else open
+    if sep is None:
+        '\t'
+    if filename.endswith('.gz'):
+        openfunc = gzip.open 
+    else:
+        openfunc = open
+    constants = ['#chrom', 'chromStart', 'chromEnd']
     fields = list(data.keys())
-    header = sep.join(['#chrom', 'chromStart', 'chromEnd'] + fields) + '\n'
-    with open_func(file, 'wb') as file:
+    header = sep.join(constants + fields) + '\n'
+    with openfunc(file, 'wb') as file:
         file.write(header.encode())
         for i, (start, end) in enumerate(regions):
-            ldata = [str(data[field][i]) for field in fields]
-            line = sep.join([chrom_num, str(start), str(end)] + ldata) + '\n'
+            interval = [chrom_num, str(start), str(end)]
+            line_data = [str(data[field][i]) for field in fields]
+            line = sep.join(interval + line_data) + '\n'
             file.write(line.encode())
 
     return
 
 
-## dealing with recombination maps
-
-
-def get_uniform_rec_map(r, sites):
+def read_bedgraph_map(filename, map_col=None, sep=None):
     """
-    Obtain a recombination map for `sites` assuming a constant recombination
-    rate `r`. Returns a map in units of cM.
+    Read a map from a BEDGRAPH file, returning an array of physical and of map
+    coordinates. If no `map_col` is given, accesses the rightmost column.
     """
-    cM_per_bp = map_function(r)
-    rec_map = sites * cM_per_bp
+    intervals, data = read_bedgraph_file(filename, sep=sep)
+    coords = intervals[0, :]
+    map_coords = data[map_col]
 
-    return rec_map
+    return coords, map_coords
 
 
-def get_rec_map(rec_map_file, sites, map_col="Map(cM)"):
-    
-    if (
-        rec_map_file.endswith(".txt") 
-        or rec_map_file.endswith(".txt.gz")
-    ):
-        coords, vals = read_hapmap_rec_map(rec_map_file, map_col=map_col)
-
-    elif (
-        rec_map_file.endswith(".bedgraph") 
-        or rec_map_file.endswith(".bedgraph.gz")
-    ):
-        coords, vals = read_bedgraph_rec_map(rec_map_file)
-
+def read_hapmap_map(filename, map_col=None):
+    """
+    Read a recombination map in the Hapmap format, returning arrays of physical
+    and map coordinates. The first line must be a header.
+    """
+    if map_col is None:
+        map_col = 'Map(cM)'
+    if filename.endswith('.gz'):
+        openfunc = gzip.open 
     else:
-        raise ValueError("unrecognized recombination map file type")
-
-    assert np.all(np.diff(coords) > 0)
-    assert np.all(np.diff(vals) >= 0)
-    site_map = np.interp(sites, coords, vals)
-
-    return site_map
-
-
-def read_recombination_map(rec_map_file, positions, map_col='Map(cM)'):
-    """
-    Read a recombination map in `hapmap` map format and interpolate map values
-    for a vector of positions.
-    """
-    open_func = gzip.open if rec_map_file.endswith('.gz') else open
-    with open_func(rec_map_file, 'rb') as fin:
-        header_line = fin.readline().decode().split()
-    pos_idx = header_line.index('Position(bp)')
-    map_idx = header_line.index(map_col)
-    map_coords, map_vals = np.loadtxt(
-        rec_map_file, skiprows=1, usecols=(pos_idx, map_idx), unpack=True
-    )
-
-    assert np.all(np.diff(map_coords) > 0)
-    assert np.all(np.diff(map_vals) >= 0)
-    
-    pos_map = np.interp(positions, map_coords, map_vals)
-    return pos_map
-
-
-def read_hapmap_rec_map(map_file, map_col="Map(cM)"):
-    ## get coords and map values
-    open_func = gzip.open if map_file.endswith('.gz') else open
-
-    with open_func(map_file, 'rb') as fin:
-        header_line = fin.readline().decode().split()
-
-    coord_idx = header_line.index('Position(bp)')
-    map_idx = header_line.index(map_col)
-
-    coords = np.loadtxt(
-        map_file, skiprows=1, usecols=(coord_idx), dtype=np.int64
-    )
-    vals = np.loadtxt(map_file, skiprows=1, usecols=(map_idx), dtype=np.float64)
-
-    return coords, vals
-
-
-def read_bedgraph_rec_map(map_file):
-    # assumes map coordinate is in the LAST column, e.g.
-    # chrom start end ... map_coord
-    open_func = gzip.open if map_file.endswith('.gz') else open
-
+        openfunc = open 
     coords = []
-    mapvals = []
-
-    with open_func(map_file, "rb") as fin:
-        for lineb in fin:
-            line = lineb.decode()
-            if line.startswith("#"):
-                continue
-        
-            split_line = line.split()
-            coords.append(int(split_line[2]))
-            mapvals.append(float(split_line[-1]))
-
+    map_coords = []
+    with openfunc(filename, "rb") as fin:
+        header_line = fin.readline().decode().split()
+        coord_idx = header_line.index('Position(bp)')
+        map_idx = header_line.index(map_col)
+        for line in fin:
+            split_line = line.decode().strip().split()
+            coords.append(split_line[coord_idx])
+            map_coords.append(split_line[map_idx])
     coords = np.array(coords, dtype=np.int64)
-    mapvals = np.array(mapvals, dtype=np.float64)
+    map_coords = np.array(map_coords, dtype=np.float64)
 
-    return coords, mapvals
-
-
-def read_mutation_map(mut_map_file, positions):
-
-    """
-    """
-    if (
-        mut_map_file.endswith('.bedgraph') 
-        or mut_map_file.endswith('.bedgraph.gz')
-    ):
-        regions, data = read_bedgraph(mut_map_file)
-        # interpolate.
-        idxs = np.searchsorted(regions[:, 1], positions)
-        reg_mut_map = data['mut_rate']
-        mut_map = reg_mut_map[idxs]
-        
-    elif mut_map_file.endswith('.npy'):
-        tot_mut_map = np.load(mut_map_file)
-        mut_map = tot_mut_map[positions]
-        assert not np.any(np.isnan(mut_map))
-
-    else:
-        raise ValueError('unrecognized mutation map format')
-
-    return mut_map
+    return coords, map_coords
 
 
-## reading .vcf files (under construction)
-
-
-def extract_gqs(samples, gq_index):
-    """
-    
-    """
-    gq_strs = [s.split(':')[gq_index] for s in samples]
-    gqs = np.array([np.nan if gq == '.' else float(gq) for gq in gq_strs])
-    return gqs
-
-
-def extract_genotypes(samples, missing_to_ref=True):
-    """
-    not finished
-    """
-    if missing_to_ref:
-        gts = [re.split('/|\|', s.split(':')[0]) for s in samples]
-        if '.' in str(gts):
-            gts = [['0', '0'] if '.' in x else x for x in gts]
-            print('replaced missing alleles')
-        genotypes = np.array(gts, dtype=np.int64)
-    else:
-        gts = [re.split('/|\|', s.split(':')[0]) for s in samples]
-        genotypes = np.array(gts, dtype=np.int64)
-    return genotypes
-
-
-def read_genotypes(
-    vcf_file, 
-    bed_file=None, 
-    min_reg_len=None,
-    region=None,
-    ancestral_seq=None, 
-    read_multiallelic=False,
-    missing_to_ref=True,
-):
-    """
-    Read a genotype matrix from a .vcf file. Matrix has shape 
-    (nsamples, nsites, 2). Ignores sites that are not biallelic. 
-    """
-    if bed_file is not None:
-        _, regions = read_bedfile(bed_file)
-        mask = regions_to_mask(regions)
-        len_mask = len(mask)
-    
-    open_func = gzip.open if vcf_file.endswith('.gz') else open
-
-    first_row = True
-    outside_mask = 0
-    outside_reg = 0
-    multiallelic = 0
-
-    chrom_nums = []
-    positions = []
-    genotypes = []
-
-    with open_func(vcf_file, "rb") as fin:
-        for lineb in fin:
-            line = lineb.decode()
-            if line.startswith('#'):
-                if line.startswith('#CHROM'):
-                    sample_ids = line.split()[9:]
-                    num_samples = len(sample_ids)
-            else:
-                split_line = line.split()
-                chrom, pos, _, ref, alt = split_line[:5]
-
-                if first_row:
-                    fmt = split_line[8]
-                    if 'GQ' in fmt:
-                        gq_index = fmt.split(':').index('GQ')
-                    else:
-                        gq_index = None
-                        
-                    first_row = False
-
-                samples = split_line[9:]
-                position = int(pos) - 1
-
-                if region is not None:
-                    if position < region[0] or position >= region[-1]:
-                        outside_reg += 1
-                        continue
-
-                if bed_file is not None:
-                    if position >= len_mask or mask[position] == 1:
-                        outside_mask += 1
-                        continue
-
-                if not read_multiallelic:
-                    if len(alt.split(',')) > 1 or len(ref) > 1:
-                        multiallelic += 1
-                        continue
-
-                line_genotypes = extract_genotypes(
-                    samples, missing_to_ref=missing_to_ref
-                )
-                chrom_nums.append(chrom)
-                positions.append(position)
-                genotypes.append(line_genotypes)
-
-    positions = np.array(positions, dtype=np.int64)
-    genotypes = np.stack(genotypes, axis=1, dtype=np.int64)
-    unique_chrom_nums = list(set(chrom_nums))
-    if len(unique_chrom_nums) > 1:
-        warnings.warn('more than one unique chromosome in .vcf')
-    chrom_num = unique_chrom_nums[0]
-
-    return chrom_num, sample_ids, positions, genotypes
-
-
-## math
-
-
-def n_choose_2(n):
-    """
-    
-    """
-    return n * (n - 1) // 2
-
-
-## recombination map math
+## Recombination map math
 
 
 def map_function(r):
@@ -687,22 +536,33 @@ def inverse_map_function(d):
     return (1 - np.exp(-d / 50)) / 2
 
 
-## printouts
+## Math
+
+
+def n_choose_2(n):
+    """
+    Return (n choose 2).
+    """
+    return n * (n - 1) // 2
+
+
+## Printouts
 
 
 def get_time():
     """
     Return a string giving the time and date with yy-mm-dd format.
     """
-    return "[" + datetime.strftime(datetime.now(), "%y-%m-%d %H:%M:%S") + "]"
+    return '[' + datetime.strftime(datetime.now(), '%y-%m-%d %H:%M:%S') + ']'
 
 
-## msprime simulation helper functions
+## Simulation helper functions
 
 
 def increment1(x):
     """
-    Increment 1 to every .vcf site to make it 1-indexed rather than 0-indexed.
+    Increment 1 to every value of x. Used to transform simulated VCF sites to
+    1-indexing.
     """
     return [_ + 1 for _ in x]
 

@@ -1,4 +1,6 @@
-## Houses functions for estimating D+ from sequence data.
+"""
+Functions for estimating D+ from sequence data.
+"""
 
 from collections import defaultdict
 import copy
@@ -204,7 +206,7 @@ def compute_denominators(
                 mut_map_left = _mut_map[left_positions]
                 mut_map_right = _mut_map[right_positions]
             elif ".bedgraph" in mut_map_file:
-                windows, mut_data = utils.read_bedgraph(mut_map_file)
+                windows, mut_data = utils.read_bedgraph_file(mut_map_file)
                 avg_mut = mut_data[mut_map_col]
                 mut_map_left = mut_map_discretized(
                     windows, avg_mut, left_positions
@@ -353,9 +355,13 @@ def compute_stats_within(
                 Gi = pop_genotypes[pop_i]
                 Gj = pop_genotypes[pop_j]
                 if phased:
-                    sums[:-1, idx] = cross_haplotype_Dplus(Gi, Gj, site_map, bins)
+                    sums[:-1, idx] = cross_haplotype_Dplus(
+                        Gi, Gj, site_map, bins
+                    )
                 else:
-                    sums[:-1, idx] = cross_genotype_Dplus(Gi, Gj, site_map, bins)
+                    sums[:-1, idx] = cross_genotype_Dplus(
+                        Gi, Gj, site_map, bins
+                    )
             idx += 1
     sums[-1] = compute_pi(pop_genotypes, cross_pop=cross_pop)
 
@@ -736,7 +742,8 @@ def count_locus_pairs(site_map, bins, weights=None, verbose=False):
             sums[i] = (weights * (cum_sum1 - cum_sum0)).sum()
             cum_sum0 = cum_sum1
             if verbose:
-                print(utils.get_time(), f"locus pairs summed (within) in bin {i}")
+                print(utils.get_time(), 
+                    f"locus pairs summed (within) in bin {i}")
 
     # TODO add a thing that returns 0s when all pair distances exceed highest bin edge
 
@@ -752,7 +759,8 @@ def count_locus_pairs(site_map, bins, weights=None, verbose=False):
             sums[i] = (edge1 - edge0).sum() 
             edge0 = edge1
             if verbose:
-                print(utils.get_time(), f"locus pairs summed (within) in bin {i}")
+                print(utils.get_time(), 
+                    f"locus pairs summed (within) in bin {i}")
 
     return sums
 
@@ -809,7 +817,8 @@ def count_locus_pairs_between(
             sums[i] = (weights_l * (cum_sum1 - cum_sum0)).sum()
             cum_sum0 = cum_sum1
             if verbose:
-                print(utils.get_time(), f"locus pairs summed (between) in bin {i}")
+                print(utils.get_time(), 
+                    f"locus pairs summed (between) in bin {i}")
 
     else:
         edge0 = np.searchsorted(site_map_r, site_map_l + bins[0])
@@ -819,7 +828,8 @@ def count_locus_pairs_between(
             sums[i] = (edge1 - edge0).sum() 
             edge0 = edge1
             if verbose:
-                print(utils.get_time(), f"locus pairs summed (between) in bin {i}")
+                print(utils.get_time(), 
+                    f"locus pairs summed (between) in bin {i}")
 
     return sums
 
@@ -849,24 +859,53 @@ def get_uniform_recombination_map(L, r, kind="linear"):
     return mapfunc
 
 
-def load_recombination_map(file, map_col="Map(cM)", kind="linear"):
+def load_recombination_map(filename, map_col=None, kind="linear"):
     """
-    Load a recombination map and return an interpolate function.
+    Load a recombination map and return a function that interpolates map 
+    positions for sites. Works for mapssaved as BEDGRAPH files or in the Hapmap 
+    format.
 
-    :param file: Filename of recombination map.
+    :param filename: Filename of recombination map.
     :param map_col: Title of column containing map coordinates.
     :param kind: The type of interpolation to use (default 'linear').
 
     :returns: Interpolate function
     :rtype: scipy.interpolate.interp1d 
     """
-    if kind not in ("nearest", "linear", "previous", "next"):
-        raise ValueError("Invalid `kind`")
-    x, y = utils.read_hapmap_rec_map(file, map_col=map_col)
-    mapfunc = scipy.interpolate.interp1d(
-        x, y, kind=kind, bounds_error=False, fill_value=(y[0], y[-1])
+    if filename.endswith(".txt") or filename.endswith(".txt.gz"):
+        coords, map_coords = utils.read_hapmap_map(filename, map_col=map_col)
+    elif filename.endswith(".bedgraph") or filename.endswith(".bedgraph.gz"):
+        coords, map_coords = utils.read_bedgraph_map(filename, map_col=map_col)
+    else:
+        raise ValueError('Unrecognized file format')
+    interp_func = scipy.interpolate.interp1d(
+        coords, 
+        map_coords, 
+        kind=kind,
+        bounds_error=False,
+        fill_value=(map_coords[0], map_coords[-1])
     )
-    return mapfunc
+    return interp_func
+
+
+def load_mutation_map(filename):
+    """
+    
+    """
+    if filename.endswith(".bedgraph") or filename.endswith(".bedgraph.gz"):
+        regions, data = read_bedgraph(mut_map_file)
+        # interpolate.
+        idxs = np.searchsorted(regions[:, 1], positions)
+        reg_mut_map = data['mut_rate']
+        mut_map = reg_mut_map[idxs]
+    elif filename.endswith('.npy'):
+        tot_mut_map = np.load(mut_map_file)
+        mut_map = tot_mut_map[positions]
+        assert not np.any(np.isnan(mut_map))
+    else:
+        raise ValueError('Unrecognized file format')
+    
+    return
 
 
 def read_genotypes(
@@ -951,68 +990,5 @@ def read_genotypes(
     if genotypes.shape == ():
         warnings.warn('Empty genotypes load')
         genotypes = genotypes[:, None]
-
-    return sites, genotypes, sample_ids
-
-
-def _genotypes_from_str(
-    vcf_str, 
-    bed_file=None, 
-    multiallelic=False,
-    missing_to_ref=True,
-    interval=None
-):
-    """
-
-    """
-    if bed_file is not None:
-        regions = utils.read_bedfile(bed_file)
-        mask = utils.regions_to_mask(regions)
-        masked = True
-    else:
-        masked = False
-
-    _sites = []
-    _genotypes = []
-
-    for line in vcf_str.split("\n"):
-        if line == "":
-            continue
-        if line.startswith('#'):
-            if line.startswith('#CHROM'):
-                sample_ids = line.split()[9:]
-            continue
-        split_line = line.split()
-        pos, __, ref, alts = split_line[1:5]
-        position = int(pos) - 1
-        if masked:
-            if position >= len(mask) or mask[position] == 1:
-                continue
-        if interval is not None:
-            if position < interval[0] or position >= interval[1]:
-                continue
-        split_alts = alts.split(',')
-        if "<NON_REF>" in split_alts:
-            split_alts.pop(split_alts.index("<NON_REF>"))
-        if len(ref) > 1:
-            continue  
-        if np.any([len(alt) > 1 for alt in split_alts]):
-            continue
-        if not multiallelic:
-            if len(split_alts) > 1:
-                continue
-        _gts = [sample.split(':')[0] for sample in split_line[9:]]
-        if '.' in "".join(_gts):
-            if missing_to_ref:
-                _gts = ['0/0' if '.' in x else x for x in _gts]
-            else:
-                warnings.warn("skipping site with missing data")
-                continue
-        gts = [re.split("/|\\|", gt) for gt in _gts]           
-        _genotypes.append(np.array(gts, dtype=np.int64))
-        _sites.append(pos)
-
-    sites = np.array(_sites, dtype=np.int64)
-    genotypes = np.array(_genotypes, dtype=np.int64)
 
     return sites, genotypes, sample_ids
