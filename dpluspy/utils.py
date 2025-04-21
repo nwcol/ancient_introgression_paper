@@ -14,7 +14,7 @@ import warnings
 ## Generating the names of statistics
 
 
-def generate_pairs(pop_ids):
+def _generate_pairs(pop_ids):
     """
     Generate a list of 2-tuples holding the (n choose 2) unique pairs that may
     be drawn from `pop_ids`. 
@@ -30,7 +30,7 @@ def generate_pairs(pop_ids):
     return pairs
 
 
-def H_names(pop_ids):
+def _get_H_names(pop_ids):
     """
     Generate a list of names of the unique one and two-population H statistics 
     corresponding to a list of population IDs. 
@@ -46,7 +46,7 @@ def H_names(pop_ids):
     return names
 
 
-def Dplus_names(pop_ids):
+def _get_Dplus_names(pop_ids):
     """
     Get a list of the unique one and two-population D+ statistics corresponding
     to a list of population IDs.
@@ -62,7 +62,7 @@ def Dplus_names(pop_ids):
     return names
 
 
-def stat_names(pop_ids):
+def _get_stat_names(pop_ids):
     """
     Get the names of all the D+ and H statistics for populations `pop_ids`.
     Statistic names have the form 'D+_{pop_i}_{pop_j}' and 'H_{pop_i}_{pop_j}'.
@@ -79,7 +79,7 @@ def stat_names(pop_ids):
     return (Dplus_names, H_names)
 
 
-def get_latex_names(pop_ids, statistic="D^+"):
+def _get_latex_names(pop_ids, statistic="D^+"):
     """
     From a list of population names, get a list of strings of the form 
     '${statistic}_{pop0,pop1}$' for each pair of populations.
@@ -200,7 +200,7 @@ def subset_means(means, pop_ids, to_pops):
     for pop in to_pops:
         if pop not in pop_ids:
             raise ValueError(f'"{pop}" not in `pop_ids`')
-    stats = Dplus_names(len(pop_ids))
+    stats = _get_Dplus_names(len(pop_ids))
     to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
     to_stats = []
     for i, idx0 in enumerate(to_pop_idx):
@@ -223,7 +223,7 @@ def subset_varcovs(varcovs, pop_ids, to_pops):
     for pop in to_pops:
         if pop not in pop_ids:
             raise ValueError(f'"{pop}" not in `pop_ids`')
-    stats = Dplus_names(len(pop_ids))
+    stats = _get_Dplus_names(len(pop_ids))
     to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
     to_stats = []
     for i, idx0 in enumerate(to_pop_idx):
@@ -240,7 +240,7 @@ def subset_varcovs(varcovs, pop_ids, to_pops):
 ## BED files and genetic masks
 
 
-def read_bed_file(filename):
+def _read_bed_file(filename):
     """
     Load regions from a BED file as an array. Expects the structure 
         CHROM\tSTART\tEND...\n
@@ -282,19 +282,19 @@ def read_bed_file(filename):
     return regions, chrom
 
 
-def read_bed_file_positions(bed_file):
+def _read_bed_file_positions(bed_file):
     """
     Read a BED file and return a vector of the positions recorded in its
     intervals (0-indexed).
     """
-    regions = read_bed_file(bed_file)[0]
-    mask = regions_to_mask(regions)
+    regions = _read_bed_file(bed_file)[0]
+    mask = _regions_to_mask(regions)
     positions = np.nonzero(~mask)[0]
     
     return positions
 
 
-def write_bed_file(filename, regions, chrom):
+def _write_bed_file(filename, regions, chrom):
     """
     Write a BED file. Does not write a header.
 
@@ -320,7 +320,7 @@ def write_bed_file(filename, regions, chrom):
     return 
 
 
-def regions_to_mask(regions, length=None):
+def _regions_to_mask(regions, length=None):
     """
     Return a boolean mask array that equals False within intervals in `regions` 
     and True elsewhere.
@@ -343,7 +343,7 @@ def regions_to_mask(regions, length=None):
     return mask
 
 
-def mask_to_regions(mask):
+def _mask_to_regions(mask):
     """
     Return an array of intervals that equal False in a boolean mask array
     (0-indexed).
@@ -356,7 +356,7 @@ def mask_to_regions(mask):
     return regions
 
 
-def intersect_regions(regions_arrs):
+def _intersect_regions(regions_arrs):
     """
     Build an array of intervals where every input regions array has coverage.
 
@@ -367,25 +367,25 @@ def intersect_regions(regions_arrs):
     :rtype: np.ndarray
     """
     length = max([reg[-1, 1] for reg in regions_arrs])
-    masks = [regions_to_mask(region, length=length) for region in regions_arrs]
+    masks = [_regions_to_mask(region, length=length) for region in regions_arrs]
     sums = np.sum(masks, axis=1)
     overlap_mask = sums < 0
-    regions = mask_to_regions(overlap_mask)
+    regions = _mask_to_regions(overlap_mask)
 
     return regions
 
 
-def collapse_regions(regions):
+def _collapse_regions(regions):
     """
     Collapse any overlapping intervals in an array together.
     """
-    return mask_to_regions(regions_to_mask(regions))
+    return _mask_to_regions(_regions_to_mask(regions))
 
 
 # BEDGRAPH files and recombination maps
 
 
-def read_bedgraph_file(filename, sep=None, override_cols=None):
+def _read_bedgraph_file(filename, override_cols=None, sep=None):
     """
     From a bedgraph-format file, read and return an array of genomic intervals,
     a dictionary of data and the associated chromosome number. There must be
@@ -395,14 +395,12 @@ def read_bedgraph_file(filename, sep=None, override_cols=None):
     be ignored.
 
     :param filename: Pathname of the file to load.
-    :param sep: File seperator to expect (default None uses \t).
+    :param sep: File seperator to expect (default None uses whitespace).
     :param override_cols: If given, overrides the data field names in the file 
         header (default None).
 
     :returns: Array of intervals, dictionary of data arrays, and chromosome ID
     """
-    if sep is None:
-        sep = '\t'
     if filename.endswith('.gz'):
         openfunc = gzip.open 
     else:
@@ -414,7 +412,7 @@ def read_bedgraph_file(filename, sep=None, override_cols=None):
         header_line = fin.readline().decode()
         if header_line[0] != '#':
             raise ValueError('Input file lacks a header line')
-        split_header = header_line.strip().split(sep)
+        split_header = header_line.replace('#', '').strip().split(sep)
         if override_cols is not None:
             if len(override_cols) != len(split_header) - 3:
                 raise ValueError('Invalid `override_cols`')
@@ -424,9 +422,11 @@ def read_bedgraph_file(filename, sep=None, override_cols=None):
             if line.startswith('#'):
                 continue
             split_line = line.strip().split(sep)
+            chroms.append(split_line[0])
+            starts.append(split_line[1])
+            ends.append(split_line[2])
             for idx in raw_data:
                 raw_data[idx].append(split_line[idx])
-            chroms.append(split_line[0])
     chrom_set = set(chroms)
     # check that there is one unique CHROM
     if len(chrom_set) > 1:
@@ -452,7 +452,7 @@ def read_bedgraph_file(filename, sep=None, override_cols=None):
     return regions, data, chrom
 
 
-def write_bedgraph_file(filename, regions, data, chrom_num, sep=None):
+def _write_bedgraph_file(filename, regions, data, chrom_num, sep=None):
     """
     Write a .bedgraph-format file from an array of regions/windows and a 
     dictionary of data columns.
@@ -480,19 +480,22 @@ def write_bedgraph_file(filename, regions, data, chrom_num, sep=None):
     return
 
 
-def read_bedgraph_map(filename, map_col=None, sep=None):
+def _read_bedgraph_map(filename, map_col=None, sep=None):
     """
     Read a map from a BEDGRAPH file, returning an array of physical and of map
     coordinates. If no `map_col` is given, accesses the rightmost column.
+    Physical coordinates are given as the end points of BEDGRAPH intervals.
     """
-    intervals, data = read_bedgraph_file(filename, sep=sep)
-    coords = intervals[0, :]
+    intervals, data, _ = _read_bedgraph_file(filename, sep=sep)
+    coords = intervals[:, 1]
+    if map_col is None:
+        map_col = list(data.keys())[-1]
     map_coords = data[map_col]
 
     return coords, map_coords
 
 
-def read_hapmap_map(filename, map_col=None):
+def _read_hapmap_map(filename, map_col=None):
     """
     Read a recombination map in the Hapmap format, returning arrays of physical
     and map coordinates. The first line must be a header.
@@ -522,47 +525,54 @@ def read_hapmap_map(filename, map_col=None):
 ## Recombination map math
 
 
-def map_function(r):
+def _map_function(r):
     """
-    Haldane's map function; transforms distance in r to cM.
+    Haldane's map function; transforms distances in recombination distance `r` 
+    to Morgans.
+
+    :param r: Float or array of recombination frequencies/distances.
+    :type r: float or np.ndarray
+
+    :returns: Distances transformed to Morgans.
+    :rtype: float or np.ndarray
     """
-    return -50 * np.log(1 - 2 * r)
+    if np.any(r > 0.5):
+        raise ValueError('`r` > 0.5 are not allowed')
+    if np.any(r < 0):
+        raise ValueError('Negative `r` are not allowed')
+    return -1 / 2 * np.log(1 - 2 * r)
 
 
-def inverse_map_function(d):
+def _inverse_map_function(d):
     """
-    The inverse of Haldane's map function. Transforms distance in cM to r.
+    The inverse of Haldane's map function. Transforms distance in Morgans to 
+    `r`.
+
+    :param d: Float or array or genetic distances in Morgans.
+    :type d: float or np.ndarray
+
+    :returns: Distances transformed to `r`.
+    :rtype: float or np.ndarray
     """
-    return (1 - np.exp(-d / 50)) / 2
-
-
-## Math
-
-
-def n_choose_2(n):
-    """
-    Return (n choose 2).
-    """
-    return n * (n - 1) // 2
+    return (1 - np.exp(2 * -d)) / 2
 
 
 ## Printouts
 
 
-def get_time():
+def _current_time():
     """
-    Return a string giving the time and date with yy-mm-dd format.
+    Return a string giving the time and date with yyyy-mm-dd format.
     """
-    return '[' + datetime.strftime(datetime.now(), '%y-%m-%d %H:%M:%S') + ']'
+    return '[' + datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S') + ']'
 
 
 ## Simulation helper functions
 
 
-def increment1(x):
+def _increment1(x):
     """
     Increment 1 to every value of x. Used to transform simulated VCF sites to
     1-indexing.
     """
     return [_ + 1 for _ in x]
-

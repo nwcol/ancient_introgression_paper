@@ -55,7 +55,9 @@ def load_bootstrap_means(filename, to_pops=None, size=None):
         contents = pickle.load(fin)
     if size is not None:
         all_means = contents["bootstrap_means"]
-        samples = np.random.choice(np.arange(len(all_means)), size=size, replace=False)
+        samples = np.random.choice(
+            np.arange(len(all_means)), size=size, replace=False
+        )
         bootstrap_means = [all_means[i] for i in samples]
     else:
         bootstrap_means = contents["bootstrap_means"]
@@ -242,8 +244,6 @@ def weighted_means_across_replicates(replicates):
     means = weighted_means_across_regions(rep_dict)
 
     return means
-
-
 
 
 ### DEPRECATED. this stuff doesn't work well!!
