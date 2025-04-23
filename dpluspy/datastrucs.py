@@ -59,7 +59,7 @@ class DplusStats(list):
 
         :returns: 2-tuple of lists holding names of D+, H statistics.
         """
-        return utils.stat_names(self.pop_ids)
+        return utils._get_stat_names(self.pop_ids)
 
     @classmethod
     def from_moments(
@@ -92,7 +92,7 @@ class DplusStats(list):
         num_demes = len(sampled_demes)
         num_stats = (num_demes ** 2 + num_demes) // 2 
         stats = [np.zeros(num_stats, dtype=np.float64) for _ in rs]
-        pairs = utils.generate_pairs(list(range(num_demes)))
+        pairs = utils._generate_pairs(list(range(num_demes)))
         for i, (j, k) in enumerate(pairs):
             if j == k:
                 phasing = True

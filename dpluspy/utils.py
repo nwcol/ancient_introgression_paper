@@ -1,5 +1,5 @@
 """
-Utilities for reading/writing files and manipulating statistics, arrays
+Utilities for reading/writing files.
 """
 
 import copy
@@ -73,8 +73,8 @@ def _get_stat_names(pop_ids):
     :returns: Lists of names for D+ and H statistics.
     :rtype: tuple of lists of strings
     """
-    Dplus_names = Dplus_names(pop_ids)
-    H_names = H_names(pop_ids)
+    Dplus_names = _get_Dplus_names(pop_ids)
+    H_names = _get_H_names(pop_ids)
 
     return (Dplus_names, H_names)
 
@@ -267,8 +267,8 @@ def _read_bed_file(filename):
                 continue
             split_line = line.split()
             chroms.append(split_line[0])
-            starts.append(split_line[1])
-            ends.append(split_line[2])
+            starts.append(float(split_line[1]))
+            ends.append(float(split_line[2]))
     chrom_set = set(chroms)
     # check that there is one unique CHROM
     if len(chrom_set) > 1:
@@ -277,8 +277,9 @@ def _read_bed_file(filename):
     elif len(chrom_set) == 0:
         raise ValueError('BED file has no valid contents')
     chrom = list(chrom_set)[0]
-    regions = np.array([[start, end] for start, end in zip(starts, ends)])
-
+    regions = np.array(
+        [[start, end] for start, end in zip(starts, ends)], dtype=np.int64
+    )
     return regions, chrom
 
 
@@ -356,23 +357,26 @@ def _mask_to_regions(mask):
     return regions
 
 
-def _intersect_regions(regions_arrs):
+def _intersect_regions(region_arrs):
     """
     Build an array of intervals where every input regions array has coverage.
 
-    :param regions_arrs: List of BED region arrays.
-    :type regions_arrs: list of np.ndarray
+    :param region_arrs: List of BED region arrays.
+    :type region_arrs: list of np.ndarray
 
     :returns: Region array representing intersection of sites in inputs.
     :rtype: np.ndarray
     """
-    length = max([reg[-1, 1] for reg in regions_arrs])
-    masks = [_regions_to_mask(region, length=length) for region in regions_arrs]
-    sums = np.sum(masks, axis=1)
-    overlap_mask = sums < 0
-    regions = _mask_to_regions(overlap_mask)
+    max_length = max([regions[-1, 1] for regions in region_arrs])
+    # Don't intersect more than 128 masks.
+    coverage = np.zeros(max_length, dtype=np.int8)
+    for regions in region_arrs:
+        for (start, end) in regions:
+            coverage[start:end] += 1
+    mask = coverage < len(region_arrs)
+    intersection = _mask_to_regions(mask)
 
-    return regions
+    return intersection
 
 
 def _collapse_regions(regions):
@@ -461,7 +465,7 @@ def _write_bedgraph_file(filename, regions, data, chrom_num, sep=None):
         if len(data[field]) != len(regions):
             raise ValueError(f'data field {data} mismatches region length!')
     if sep is None:
-        '\t'
+        sep = '\t'
     if filename.endswith('.gz'):
         openfunc = gzip.open 
     else:
@@ -469,13 +473,13 @@ def _write_bedgraph_file(filename, regions, data, chrom_num, sep=None):
     constants = ['#chrom', 'chromStart', 'chromEnd']
     fields = list(data.keys())
     header = sep.join(constants + fields) + '\n'
-    with openfunc(file, 'wb') as file:
-        file.write(header.encode())
+    with openfunc(filename, 'wb') as fout:
+        fout.write(header.encode())
         for i, (start, end) in enumerate(regions):
             interval = [chrom_num, str(start), str(end)]
             line_data = [str(data[field][i]) for field in fields]
             line = sep.join(interval + line_data) + '\n'
-            file.write(line.encode())
+            fout.write(line.encode())
 
     return
 

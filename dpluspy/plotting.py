@@ -89,11 +89,12 @@ def plot_d_plus_curves_comparison(
     fill=True,
     rows=None,
     cols=None,
-    ax_size=4,
+    ax_size=3,
     plot_H=False,
     cM=False,
     out=None,
-    show=True
+    show=True,
+    sharey=False
 ):
     """
     Plot any number of model expectations and empirical data sets alongside
@@ -158,13 +159,13 @@ def plot_d_plus_curves_comparison(
         else:
             raise ValueError('You must provide `pop_ids`')
     else:
-        statistics = utils.Dplus_names(pop_ids)
+        statistics = utils._get_Dplus_names(pop_ids)
         if len(models) > 0:
             assert len(statistics) == len(models[0][0])
         if len(means) > 0:
             assert len(statistics) == len(means[0][0])
     
-    stat_names = utils.get_latex_names(pop_ids)
+    stat_names = utils._get_latex_names(pop_ids)
 
     # if no stats_to_plot were given: plot all statistics
     if len(stats_to_plot) == 0:
@@ -174,7 +175,10 @@ def plot_d_plus_curves_comparison(
     
     if plot_H:
         num_stats += 1
-        Hs_to_plot = utils.H_names(pop_ids)
+        Hs_to_plot = utils._get_H_names(pop_ids)
+        sharex = False
+    else:
+        sharey = True
 
     if not cols:
         cols = min(5, num_stats)
@@ -187,10 +191,13 @@ def plot_d_plus_curves_comparison(
 
     x_label = "$r$"
     if cM == True:
-        mids = utils.map_function(mids)
+        mids = utils._map_function(mids) * 0.01
         x_label = "cM"
 
-    fig, axs = plt.subplots(rows, cols, figsize=figsize, layout="constrained")
+    fig, axs = plt.subplots(
+        rows, cols, figsize=figsize, layout="constrained", 
+        sharex=sharex, sharey=sharey
+    )
     
     if rows > 1:
         axs = axs.flat
@@ -230,7 +237,6 @@ def plot_d_plus_curves_comparison(
                     label=labels[j]
                 )
             j += 1
-
             ax.legend(framealpha=0)
 
         # ax setup
@@ -270,12 +276,12 @@ def plot_d_plus_curves_comparison(
                 j += 1
         ax.legend(framealpha=0)
         ax.set_xticks(list(range(len(Hs_to_plot))), labels=Hs_to_plot)
+        ax.set_xlim(-1, len(Hs_to_plot))
 
     #fig.legend(
     #   placed_labels, labels, framealpha=0, ncols=2, loc='lower center',
     #    bbox_to_anchor=(0.5, -0.15)
     #)
-
     if out:
         plt.savefig(out, dpi=244, bbox_inches='tight')
     if show:

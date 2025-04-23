@@ -1,5 +1,5 @@
 """
-Functions for estimating D+ from sequence data.
+Functions for estimating ``D+`` from sequence data.
 """
 
 from collections import defaultdict
@@ -68,6 +68,8 @@ def compute_statistics(
     if interval is not None:
         within = True
         assert len(interval) == 2
+        interval = (int(interval[0]), int(interval[1]))
+        tot_interval = interval
     elif interval_between is not None:
         within = False
         assert len(interval_between) == 2
@@ -75,10 +77,18 @@ def compute_statistics(
         right_interval = interval_between[1]
         assert len(left_interval) == len(right_interval) == 2
         assert right_interval[0] >= left_interval[1]
-        interval = (left_interval[0], right_interval[1])
+        interval_between = (
+            (int(left_interval[0]), int(left_interval[1])),
+            (int(right_interval[0]), int(right_interval[1]))
+        )
+        tot_interval = (interval_between[0][0], interval_between[1][1])
     else:
         within = True
         print(utils._current_time(), 'No interval was given: Parsing all sites')
+    
+    if L is None:
+        if tot_interval is not None:
+            L = tot_interval[-1]
 
     if pop_file is not None and pop_mapping is not None:
         raise ValueError('You cannot use both `pop_file` and `pop_mapping`')
@@ -87,10 +97,7 @@ def compute_statistics(
 
     if r is not None:
         if L is None:
-            if interval is not None:
-                L = interval[-1]
-            else:
-                raise ValueError("You must provide `L`.")
+            raise ValueError("You must provide `L`.")
         rec_map = _get_uniform_recombination_map(L, r)
     else:
         rec_map = _load_recombination_map(
@@ -181,6 +188,8 @@ def compute_denominators(
     if interval is not None:
         within = True
         assert len(interval) == 2
+        interval = (int(interval[0]), int(interval[1]))
+        tot_interval = interval
     elif interval_between is not None:
         within = False
         assert len(interval_between) == 2
@@ -188,14 +197,18 @@ def compute_denominators(
         right_interval = interval_between[1]
         assert len(left_interval) == len(right_interval) == 2
         assert right_interval[0] >= left_interval[1]
-        interval = (left_interval[0], right_interval[1])
+        interval_between = (
+            (int(left_interval[0]), int(left_interval[1])),
+            (int(right_interval[0]), int(right_interval[1]))
+        )
+        tot_interval = (interval_between[0][0], interval_between[1][1])
     else:
         within = True
         print(utils._current_time(), 'No interval was given: Parsing all sites')
     
     if L is None:
-        if interval is not None:
-            L = interval[-1]
+        if tot_interval is not None:
+            L = tot_interval[-1]
 
     if r_bins is None:
         raise ValueError('You must provide `r_bins`')
@@ -292,6 +305,8 @@ def compute_mutation_factors(
     if interval is not None:
         within = True
         assert len(interval) == 2
+        interval = (int(interval[0]), int(interval[1]))
+        tot_interval = interval
     elif interval_between is not None:
         within = False
         assert len(interval_between) == 2
@@ -299,13 +314,18 @@ def compute_mutation_factors(
         right_interval = interval_between[1]
         assert len(left_interval) == len(right_interval) == 2
         assert right_interval[0] >= left_interval[1]
-        interval = (left_interval[0], right_interval[1])
+        interval_between = (
+            (int(left_interval[0]), int(left_interval[1])),
+            (int(right_interval[0]), int(right_interval[1]))
+        )
+        tot_interval = (interval_between[0][0], interval_between[1][1])
     else:
         within = True
+        print(utils._current_time(), 'No interval was given: Parsing all sites')
     
     if L is None:
-        if interval is not None:
-            L = interval[-1]
+        if tot_interval is not None:
+            L = tot_interval[-1]
         print(utils._current_time(), 'No interval was given: Parsing all sites')
 
     if r is not None:
@@ -921,6 +941,14 @@ def _count_locus_pairs(site_map, bins, weights=None, verbose=False):
     :returns: Array of binned locus pair counts.
     """
     num_bins = len(bins) - 1
+    sums = np.zeros(num_bins, dtype=np.float64)
+
+    if len(site_map) == 0:
+        print(utils._current_time(), 'Empty window: returning 0')
+        return sums
+    if weights is not None:
+        if len(weights) != len(site_map):
+            raise ValueError('Length mismatch between `site_map` and `weights`')
 
     if weights is not None:
         if bins[0] == 0:
@@ -929,7 +957,6 @@ def _count_locus_pairs(site_map, bins, weights=None, verbose=False):
             indices = np.searchsorted(site_map, site_map + bins[0])
         cum_weights = np.concatenate(([0], np.cumsum(weights)))
         cum_sum0 = cum_weights[indices]
-        sums = np.zeros(num_bins, dtype=np.float64)
         for i, b in enumerate(bins[1:]):
             indices = np.searchsorted(site_map, site_map + b)
             cum_sum1 = cum_weights[indices]
@@ -938,14 +965,12 @@ def _count_locus_pairs(site_map, bins, weights=None, verbose=False):
             if verbose:
                 print(utils._current_time(), 
                     f"locus pairs summed (within) in bin {i}")
-
     else:
         if bins[0] == 0:
             edge0 = np.arange(1, len(site_map) + 1)
         else:
             edge0 = np.searchsorted(site_map, site_map + bins[0])
             assert np.all(edge0 > 0)
-        sums = np.zeros(num_bins, dtype=np.int64)
         for i, b in enumerate(bins[1:]):
             edge1 = np.searchsorted(site_map, site_map + b)
             sums[i] = (edge1 - edge0).sum() 
@@ -982,10 +1007,17 @@ def _count_locus_pairs_between(
         (default None).
     :returns: Array of binned locus pair counts.
     """
+    num_bins = len(bins) - 1
+    sums = np.zeros(num_bins, dtype=np.float64)
+
+    if len(site_map_l) == 0 or len(site_map_r) == 0:
+        print(utils._current_time(), 'Empty windows: returning 0')
+        return sums
+    
     if not np.max(site_map_l) <= np.min(site_map_r):
-        raise ValueError("Block 1 have lower coordinate than block 2")
+        raise ValueError('Left window must have coords lower than right window')
     if (weights_l is not None) ^ (weights_r is not None):
-        raise ValueError("You must provide weights for both blocks")
+        raise ValueError('You must provide weights for both blocks')
     if weights_l is not None:
         if len(weights_l) != len(site_map_l):
             raise ValueError("Map and weight lengths mismatch for block 1")
@@ -1009,7 +1041,6 @@ def _count_locus_pairs_between(
             if verbose:
                 print(utils._current_time(), 
                     f"locus pairs summed (between) in bin {i}")
-
     else:
         edge0 = np.searchsorted(site_map_r, site_map_l + bins[0])
         sums = np.zeros(num_bins, dtype=np.int64)
@@ -1035,11 +1066,11 @@ def _get_uniform_recombination_map(L, r):
     :param L: Length of the map.
     :param r: Map rate, in units of r (recombination frequency).
 
-    :returns: Function that interpolates for a uniform map
+    :returns: Function that interpolates for a uniform map, in M.
     :rtype: scipy.interpolate.interp1d 
     """
     coords = np.arange(L)
-    map_coords = r * 100 * coords
+    map_coords = r * coords
     mapfunc = scipy.interpolate.interp1d(
         coords, 
         map_coords, 
@@ -1055,7 +1086,8 @@ def _load_recombination_map(
     map_col=None,
     interp_method="linear", 
     unit='cM',
-    sep=None
+    sep=None,
+    inverse=False
 ):
     """
     Load a recombination map and return a function that interpolates map 
@@ -1070,7 +1102,9 @@ def _load_recombination_map(
         to `M`.
     :param sep: If a BEDGRAPH file is given, gives the separator to expect in
         the file (default None uses whitespace).
-
+    :param inverse: If True, return a function that maps from map coordinates
+        back to physical coordinates (default False).
+        
     :returns: Interpolate function
     :rtype: scipy.interpolate.interp1d 
     """
@@ -1086,12 +1120,18 @@ def _load_recombination_map(
         raise ValueError('Unrecognized map unit')
     if unit == 'cM':
         map_coords *= 0.01
+    if inverse:
+        xs = map_coords
+        ys = coords
+    else:
+        xs = coords
+        ys = map_coords
     map_func = scipy.interpolate.interp1d(
-        coords, 
-        map_coords, 
+        xs, 
+        ys, 
         kind=interp_method,
         bounds_error=False,
-        fill_value=(map_coords[0], map_coords[-1])
+        fill_value=(ys[0], ys[-1])
     )
     return map_func
 
@@ -1130,7 +1170,7 @@ def _read_genotypes(
     multiallelic=False,
     missing_to_ref=True,
     interval=None,
-    verbose=None
+    verbose=0
 ):
     """
     Read sites and genotypes from a VCF file.
@@ -1162,10 +1202,11 @@ def _read_genotypes(
     :returns: Array of 1-indexed sites, array of genotypes, list of sample IDs
     """
     if bed_file is not None:
-        regions, bed_chrom = utils.read_bed_file(bed_file)
-        mask = utils.regions_to_mask(regions)
+        regions, bed_chrom = utils._read_bed_file(bed_file)
+        mask = utils._regions_to_mask(regions)
         masked = True
     else:
+        bed_chrom = None
         masked = False
 
     if interval is not None:
@@ -1181,7 +1222,7 @@ def _read_genotypes(
     _sites = []
     _genotypes = []
     vcf_chrom = None
-    counter = None
+    counter = 0
 
     with open_func(vcf_file, 'rb') as fin:
         for lineb in fin:
@@ -1202,8 +1243,9 @@ def _read_genotypes(
 
             if vcf_chrom is None:
                 vcf_chrom = chrom
-                if vcf_chrom.strip('chr') != bed_chrom.strip('chr'):
-                    raise ValueError('BED and VCF chromosomes must match')
+                if bed_chrom is not None:
+                    if vcf_chrom.strip('chr') != bed_chrom.strip('chr'):
+                        raise ValueError('BED and VCF chromosomes must match')
             else:
                 if vcf_chrom != chrom:
                     raise ValueError('VCF files must hold 1 chromosome only')
@@ -1225,7 +1267,7 @@ def _read_genotypes(
             alts = split_line[3].split(',')
             alleles = [ref] + alts
 
-            if np.any([len(allele) for allele in alleles] > 1):
+            if np.any([len(allele) > 1 for allele in alleles]):
                 continue
 
             if not multiallelic:
@@ -1235,7 +1277,7 @@ def _read_genotypes(
             split_samples = [sample.split(':') for sample in split_line[9:]]
             gt_strs = [sample[0] for sample in split_samples]
             alleles = [re.split("/|\\|", gt) for gt in gt_strs]
-            _genotypes.append(np.array(alleles, dtype=np.int64))
+            _genotypes.append(np.array(alleles))
             _sites.append(pos1)
 
     sites = np.array(_sites, dtype=np.int64)

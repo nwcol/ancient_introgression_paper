@@ -52,7 +52,7 @@ def write_random_map(filename, shape, scale, mean_interval, L):
     """
     intervals, values = build_map(shape, scale, mean_interval, L)
     data = {'map': values}
-    utils.write_bedgraph(filename, '0', intervals, data, sep='\t')
+    utils._write_bedgraph_file(filename, intervals, data, '0')
 
     return
 
@@ -64,7 +64,7 @@ def load_ratemap(filename):
     
     """
     # right now: has to have exact sequence length
-    intervals, data = utils.read_bedgraph(filename)
+    intervals, data, _ = utils._read_bedgraph_file(filename)
     positions = np.append(intervals[:, 0], intervals[-1, 1])
     rate = data['map']
     ratemap = msprime.RateMap(position=positions, rate=rate)
