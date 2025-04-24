@@ -74,8 +74,8 @@ class DplusStats(list):
         """
         Instantiate from expected values computed using moments.LD.
 
-        :param graph: Demes graph or path and filename specifying a demes-format
-            .yaml file.
+        :param graph: Demes graph or pathname specifying a demes-format .yaml 
+            file.
         :param sampled_demes:
         :param sample_times:
         :param rs:

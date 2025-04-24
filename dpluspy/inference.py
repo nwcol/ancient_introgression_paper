@@ -1,4 +1,6 @@
-## functions for fitting models to estimated statistics
+"""
+Functions for fitting models to estimated statistics.
+"""
 
 from datetime import datetime
 import demes
@@ -14,28 +16,40 @@ from . import utils
 from .datastrucs import DplusStats
 
 
-# TODO write own getter/setter functions for fitting u
-
-
 _out_of_bounds = 1e10
 _counter = 0
 
 
-def load_statistics(data_file, graph_file):
+def load_statistics(data_file, graph=None):
+    """
+    Load bootstrapped statistics stored in a .pkl file, subsetting it to the
+    set of populations present in both the file and a Demes graph .yaml file.
 
-    data = pickle.load(open(data_file, "rb+"))
-    pop_ids = data["pop_ids"]
-    to_pops = graph_data_overlap(graph_file, pop_ids)
+    :param data_file: Pathname of a .pkl file holding statistics- minimally
+        'pop_ids', 'bins', and corresponding 'means' and 'varcovs'.
+    :param graph_file: Optional of a .yaml Demes file- if given, subset to the
+        populations common to the graph and data (default None).
+
+    :returns: List of population IDs, bins, means, and varcovs.
+    """
+    data = pickle.load(open(data_file, "rb"))
+    if graph:
+        _pop_ids = data["pop_ids"]
+        pop_ids = graph_data_overlap(graph, _pop_ids)
+        means = utils.subset_means(data["means"], _pop_ids, pop_ids)
+        varcovs = utils.subset_varcovs(data["varcovs"], _pop_ids, pop_ids)
+    else:
+        pop_ids = data['pop_ids']
+        means = data['means']
+        varcovs = data['varcovs']
     bins = data["bins"]
-    means = utils.subset_means(data["means"], pop_ids, to_pops)
-    varcovs = utils.subset_varcovs(data["varcovs"], pop_ids, to_pops)
 
-    return to_pops, bins, means, varcovs
+    return pop_ids, bins, means, varcovs
 
 
 def compute_bin_stats(
     graph,
-    sampled_demes=None, 
+    sampled_demes, 
     sample_times=None, 
     u=None,
     bins=None,
@@ -43,16 +57,35 @@ def compute_bin_stats(
     phased=False
 ):
     """
-    From a Demes graph, compute expected D+ in bins using moments.LD and a
-    given approximation method. 
+    From a Demes graph, compute expected ``D+`` in bins using `moments.LD` and 
+    a given approximation method. This is effectively a wrapped for the  
+    `moments.Demes.LD()` function. `bins` must be provided.
+
+    :param param graph: `demes` graph or pathname of a .yaml file specifying a 
+        demographuc model in the `demes` format.
+    :param sampled_demes: List of demes to compute statistics for.
+    :param sample_times: Optional list of sample times for demes. Default to 
+        the specified end times.
+    :param u: Mutation rate parameter (defaults to 1).
+    :param bins: Recombination distance bin edges, in units of ``r``.
+    :param approx: Method for approximating quantities in each bin; defaults
+        to 'simpsons'.
+    :param phased: If True, compute phased expectations for cross-population
+        statistics (default False).
 
     :returns: A DPlusStats instance holding computed statistics.
     """
     if approx not in ("midpoint", "trapezoid", "simpsons"):
-        raise ValueError("unrecognized approximation method")
+        raise ValueError("Unrecognized approximation method")
     
+    if bins is None:
+        raise ValueError('You must provide bins')
+
     if isinstance(graph, str):
         graph = demes.load(graph)
+
+    if u is None:
+        u = 1
 
     if approx == "midpoint":
         midpoints = (bins[:-1] + bins[1:]) / 2
@@ -66,7 +99,7 @@ def compute_bin_stats(
         )
 
     elif approx == "trapezoid":
-        raise ValueError("this method is too inaccurate")
+        raise ValueError("This method is forbidden as it is too inaccurate")
         y_edges = DplusStats.from_moments(
             graph, 
             sampled_demes, 
@@ -110,7 +143,7 @@ def compute_bin_stats(
     return model
 
 
-## optimization functions
+## Optimization functions
 
 
 def _object_func(
@@ -127,24 +160,32 @@ def _object_func(
     upper_bounds=None,
     constraints=None,
     verbose=None,
-    one_locus=False,
+    use_H=False,
     use_afs=False,
     afs=None,
-    fit_mutation_rate=False
+    L=None,
+    fit_mutation_rate=False,
+    fit_ancestral_misid=False
 ):
-    
+    """
+    The objective function for model optimization using ``D+``  (and optionally 
+    ``H`` or the SFS). 
+    """
     if lower_bounds is not None and np.any(params < lower_bounds):
-        return -_out_of_bounds
+        return _out_of_bounds
     elif upper_bounds is not None and np.any(params > upper_bounds):
-        return -_out_of_bounds
+        return _out_of_bounds
     elif constraints is not None and np.any(constraints(params) <= 0):
-        return -_out_of_bounds
+        return _out_of_bounds
 
     global _counter
     _counter += 1    
 
-
-
+    if fit_mutation_rate:
+        if fit_ancestral_misid:
+            u = params[-2]
+        else:
+            u = params[-1]
 
     builder = Inference._update_builder(builder, options, params)
     graph = demes.Graph.fromdict(builder)
@@ -156,26 +197,33 @@ def _object_func(
         bins=bins,
         phased=False
     )
-    ll = composite_ll(model, means, varcovs, one_locus=one_locus)
+    ll = composite_ll(model, means, varcovs, use_H=use_H)
 
     if use_afs:
-        ll_afs = 0
-
-        ll += ll_afs
-        raise ValueError("not implemented")
+        sample_sizes = afs.sample_sizes
+        model_afs = moments.Demes.SFS(
+            graph, 
+            sampled_demes, 
+            sample_sizes, 
+            sample_times=sample_times, 
+            u=u * L
+        )
+        if fit_ancestral_misid:
+            p_misid = params[-1]
+            model_afs = moments.Misc.flip_ancestral_misid(model_afs, p_misid)
+        ll += moments.Inference.ll(model_afs, afs)
     
     if verbose > 0 and _counter % verbose == 0:
-        param_str = "".join(["{:>11}".format(p) for p in format_params(params)])
-        report_str = "{n:<5g}{l:>10g}  [{p}]".format(
-            n=_counter, l=np.round(ll, 2), p=param_str
-        )
-        print(report_str)
+        pstr = ''.join([f'{float(p):>10.3}' for p in params])
+        print(f'{_counter:<5}{np.round(ll, 2):>10} [{pstr}]')
 
     return -ll
 
 
 def _object_func_log(log_p, *args, **kwargs):
-    
+    """
+    Objective function for optimizing over the log of parameters.
+    """
     p = np.exp(log_p - 1)
     return _object_func(p, *args, **kwargs)
 
@@ -190,18 +238,62 @@ def optimize(
     u=None,
     method="fmin",
     max_iter=1000,
-    max_calls=None,
     log=False,
     verbose=1,
     overwrite=False,
     output=None,
-    one_locus=False,
+    use_H=False,
+    use_afs=False,
+    afs=None,
+    L=None,
     perturb=False,
     fit_mutation_rate=False,
-    u_guess=None
+    u_bounds=None,
+    fit_ancestral_misid=False,
+    misid_guess=None
 ):
     """
+    Optimize a demographic model given empirical ``D+`` statistics and a set of
+    model parameters. Wraps functionality from ``moments.Demes.Inference``. 
+    Optionally, the allele frequency spectrum (AFS) or the pairwise diversity
+    statistic ``H`` may be jointly used in the optimization.
 
+    :param graph_file: Pathname of file holding ``demes``-format model to fit.
+    :param param_file: Pathname of parameter file, specified as described at 
+        https://momentsld.github.io/moments/extensions/demes.html#the-options-file
+    :param means: List of ``D+`` statistics obtained using `bootstrapping`. 
+        ``H`` statistics are the last element of this list.
+    :param varcovs: List of variance-covariance matrices from `bootstrapping`.
+    :param pop_ids: List of population IDs corresponding to `means`.
+    :param bins: Array of recombination bin edges in units of ``r``.
+    :param u: Mutation rate parameter. If fitting the mutation rate, provides 
+        the initial guess for this parameter (here defaults to 1e-8).
+    :param method: Optimization algorithm to use.
+    :param max_iter: Maximum number of optimization iterations.
+    :param log: If True, optimize over the log of parameters (default False)
+    :param verbose: Print convergence messsages every `verbose` function calls.
+    :param overwrite: If True, overwrites existing files with output 
+        (default False).
+    :param output: Pathname at which to write fitted graph file.
+    :param use_H: If True, include ``H`` in optimization (default False).
+    :param use_afs: If True, include the allele frequency spectrum `afs` in the 
+        fit (default False).
+    :param afs: AFS (SFS) data to use in fitting.
+    :param L: Required when fitting the AFS; gives corresponding sequence 
+        length.
+    :param perturb: Perturb initial parameters by up to `perturb`-fold (default
+        0 does not perturb parameters).
+    :param fit_mutation_rate: If True, fit the mutation rate as an additional
+        parameter (default False).
+    :param u_bounds: When fitting the mutation rate, provides upper and lower
+        bounds for that parameter (defaults to (5e-9, 2e-8)).
+    :param fit_ancestral_misid: When fitting jointly with an unfolded AFS and
+        True, fit the probability that the ancestral state is misspecified
+        (default False).
+    :param misid_guess: Initial guess for the misid probability (defaults to 
+        0.02).
+
+    :returns: List of parameter names, optimized values, and log-likelihood.
     """
     builder = Inference._get_demes_dict(graph_file)
     options = Inference._get_params_dict(param_file)
@@ -210,20 +302,38 @@ def optimize(
     constraints = Inference._set_up_constraints(options, param_names)
 
     if u is None and not fit_mutation_rate:
-        raise ValueError("you must provide `u`")
+        raise ValueError("You must provide `u`")
     if pop_ids is None:
-        raise ValueError("you must provide `pop_ids`")
+        raise ValueError("You must provide `pop_ids`")
+    
+    if use_afs:
+        if afs is None:
+            raise ValueError('You must provide `afs` to use `fit_afs`')
+        if L is None:
+            raise ValueError('You must provide `L` to use `fit_afs`')
     
     if fit_mutation_rate:
-        if u_guess is None:
-            if u is not None:
-                u_guess = u
-            else:
-                u_guess = 1e-8
-        param_names.append("u")
-        params_0 = np.concatenate((params_0, [u_guess]))
-        lower_bounds = np.concatenate((lower_bounds, [0]))
-        upper_bounds = np.concatenate((upper_bounds, [1]))
+        if u is None:
+            u = 1e-8
+        param_names.append('u')
+        params_0 = np.append(params_0, u)
+        if u_bounds is None:
+            u_bounds = (5e-9, 2e-8)
+        lower_bounds = np.append(lower_bounds, u_bounds[0])
+        upper_bounds = np.append(upper_bounds, u_bounds[1])
+
+    if fit_ancestral_misid:
+        if not use_afs:
+            raise ValueError('You must fit the AFS to `fit_ancestral_misid`')
+        if afs.folded:
+            raise ValueError('The AFS is folded: cannot `fit_ancestral_misid`')
+        param_names.append('p_misid')
+        if misid_guess is None:
+            misid_guess = 0.02
+        param_names.append('p_misid')
+        params_0 = np.append(params_0, misid_guess)
+        lower_bounds = np.append(lower_bounds, 0)
+        upper_bounds = np.append(upper_bounds, 1)
     
     if perturb > 0: 
         params_0 = Inference._perturb_params_constrained(
@@ -239,17 +349,11 @@ def optimize(
     else:
         objective = _object_func
     
-    print(get_time(), f"Fitting D+ to data for {pop_ids}")
-    param_name_str = "".join(["{:>11}".format(p) for p in param_names])
-    init_param_str = "{n:<5}{l:>10}  [{p}]".format(
-        n="", l="Params", p=param_name_str
-    )
-    print(init_param_str)
-    param_0_str = "".join(["{:>11}".format(p) for p in format_params(params_0)])
-    init_param_str = "{n:<5}{l:>10}  [{p}]".format(
-        n="Calls", l="LL", p=param_0_str
-    )
-    print(init_param_str)
+    print(_current_time(), f"Fitting D+ to data for {pop_ids}")
+    namestr = ''.join([f'{n:>10}' for n in param_names])
+    pstr = ''.join([f'{float(p):>10.3}' for p in params_0])
+    print(f'{"Call":<5}{"LL":>10} [{namestr}]')
+    print(f'{"init":<5}{"-":>10} [{pstr}]')
 
     deme_names = [d["name"] for d in builder["demes"]]
     sampled_demes = [] 
@@ -274,9 +378,12 @@ def optimize(
         upper_bounds,
         constraints,
         verbose,
-        one_locus,
-        False,
-        None,
+        use_H,
+        use_afs,
+        afs,
+        L,
+        fit_mutation_rate,
+        fit_ancestral_misid
     )
     
     methods = ['fmin', 'powell', 'bfgs', 'lbfgsb']
@@ -289,7 +396,6 @@ def optimize(
             params_0,
             args=args,
             maxiter=max_iter,
-            maxfun=max_calls,
             full_output=True
         )
         fit_params, fopt, num_iter, func_calls, flag = ret[:5]
@@ -355,7 +461,7 @@ def optimize(
 
     ll = -fopt
 
-    print(f"Log-likelihood:\t{ll:.3}")
+    print(f"Log-likelihood:\t{np.round(ll, 2)}")
     print("Fitted parameters:")
     for name, value in zip(param_names, fit_params):
         print(f"{name}\t{value:.3}")
@@ -392,7 +498,7 @@ def print_status(n_calls, ll, params):
     Print the number of function calls, the log-likelihood, and the current 
     parameter values.
     """
-    t = utils.get_time()
+    t = utils._current_time()
     _n = f'{n_calls:<4}'
     if isinstance(ll, float):
         _ll = f'{np.round(ll, 2):>10}'
@@ -437,11 +543,11 @@ def format_params(params):
 _inv_varcov_cache = dict()
 
 
-def composite_ll(model, means, varcovs, one_locus=False):
+def composite_ll(model, means, varcovs, use_H=False):
     """
-    Compute the sum of log-likelihoods across bins.
+    Compute the sum of log-likelihoods across ``D+`` bins.
     """
-    if one_locus:
+    if use_H:
         ll = ll_per_bin(model, means, varcovs).sum()
     else:
         ll = ll_per_bin(model[:-1], means[:-1], varcovs[:-1]).sum()
@@ -451,7 +557,7 @@ def composite_ll(model, means, varcovs, one_locus=False):
 
 def ll_per_bin(xs, mus, varcovs):
     """
-    Compute LL in each bin and return array of bin LLs
+    Compute LL in each bin and return an array of bin LLs.
     """
     n_bins = len(xs)
     if len(mus) != n_bins or len(varcovs) != n_bins:
@@ -598,6 +704,9 @@ def compute_uncerts(
     return param_names, params_0, uncerts
 
 
+_model_cache = dict()
+
+
 def compute_godambe_matrix(
     params_0,
     model_func,
@@ -632,7 +741,7 @@ def compute_godambe_matrix(
         delta=delta
     )
     if verbose:
-        print(get_time(), "computed Hessian")
+        print(_current_time(), "computed Hessian")
 
     if get_hessian:
         return H
@@ -648,7 +757,7 @@ def compute_godambe_matrix(
             delta=delta
         )
         if verbose:
-            print(get_time(), f"computed gradient for bootstrap set {i}")
+            print(_current_time(), f"computed gradient for bootstrap set {i}")
         cJ = np.matmul(cU, cU.T)
         J += cJ
     J = J / len(bootstrap_reps)
@@ -740,377 +849,8 @@ def graph_data_overlap(graph, pop_ids):
     return overlaps
 
 
-def get_time():
+def _current_time():
     """
     Get a string representing the date and time.
     """
     return "[" + datetime.strftime(datetime.now(), "%d-%m-%y %H:%M:%S") + "]"
-
-
-## Caches
-
-
-_model_cache = dict()
-
-
-
-
-
-
-_out_of_bounds = -1e10
-_n_calls = 0
-
-
-
-def _moments_d_plus(
-    graph,
-    data=None,
-    theta=None,
-    rs=None,
-    bins=None,
-    u=None,
-    approximation='trapezoid',
-    sampled_demes=None,
-    sample_times=None,
-    phased=False
-):
-
-    methods = ['midpoint', 'trapezoid', 'Simpsons', None]
-    if approximation not in methods: 
-        raise ValueError(f"{approximation} is not a valid method")
-    if u is None and theta is None:
-        raise ValueError("you must provide `u` or `theta`")
-    
-    if isinstance(graph, str):
-        graph = demes.load(graph)
-    if data is not None:
-        sampled_demes = data['pops']
-        bins = data['bins']
-    else:
-        if sampled_demes is not None:
-            graph_demes = [d.name for d in graph.demes]
-            for d in sampled_demes:
-                if d not in graph_demes: 
-                    raise ValueError(f'deme {d} is not present in graph!')
-        else:
-            sampled_demes = [d.name for d in graph.demes if d.end_time == 0]
-    if sample_times is None:
-        end_times = {d.name: d.end_time for d in graph.demes}
-        sample_times = [end_times[pop] for pop in sampled_demes]
-    else:
-        assert len(sample_times) == len(sampled_demes)
-    if rs is None:
-        if bins is None:
-            raise ValueError("you must provide `bins` or `rs`")
-        rs = get_rs(bins, approximation)   
-
-    y = moments.Demes.LD(
-        graph,
-        sampled_demes,
-        sample_times=sample_times,
-        theta=theta,
-        r=rs,
-        u=u
-    )
-    num_demes = len(sampled_demes)
-    indices = [(i, j) for i in range(num_demes) for j in range(i, num_demes)]
-    raw_stats = np.zeros((len(rs), len(indices)))
-    for k, (i, j) in enumerate(indices):
-        if i == j:
-            phasing = True
-        else:
-            phasing = phased
-        raw_stats[:, k] = y.H2(i, j, phased=phasing)
-    stats = approximate_Dplus(raw_stats, approximation)
-    stats_H = np.vstack((stats, y.H()))
-    model = {'means': stats_H, 'pops': sampled_demes, 'bins': bins}
-
-    return model
-
-
-def _get_rs(bins, approximation):
-
-    key = (str(bins), approximation)
-    if key in _rs_cache:
-        rs = _rs_cache[key]
-
-    elif approximation is None:
-        rs = bins
-
-    elif approximation == 'midpoint':
-        rs = bins[:-1] + (bins[1:] - bins[:-1]) / 2
-
-    elif approximation == 'trapezoid':
-        rs = bins
-    
-    elif approximation == 'Simpsons':
-        midpoints = (bins[1:] - bins[:-1]) / 2
-        rs = np.sort(np.concatenate((bins, bins[:-1] + midpoints)))
-
-    else:
-        raise ValueError(f"{approximation} is not a valid method")
-
-    return rs
-
-
-def _approximate_Dplus(raw_stats, approximation):
-
-    if approximation is None:
-        ret = raw_stats
-
-    elif approximation == 'midpoint':
-        ret = raw_stats
-
-    elif approximation == 'trapezoid':
-        ret = 1/2 * (raw_stats[:-1] + raw_stats[1:])
-    
-    elif approximation == 'Simpsons':
-        ret = (
-            1/6 * raw_stats[:-1:2] 
-            + 2/3 * raw_stats[1::2] 
-            + 1/6 * raw_stats[2::2]
-        )
-    else:
-        raise ValueError(f"{approximation} is not a valid method")
-
-    return ret
-
-
-def _load_statistics(file, graph=None):
-
-    with open(file, 'rb') as fin:
-        dic = pickle.load(fin)
-    _data = dic[next(iter(dic))]
-    if graph is not None:
-        data = parsing.subset_statistics(_data, graph=graph)
-    return data
-
-
-## optimization functions
-
-
-def __object_func(
-    p,
-    builder,
-    options,
-    data,
-    u=None,
-    lower_bounds=None,
-    upper_bounds=None,
-    constraints=None,
-    verbose=None,
-    one_locus=False
-):
-    
-    global _n_calls
-    _n_calls += 1
-    if lower_bounds is not None and np.any(p < lower_bounds):
-        return -_out_of_bounds
-    elif upper_bounds is not None and np.any(p > upper_bounds):
-        return -_out_of_bounds
-    elif constraints is not None and np.any(constraints(p) <= 0):
-        return -_out_of_bounds
-    builder = Inference._update_builder(builder, options, p)
-    graph = demes.Graph.fromdict(builder)
-    model = moments_d_plus(graph, u=u, data=data)
-    ll = compute_ll(model, data, one_locus=one_locus)
-    if verbose > 0 and _n_calls % verbose == 0:
-        print_status(_n_calls, ll, p)
-
-    return -ll
-
-
-def __object_func_log(logp, *args, **kwargs):
-    
-    p = np.exp(logp - 1)
-    return _object_func(p, *args, **kwargs)
-
-
-def _optimize(
-    graph_file,
-    param_file,
-    data,
-    u=None,
-    method='fmin',
-    max_iter=1000,
-    max_calls=None,
-    log=False,
-    verbose=1,
-    out_file=None,
-    one_locus=False,
-    perturb=False
-):
-    """
-    Fit a graph defined in `graph_file` and parameterized by `param_file`
-    to `data` using `objective_func` using a scipy optimization routine.
-    """
-    print(get_time(), f"fitting D+ to data for demes {data['pops']}")
-    builder = Inference._get_demes_dict(graph_file)
-    options = Inference._get_params_dict(param_file)
-    pnames, p0, lower_bounds, upper_bounds = \
-        Inference._set_up_params_and_bounds(options, builder)
-    constraints = Inference._set_up_constraints(options, pnames)
-    if u is None:
-        raise ValueError("you must provide `u`")
-    if perturb > 0: 
-        p0 = Inference._perturb_params_constrained(
-            p0, 
-            perturb, 
-            lower_bound=lower_bounds, 
-            upper_bound=upper_bounds,
-            cons=constraints
-        )
-        print_p0 = p0
-    else:
-        print_p0 = p0
-    if log:
-        objective = _object_func_log
-        p0 = np.log(p0) + 1
-    else:
-        objective = _object_func
-    print_status(0, 'pnames', pnames)
-    print_status(0, 'p0', print_p0)
-    
-    warn = None
-    args = (
-        builder,
-        options,
-        data,
-        u,
-        lower_bounds,
-        upper_bounds,
-        constraints,
-        verbose,
-        one_locus
-    )
-    
-    methods = ['fmin', 'powell', 'bfgs', 'lbfgsb']
-    if method not in methods:
-        raise ValueError(f"{method} is not a valid method")
-    
-    if method == 'fmin':
-        output = scipy.optimize.fmin(
-            objective,
-            p0,
-            args=args,
-            maxiter=max_iter,
-            maxfun=max_calls,
-            full_output=True
-        )
-        popt, fopt, num_iter, func_calls, flag = output[:5]
-
-    elif method == 'powell':
-        output = scipy.optimize.fmin_powell(
-            objective,
-            p0,
-            args=args,
-            maxiter=max_iter,
-            full_output=True,
-        )
-        popt, fopt, _, num_iter, func_calls, flag = output[:6]
-
-    elif method == 'bfgs':
-        if log:
-            epsilon = 1e-3
-        else:
-            epsilon = None
-        output = scipy.optimize.fmin_bfgs(
-            objective,
-            p0,
-            args=args,
-            maxiter=max_iter,
-            epsilon=epsilon,
-            disp=False,
-            full_output=True
-        )
-        popt, fopt, _, __, func_calls, grad_calls, flag = output[:7]
-        num_iter = grad_calls
-
-    elif method == 'lbfgsb':
-        if log:
-            bounds = list(
-                zip(np.log(lower_bounds) + 1, np.log(upper_bounds) + 1)
-            )
-            epsilon = 1e-5
-            pgtol = 1e-5
-        else:
-            bounds = list(zip(lower_bounds, upper_bounds))
-            epsilon = 1e-8
-            pgtol = 1e-5
-        output = scipy.optimize.fmin_l_bfgs_b(
-            objective,
-            p0,
-            args=args,
-            maxiter=max_iter,
-            bounds=bounds,
-            epsilon=epsilon,
-            pgtol=pgtol,
-            approx_grad=True
-        )
-        popt, fopt, output_dict = output
-        num_iter = output_dict['nit']
-        func_calls = output_dict['funcalls']
-        flag = output_dict['warnflag']
-        warn = output_dict["task"]
-
-    else:
-        return 1
-
-    if log: 
-        popt = np.exp(popt - 1)
-
-    global _n_calls
-    print_status(_n_calls, 'popt:', popt)
-    info = dict(
-        method=method,
-        objective_func=objective.__name__,
-        fopt=-fopt,
-        max_iter=max_iter,
-        num_iter=num_iter,
-        func_calls=func_calls,
-        flag=flag,
-        warn=warn,
-        u=u
-    )
-    print('\n'.join([f'\t{key}: {info[key]}' for key in info]))
-    builder = Inference._update_builder(builder, options, popt)
-    graph = demes.Graph.fromdict(builder)
-    graph.metadata['opt_info'] = info
-
-    if out_file is not None: 
-        demes.dump(graph, out_file)
-    else: 
-        print(graph)
-    
-    return pnames, popt, fopt, graph
-
-
-def _print_status(n_calls, ll, p):
-
-    """
-    Print the number of function calls, the log-likelihood, and the current 
-    parameter values.
-    """
-    t = utils.get_time()
-    _n = f'{n_calls:<4}'
-    if isinstance(ll, float):
-        _ll = f'{np.round(ll, 2):>10}'
-    else:
-        _ll = f'{ll:>10}'
-    fmt_p = []
-    for x in p:
-        if isinstance(x, str):
-            fmt_p.append(f'{x:>10}')
-        else:
-            if x > 1:
-                fmt_p.append(f'{np.round(x, 1):>10}')
-            else:
-                sci = np.format_float_scientific(x, 2, trim='k')
-                fmt_p.append(f'{sci:>10}')
-    _p = ''.join(fmt_p)
-    print(t, _n, _ll, '[', _p, ']')
-
-
-
-
-

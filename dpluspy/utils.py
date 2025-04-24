@@ -96,9 +96,9 @@ def _get_latex_names(pop_ids, statistic="D^+"):
     for i, pop0 in enumerate(pop_ids):
         for pop1 in pop_ids[i:]:
             if pop0 == pop1:
-                names.append(f"${statistic}_{{{pop0}}}$")
+                names.append(rf"${statistic}_{{\text{{{pop0}}}}}$")
             else:
-                names.append(f"${statistic}_{{{pop0},{pop1}}}$")
+                names.append(rf"${statistic}_{{\text{{{pop0}, {pop1}}}}}$")
 
     return names
 
@@ -184,7 +184,8 @@ def load_statistics(filename, to_pops=None):
 
 def subset_means(means, pop_ids, to_pops):
     """
-    Subset a list of binned statistics representing `pop_ids` to `to_pops`. 
+    Subset a list of binned statistics representing `pop_ids` to `to_pops`. The
+    returned statistics will be in an order determined by `to_pops`.
 
     :param means: List of 1d arrays to subset.  
     :type means: list of np.ndarray
@@ -200,7 +201,7 @@ def subset_means(means, pop_ids, to_pops):
     for pop in to_pops:
         if pop not in pop_ids:
             raise ValueError(f'"{pop}" not in `pop_ids`')
-    stats = _get_Dplus_names(len(pop_ids))
+    stats = _get_Dplus_names(list(range(len(pop_ids))))
     to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
     to_stats = []
     for i, idx0 in enumerate(to_pop_idx):
@@ -223,7 +224,7 @@ def subset_varcovs(varcovs, pop_ids, to_pops):
     for pop in to_pops:
         if pop not in pop_ids:
             raise ValueError(f'"{pop}" not in `pop_ids`')
-    stats = _get_Dplus_names(len(pop_ids))
+    stats = _get_Dplus_names(list(range(len(pop_ids))))
     to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
     to_stats = []
     for i, idx0 in enumerate(to_pop_idx):

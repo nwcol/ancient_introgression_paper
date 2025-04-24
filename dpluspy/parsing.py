@@ -110,10 +110,19 @@ def compute_statistics(
         r_bins = np.loadtxt(r_bins)
     bins = utils._map_function(r_bins)
 
+    if pop_mapping is not None:
+        pop_ids = list(pop_mapping.keys())
+    else:
+        pop_ids = None
+
     if within:
         sites, genotype_matrix, sample_ids = _read_genotypes(
             vcf_file, bed_file=bed_file, interval=interval
         )
+        if len(sites) == 0:
+            warnings.warn('Loaded empty genotype array')
+            zeros = _empty_sums(bins, pop_ids, cross_pop=cross_pop)
+            return zeros, pop_ids
         pop_genotypes = _build_pop_genotypes(
             genotype_matrix, sample_ids, pop_mapping=pop_mapping
         )
@@ -121,16 +130,19 @@ def compute_statistics(
         sums = _compute_stats_within(
             pop_genotypes, site_map, bins, cross_pop=cross_pop, phased=phased,
         )
-        pop_ids = list(pop_genotypes.keys())
     else:
         sites_left, genotype_matrix_left, sample_ids = _read_genotypes(
             vcf_file, bed_file=bed_file, interval=left_interval
         )
-        pop_genotypes_left = _build_pop_genotypes(
-            genotype_matrix_left, sample_ids, pop_mapping=pop_mapping
-        )
         sites_right, genotype_matrix_right, _ = _read_genotypes(
             vcf_file, bed_file=bed_file, interval=right_interval
+        )
+        if len(sites_left) == 0 or len(sites_right) == 0:
+            warnings.warn('Loaded empty genotype array(s)')
+            zeros = _empty_sums(bins, pop_ids, cross_pop=cross_pop)
+            return zeros, pop_ids
+        pop_genotypes_left = _build_pop_genotypes(
+            genotype_matrix_left, sample_ids, pop_mapping=pop_mapping
         )
         pop_genotypes_right = _build_pop_genotypes(
             genotype_matrix_right, sample_ids, pop_mapping=pop_mapping
@@ -147,6 +159,20 @@ def compute_statistics(
         pop_ids = list(pop_genotypes_left.keys())
 
     return sums, pop_ids
+
+
+def _empty_sums(bins, pop_ids, cross_pop=True):
+    """
+    Create an array of zeros with shape determined by `bins` and `pop_ids`.
+    """
+    num_pops = len(pop_ids)
+    if cross_pop:
+        num_stats = (num_pops + num_pops ** 2) // 2
+    else:
+        num_stats = num_pops
+    zeros = np.zeros((len(bins), num_stats), dtype=np.float64)
+
+    return zeros
 
 
 def compute_denominators(
@@ -226,11 +252,11 @@ def compute_denominators(
         )
 
     if bed_file is not None:
-        all_positions = utils._read_bed_file_positions(bed_file)
+        all_positions = utils._read_bed_file_positions(bed_file) + 1
     else:
         if L is None:
             raise ValueError('L or a bed_file is required to compute denoms')
-        all_positions = np.arange(L)
+        all_positions = np.arange(1, L + 1)
 
     if within:
         if interval is None:
@@ -240,7 +266,7 @@ def compute_denominators(
                 (all_positions >= interval[0]) & (all_positions < interval[1])
             ]
         pos_map = rec_map(positions)
-        denoms = _count_locus_pairs(pos_map, bins, verbose=True)
+        denoms = _count_locus_pairs(pos_map, bins)
         denoms = np.append(denoms, len(positions))
     else:
         left_positions = all_positions[
@@ -253,9 +279,7 @@ def compute_denominators(
             & (all_positions < right_interval[1])
         ]
         pos_map_right = rec_map(right_positions)
-        denoms = _count_locus_pairs_between(
-            pos_map_left, pos_map_right, bins, verbose=True
-        )
+        denoms = _count_locus_pairs_between(pos_map_left, pos_map_right, bins)
         denoms = np.append(denoms, 0)
 
     return denoms
@@ -326,7 +350,6 @@ def compute_mutation_factors(
     if L is None:
         if tot_interval is not None:
             L = tot_interval[-1]
-        print(utils._current_time(), 'No interval was given: Parsing all sites')
 
     if r is not None:
         if L is None:
@@ -338,11 +361,11 @@ def compute_mutation_factors(
         )
 
     if bed_file is not None:
-        all_positions = utils._read_bed_file_positions(bed_file)
+        all_positions = utils._read_bed_file_positions(bed_file) + 1
     else:
         if L is None:
             raise ValueError('You must provide `L` or `bed_file`')
-        all_positions = np.arange(L)
+        all_positions = np.arange(1, L + 1)
 
     if r_bins is None:
         raise ValueError('You must provide `r_bins`')
@@ -361,9 +384,7 @@ def compute_mutation_factors(
         mut_map = _load_mutation_map(
             mut_map_file, positions, map_col=mut_map_col
         )
-        mut_facs= _count_locus_pairs(
-            pos_map, bins, weights=mut_map, verbose=True
-        )
+        mut_facs= _count_locus_pairs(pos_map, bins, weights=mut_map)
         sum_mut = np.sum(mut_map)
         mut_facs = np.append(mut_facs, sum_mut)
         num_sites = len(positions)
@@ -1069,7 +1090,7 @@ def _get_uniform_recombination_map(L, r):
     :returns: Function that interpolates for a uniform map, in M.
     :rtype: scipy.interpolate.interp1d 
     """
-    coords = np.arange(L)
+    coords = np.arange(1, L + 1)
     map_coords = r * coords
     mapfunc = scipy.interpolate.interp1d(
         coords, 
@@ -1241,14 +1262,14 @@ def _read_genotypes(
                         f'parsed position {pos1} line {counter}')
             counter += 1
 
-            if vcf_chrom is None:
-                vcf_chrom = chrom
-                if bed_chrom is not None:
-                    if vcf_chrom.strip('chr') != bed_chrom.strip('chr'):
-                        raise ValueError('BED and VCF chromosomes must match')
-            else:
-                if vcf_chrom != chrom:
-                    raise ValueError('VCF files must hold 1 chromosome only')
+            #if vcf_chrom is None:
+            #    vcf_chrom = chrom
+            #    if bed_chrom is not None:
+            #        if vcf_chrom.strip('chr') != bed_chrom.strip('chr'):
+            #            raise ValueError('BED and VCF chromosomes must match')
+            #else:
+            #    if vcf_chrom != chrom:
+            #        raise ValueError('VCF files must hold 1 chromosome only')
 
             if masked:
                 pos0 = pos1 - 1
@@ -1282,9 +1303,5 @@ def _read_genotypes(
 
     sites = np.array(_sites, dtype=np.int64)
     genotypes = np.array(_genotypes, dtype=np.int64)
-
-    if genotypes.shape == ():
-        warnings.warn('Loaded empty genotypes array')
-        genotypes = genotypes[:, None]
 
     return sites, genotypes, sample_ids

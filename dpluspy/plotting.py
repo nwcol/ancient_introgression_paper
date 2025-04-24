@@ -11,6 +11,7 @@ from . import parsing, inference, utils
 
 mpl.rcParams["xtick.labelsize"] = 10
 mpl.rcParams["ytick.labelsize"] = 10
+mpl.rcParams["legend.fontsize"] = 8
 mpl.rcParams["font.size"] = 11
 mpl.rcParams["axes.titlesize"] = 11
 mpl.rcParams["font.style"] = "normal"
@@ -85,6 +86,7 @@ def plot_d_plus_curves_comparison(
     pop_ids=None,
     bins=None,
     stats_to_plot=[],
+    Hs_to_plot=[],
     labels=[],
     fill=True,
     rows=None,
@@ -133,9 +135,10 @@ def plot_d_plus_curves_comparison(
     # do the same with data
     if len(varcovs) != len(means):
         raise ValueError('Lengths of `means` and `varcovs` mismatch')
-    if type(means[0]) != list:
-        means = [means]
-        varcovs = [varcovs] 
+    if len(means) > 0:
+        if type(means[0]) != list:
+            means = [means]
+            varcovs = [varcovs] 
 
     # check labels and build them if necessary
     if len(labels) == 0:
@@ -175,10 +178,15 @@ def plot_d_plus_curves_comparison(
     
     if plot_H:
         num_stats += 1
-        Hs_to_plot = utils._get_H_names(pop_ids)
+        if len(Hs_to_plot) == 0:
+            Hs_to_plot = utils._get_H_names(pop_ids)
+        H_labels = []
+        for Hstat in Hs_to_plot:
+            pop0, pop1 = Hstat.strip('H_').split('_')
+            H_labels.append(f'{pop_ids.index(pop0)},{pop_ids.index(pop1)}')
         sharex = False
     else:
-        sharey = True
+        sharex = True
 
     if not cols:
         cols = min(5, num_stats)
@@ -237,7 +245,7 @@ def plot_d_plus_curves_comparison(
                     label=labels[j]
                 )
             j += 1
-            ax.legend(framealpha=0)
+            ax.legend(framealpha=0, loc='upper right')
 
         # ax setup
         ax.set_xscale("log")
@@ -274,9 +282,10 @@ def plot_d_plus_curves_comparison(
                     label=label, ecolor=colors[j], capsize=2
                 )
                 j += 1
-        ax.legend(framealpha=0)
-        ax.set_xticks(list(range(len(Hs_to_plot))), labels=Hs_to_plot)
-        ax.set_xlim(-1, len(Hs_to_plot))
+        ax.legend(framealpha=0, loc='upper right')
+        ax.set_xticks(list(range(len(Hs_to_plot))), labels=H_labels)
+        ax.set_xlim(-0.2, len(Hs_to_plot) - 0.8)
+        ax.set_title('$H$', y=0.85)
 
     #fig.legend(
     #   placed_labels, labels, framealpha=0, ncols=2, loc='lower center',
