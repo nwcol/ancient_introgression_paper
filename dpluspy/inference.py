@@ -471,21 +471,29 @@ def optimize(
     if output is not None:
         builder = Inference._update_builder(builder, options, fit_params)
         graph = demes.Graph.fromdict(builder)
+        # Record some information about the fit in the 'metadata' field
+        info = {
+            'll': ll,
+            'num_iter': num_iter,
+            'max_iter': max_iter,
+            'flag': flag
+        }
+        if fit_mutation_rate:
+            if fit_ancestral_misid:
+                fitted_u = fit_params[-2]
+            else:
+                fitted_u = fit_params[-1]
+            info['fitted_u'] = fitted_u
+        else:
+            info['u'] = u
+        if fit_ancestral_misid:
+            info['fitted_misid'] = fit_params[-1]
+        graph.metadata['opt_info'] = info
+
         if overwrite is False and os.path.isfile(output):
             print(f"{output} already exists: printing model")
             print(str(graph))
         else:
-            info = dict(
-                method=method,
-                objective_func=objective.__name__,
-                fopt=-ll,
-                max_iter=max_iter,
-                num_iter=num_iter,
-                flag=flag,
-                warn=warn,
-                u=u
-            )
-            graph.metadata['opt_info'] = info
             demes.dump(graph, output)
 
     _counter = 0

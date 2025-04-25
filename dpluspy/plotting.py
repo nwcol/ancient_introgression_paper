@@ -96,7 +96,8 @@ def plot_d_plus_curves_comparison(
     cM=False,
     out=None,
     show=True,
-    sharey=False
+    sharey=False,
+    title=None
 ):
     """
     Plot any number of model expectations and empirical data sets alongside
@@ -286,6 +287,9 @@ def plot_d_plus_curves_comparison(
         ax.set_xticks(list(range(len(Hs_to_plot))), labels=H_labels)
         ax.set_xlim(-0.2, len(Hs_to_plot) - 0.8)
         ax.set_title('$H$', y=0.85)
+
+    if title:
+        fig.suptitle(title)
 
     #fig.legend(
     #   placed_labels, labels, framealpha=0, ncols=2, loc='lower center',
