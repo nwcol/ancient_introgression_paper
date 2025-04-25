@@ -604,13 +604,18 @@ def _ll(x, mu, inv_varcov):
 
 
 def _log_multivariate_normal_pdf(x, mu, varcov):
-
+    """
+    Evaluate the log of the complete multivariate normal probability law.
+    """
     f = _multivariate_normal_pdf(x, mu, varcov)
     return np.log(f)
 
 
 def _multivariate_normal_pdf(x, mu, varcov):
-
+    """
+    Evaluate the full multivariate normal PDF with means `mu`, variance-
+    covariances `varcov` and point `x`.
+    """
     k = len(x)
     inv_varcov = np.linalg.inv(varcov)
     f = (
@@ -631,12 +636,39 @@ def compute_uncerts(
     pop_ids=None,
     bins=None,
     u=None,
+    fitted_u=None,
     bootstrap_reps=None,
     delta=0.01,
     method="godambe"
 ):
     """
-    
+    Compute parameter estimates using either the Fisher information matrix 
+    ('fisher' method) or the Godambe information matrix ('godambe'). 
+
+    This function is adopted from the Godambe uncertainty estimators already 
+    implemented in `moments`.
+
+    :param graph_file: Pathname of a `demes`-format .yaml file specifying a
+        fitted demographic model.
+    :param param_file: Pathname of an options file.
+    :param means: List of arrays holding binned mean statistics.
+    :param varcovs: List of variance-covariance matrices.
+    :param pop_ids: List of population IDs.
+    :param bins: Array of recombination distance bin edges.
+    :param u: Fixed mutation rate parameter. Mutually exclusive with `fitted_u`.
+    :param fitted_u: Fitted mutation rate parameter. This value is appended
+        to the fitted parameters and uncerts are computed for it as well.
+    :param bootstrap_reps: List of bootstrap replicate means. Required when
+        `method` is 'godambe' and otherwise not used.
+    :param delta: Step size for evaluating the gradient, etc with finite
+        differences.
+    :param method: Method to use for computing standard deviations. Can be 
+        either 'fisher'- which does not require bootstrap replicates but 
+        understimates variance because genetic linkage violates assumptions-
+        or 'godambe', which requires bootstrap replicates.
+
+    :returns: A list of parameter names, of input parameter values, and 
+        estimated standard deviations of parameter estimates.
     """
     if method not in ("godambe", "fisher"):
         raise ValueError("invalid method")
@@ -644,7 +676,17 @@ def compute_uncerts(
     builder = Inference._get_demes_dict(graph_file)
     options = Inference._get_params_dict(param_file)
     params_bounds = Inference._set_up_params_and_bounds(options, builder)
-    param_names, params_0, lower_bounds, upper_bounds = params_bounds
+    param_names, params = params_bounds[:2]
+
+    if fitted_u is not None:
+        if u is not None:
+            raise ValueError('You cannot specify both `u` and `fitted_u`')
+        param_names.append('u')
+        params = np.append(params, fitted_u)
+        fitted_mutation_rate = True
+    else:
+        fitted_mutation_rate = False
+
     deme_names = [d["name"] for d in builder["demes"]]
     sampled_demes = [] 
     sample_times = []
@@ -660,12 +702,25 @@ def compute_uncerts(
         sampled_demes, 
         sample_times, 
         bins, 
-        u
+        u,
+        fitted_mutation_rate
     )
 
     def model_func(params, args=()):
-        # 
-        builder, options, sampled_demes, sample_times, bins, u = args
+        """
+        Compute expected ``D+`` given `params`.
+        """
+        (
+            builder, 
+            options, 
+            sampled_demes, 
+            sample_times, 
+            bins, 
+            u, 
+            fitted_mutation_rate
+        ) = args
+        if fitted_mutation_rate:
+            u = params[-1]
         builder = Inference._update_builder(builder, options, params)
         graph = demes.Graph.fromdict(builder)
         model = compute_bin_stats(
@@ -676,12 +731,11 @@ def compute_uncerts(
             bins=bins,
             phased=False
         )
-
         return model
 
     if method == "fisher":
-        H = compute_godambe_matrix(
-            params_0,
+        H = _compute_godambe_matrix(
+            params,
             model_func,
             model_args,
             means,
@@ -695,8 +749,8 @@ def compute_uncerts(
     elif method == "godambe":
         if bootstrap_reps is None:
             raise ValueError('we need bootstrap_reps to use `godambe` method!')
-        G, _, __ = compute_godambe_matrix(
-            params_0,
+        G, _, __ = _compute_godambe_matrix(
+            params,
             model_func,
             model_args,
             means,
@@ -709,13 +763,13 @@ def compute_uncerts(
     else:
         return
 
-    return param_names, params_0, uncerts
+    return param_names, params, uncerts
 
 
 _model_cache = dict()
 
 
-def compute_godambe_matrix(
+def _compute_godambe_matrix(
     params_0,
     model_func,
     model_args,
@@ -727,7 +781,9 @@ def compute_godambe_matrix(
     verbose=False
 ):
     """
-
+    Compute the Fisher (FIM) or Godambe (GIM) information matrix. These objects
+    are used to compute the uncertainties of parameters inferred with (here, 
+    composite) maximum likelihood.
     """
     def obj_func(params, means, varcovs, model_args):
         
@@ -740,7 +796,7 @@ def compute_godambe_matrix(
 
         return composite_ll(model, means, varcovs)
 
-    H = -compute_hessian(
+    H = - _compute_hessian(
         params_0, 
         obj_func, 
         model_args,
@@ -756,7 +812,7 @@ def compute_godambe_matrix(
 
     J = np.zeros((len(params_0), len(params_0)))
     for i, bootmeans in enumerate(bootstrap_reps):
-        cU = compute_gradient(
+        cU = _compute_gradient(
             params_0, 
             obj_func, 
             model_args,
@@ -775,10 +831,10 @@ def compute_godambe_matrix(
     return G, H, J
 
 
-def compute_hessian(p0, obj_func, model_args, means, varcovs, delta=0.01):
+def _compute_hessian(p0, obj_func, model_args, means, varcovs, delta=0.01):
     """
-    Compute the approximate Hessian matrix of the log-lik function. Uses 
-    original data (not the bootstrap).
+    Compute the approximate Hessian matrix of the log-likelihood function. Uses 
+    empirical means and varcovs obtained by bootstrapping. 
     """
     f0 = obj_func(p0, means, varcovs, model_args)
     hs = delta * p0
@@ -812,8 +868,9 @@ def compute_hessian(p0, obj_func, model_args, means, varcovs, delta=0.01):
     return H
 
 
-def compute_gradient(p0, obj_func, model_args, means, varcovs, delta=0.01):
+def _compute_gradient(p0, obj_func, model_args, means, varcovs, delta=0.01):
     """
+    Compute the gradient of the log likelihood function. 
     """
     hs = delta * p0
     gradient = np.zeros((len(p0), 1))
@@ -826,16 +883,6 @@ def compute_gradient(p0, obj_func, model_args, means, varcovs, delta=0.01):
         gradient[i] = (fp - fm) / (2 * hs[i])
 
     return gradient
-
-
-def indicator(n, i):
-    # get an indicator vector of length n, with element i equal to 1
-    if i >= n:
-        raise ValueError("invalid index, must have i < n")
-    arr = np.zeros(n, dtype=np.int64)
-    arr[i] = 1
-
-    return arr
 
 
 ## Utilities and printing functions
