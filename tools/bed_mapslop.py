@@ -24,7 +24,7 @@ def get_args():
 
 def main():
     """
-    Extend BED intervals by `args.distance` cM by loading them, transforming
+    Extend BED intervals by `args.distance` M by loading them, transforming
     them to map coordinates to add/subtract the distance, and transforming them 
     back into physical coordinates.
     """
@@ -41,6 +41,8 @@ def main():
     slopped[:, 1] = np.ceil(slopped[:, 1])  
     slopped = slopped.astype(np.int64)
     slopped[slopped < 0] = 0
+    # Remove any redundant regions
+    slopped = utils._mask_to_regions(utils._regions_to_mask(slopped))
     utils._write_bed_file(args.out_file, slopped, chrom_num)
 
     return

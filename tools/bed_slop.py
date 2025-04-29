@@ -24,13 +24,13 @@ def main():
     Load a BED file and extend its intervals by `args.distance`.
     """
     args = get_args()
-    regions, chrom_num = utils._read_bed_file(args.in_file)
+    regions, chrom_num = utils._read_bed_file(args.bed_file)
     dist = args.distance
     regions[:, 0] -= dist
     regions[:, 1] += dist
     regions[regions < 0] = 0
     resolved = utils._mask_to_regions(utils._regions_to_mask(regions))
-    utils.write_bedfile(args.out_file, resolved, chrom_num)
+    utils._write_bed_file(args.out_file, resolved, chrom_num)
 
     return 
 

@@ -48,6 +48,8 @@ def get_args():
         help='Input region specification')
     parser.add_argument('--merge', action='store_true',
         help='Merge within- and between-region ``D+``')
+    parser.add_argument('--between', action='store_true',
+        help='Include between-window statistics if --merge is not given')
     parser.add_argument('--phased', action='store_true',
         help='Use the phased (haplotype) ``D+`` estimator')
     parser.add_argument('-chrom', '--chrom', required=True,
@@ -72,9 +74,12 @@ def parse_merged(bins, regions, args):
         else:
             parse_between = True
             between = ((start, left_end), (left_end, right_end))
+
+        region_stats = {}
+
         # compute denominators
         if args.mut_file:
-            denoms, num_sites = parsing.compute_mutation_factors(
+            mut_facs, _ = parsing.compute_mutation_factors(
                 args.mut_file,
                 bed_file=args.bed_file,
                 rec_map_file=args.rec_file,
@@ -83,7 +88,7 @@ def parse_merged(bins, regions, args):
                 r_bins=bins
             )
             if parse_between:
-                _denoms, _num_sites = parsing.compute_mutation_factors(
+                _mut_facs, _ = parsing.compute_mutation_factors(
                     args.mut_file,
                     bed_file=args.bed_file,
                     rec_map_file=args.rec_file,
@@ -91,30 +96,30 @@ def parse_merged(bins, regions, args):
                     interval_between=between,
                     r_bins=bins
                 )
-                denoms += _denoms 
-                num_sites += _num_sites
-            denom_key = 'mut_facs'
-        else:
-            denoms = parsing.compute_denominators(
+                mut_facs += _mut_facs 
+            region_stats['mut_facs'] = mut_facs
+        denoms = parsing.compute_denominators(
+            bed_file=args.bed_file,
+            rec_map_file=args.rec_file,
+            interp_method='linear',
+            interval=within,
+            r_bins=bins
+        )
+        if parse_between:
+            denoms += parsing.compute_denominators(
                 bed_file=args.bed_file,
                 rec_map_file=args.rec_file,
                 interp_method='linear',
-                interval=within,
+                interval_between=between,
                 r_bins=bins
             )
-            if parse_between:
-                denoms += parsing.compute_denominators(
-                    bed_file=args.bed_file,
-                    rec_map_file=args.rec_file,
-                    interp_method='linear',
-                    interval_between=between,
-                    r_bins=bins
-                )
-            denom_key = 'denoms'
-            num_sites = denoms[-1]
+        region_stats['denoms'] = denoms
+        num_sites = region_stats['denoms']
+        region_stats['num_sites'] = num_sites
         if num_sites == 0:
             print(utils._current_time(), f'Skipping empty window {i}')
             continue
+
         sums, pop_ids = parsing.compute_statistics(
             args.vcf_file,
             bed_file=args.bed_file,
@@ -136,14 +141,14 @@ def parse_merged(bins, regions, args):
                 r_bins=bins,
                 phased=bool(args.phased)
             )[0]
+        region_stats['pop_ids'] = pop_ids
+        region_stats['bins'] = bins
+        region_stats['sums'] = sums
         key = f'{args.chrom}:{i}:{region}'
-        stats[key] = {
-            'pop_ids': pop_ids,
-            'bins': bins,
-            'sums': sums,
-            denom_key: denoms,
-            'num_sites': num_sites
-        }
+        stats[key] = region_stats
+
+        print(utils._current_time(), 
+            f'Parsed chromosome {args.chrom} window {i}')
     
     return stats
 
@@ -160,8 +165,11 @@ def parse(bins, regions, args):
             if i == j:
                 start, end = reg_i[:2]
                 interval = (start, end)
+
+                region_stats = {}
+
                 if args.mut_file is not None:
-                    denoms, num_sites = parsing.compute_mutation_factors(
+                    mut_facs, _ = parsing.compute_mutation_factors(
                         args.mut_file,
                         bed_file=args.bed_file,
                         rec_map_file=args.rec_file,
@@ -169,20 +177,21 @@ def parse(bins, regions, args):
                         interval=interval,
                         r_bins=bins
                     )
-                    denom_key = 'mut_facs'
-                else:
-                    denoms = parsing.compute_denominators(
-                        bed_file=args.bed_file,
-                        rec_map_file=args.rec_file,
-                        interp_method='linear',
-                        interval=interval,
-                        r_bins=bins
-                    )
-                    denom_key = 'denoms'
-                    num_sites = denoms[-1]
+                    region_stats['mut_facs'] = mut_facs
+                denoms = parsing.compute_denominators(
+                    bed_file=args.bed_file,
+                    rec_map_file=args.rec_file,
+                    interp_method='linear',
+                    interval=interval,
+                    r_bins=bins
+                )
+                region_stats['denoms'] = denoms
+                num_sites = region_stats['denoms']
+                region_stats['num_sites'] = num_sites
                 if num_sites == 0:
                     print(utils._current_time(), f'Skipping empty window {i}')
                     continue
+
                 sums, pop_ids = parsing.compute_statistics(
                     args.vcf_file,
                     bed_file=args.bed_file,
@@ -193,16 +202,16 @@ def parse(bins, regions, args):
                     r_bins=bins,
                     phased=bool(args.phased)
                 )
+                region_stats['pop_ids'] = pop_ids
+                region_stats['bins'] = bins
+                region_stats['sums'] = sums
                 key = f'{args.chrom}:({i},{i}):{reg_i}'
-                stats[key] = {
-                    'pop_ids': pop_ids,
-                    'bins': bins,
-                    'sums': sums,
-                    denom_key: denoms,
-                    'num_sites': num_sites
-                }
+                stats[key] = region_stats
+                print(utils._current_time(), 
+                    f'Parsed chromosome {args.chrom} window {i}x{j}')
+
             # between
-            elif i < j:
+            elif i < j and args.between:
                 left_start, left_end, right_limit = reg_i
                 right_start, right_end = reg_j[:2]
                 if right_start >= right_limit:
@@ -211,8 +220,11 @@ def parse(bins, regions, args):
                     print(utils._current_time(),
                         f'Setting right end to {right_limit} to meet limit')
                 interval = ((left_start, left_end), (right_start, right_end))
+
+                region_stats = {}
+
                 if args.mut_file is not None:
-                    denoms, num_sites = parsing.compute_mutation_factors(
+                    mut_facs, _ = parsing.compute_mutation_factors(
                         args.mut_file,
                         bed_file=args.bed_file,
                         rec_map_file=args.rec_file,
@@ -220,21 +232,22 @@ def parse(bins, regions, args):
                         interval_between=interval,
                         r_bins=bins
                     )
-                    denom_key = 'mut_facs'
-                else:
-                    denoms = parsing.compute_denominators(
-                        bed_file=args.bed_file,
-                        rec_map_file=args.rec_file,
-                        interp_method='linear',
-                        interval_between=interval,
-                        r_bins=bins
-                    )
-                    denom_key = 'denoms'
-                    num_sites = denoms[-1]
+                    region_stats['mut_facs'] = mut_facs
+                denoms = parsing.compute_denominators(
+                    bed_file=args.bed_file,
+                    rec_map_file=args.rec_file,
+                    interp_method='linear',
+                    interval_between=interval,
+                    r_bins=bins
+                )
+                region_stats['denoms'] = denoms
+                num_sites = region_stats['denoms']
+                region_stats['num_sites'] = num_sites
                 if np.sum(denoms) == 0:
                     print(utils._current_time(), 
                         f'Skipping empty windows ({i}, {j})')
                     continue
+
                 sums, pop_ids = parsing.compute_statistics(
                     args.vcf_file,
                     bed_file=args.bed_file,
@@ -246,13 +259,13 @@ def parse(bins, regions, args):
                     phased=bool(args.phased)
                 )
                 key = f'{args.chrom}:({i},{j}):({reg_i}),({reg_j})'
-                stats[key] = {
-                    'pop_ids': pop_ids,
-                    'bins': bins,
-                    'sums': sums,
-                    denom_key: denoms,
-                    'num_sites': num_sites
-                }
+                region_stats['pop_ids'] = pop_ids
+                region_stats['bins'] = bins
+                region_stats['sums'] = sums
+                stats[key] = region_stats
+                print(utils._current_time(), 
+                    f'Parsed chromosome {args.chrom} windows {i}x{j}')
+
             else:
                 continue
 

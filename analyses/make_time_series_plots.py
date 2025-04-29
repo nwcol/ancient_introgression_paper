@@ -94,68 +94,93 @@ def contraction():
     """
     Plot D+ trajectories under a model of contraction from 1e4 to 1e3
     """
-    fig, axs = plt.subplots(1, 3, figsize=(12, 4), layout='constrained')
-    ax0, ax1, ax2 = axs
+    fig, axs = plt.subplots(2, 2, figsize=(7, 7), layout='constrained')
+    ax0, ax1, ax2, ax3 = axs.flat
 
     r_vals = np.logspace(-6, -2, 20)
     t_vals = [1, 15000, 1e6]
     labels = ['$t=0$', '$t=1.5 \cdot 10^4$', '$t=\infty$']
     styles = ['solid', 'dotted', 'dashed', 'dashdot']
 
+    # subfig A
     ys = []
+    hs = []
     for t in t_vals:
         b = demes.Builder()
         b.add_deme('popA', epochs=[dict(end_time=t, start_size=10000), 
                                 dict(end_time=0, start_size=5000)])
         g = b.resolve()
-        y = moments.Demes.LD(g, ['popA'], u=u, r=r_vals).H2(0)
-        ys.append(y)
+        model = moments.Demes.LD(g, ['popA'], u=u, r=r_vals)
+        ys.append(model.H2(0))
+        hs.append(model.H(pops=[0]))
+    ys = np.array(ys)
+    hs = np.array(hs)
+
     for i in range(3):
         ax0.plot(r_vals, ys[i], label=labels[i], color='black', linestyle=styles[i])
     ax0.legend(framealpha=0)
     ax0.set_xlabel('$r$')
     ax0.set_ylabel('$E[D^+]$')
     ax0.set_xscale('log')
-    ax0.set_ylim(0,)
+    ax0.set_ylim(0,7.6e-7)
     ax0.spines['top'].set_visible(False)
     ax0.spines['right'].set_visible(False)
+    ax0.grid(axis='y', alpha=0.2)
 
 
+    # subfig C
     for i in range(3):
-        ax1.plot(r_vals, ys[i]/ys[i][-1], label=labels[i], color='black', linestyle=styles[i])
-    ax1.legend(framealpha=0)
-    ax1.set_xlabel('$r$')
-    ax1.set_ylabel('E[$D^+/H^2]$')
-    ax1.set_xscale('log')
-    ax1.set_ylim(0.9,)
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
+        ax2.plot(r_vals, ys[i]/hs[i]**2, label=labels[i], color='black', linestyle=styles[i])
+    ax2.legend(framealpha=0)
+    ax2.set_xlabel('$r$')
+    ax2.set_ylabel('E[$D^+]/E[\pi]^2$')
+    ax2.set_xscale('log')
+    ax2.set_ylim(0.8,3.1)
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    ax2.grid(axis='y', alpha=0.2)
 
 
-    # plot with xax t, yax D+, key r
     r_vals = np.array([1e-6, 3.6e-5, 7.2e-5, 1e-2])
-    labels = ['$r=10^{-6}$', '$r=3.6 \cdot 10^{-6}$', '$r=7.2 \cdot ^{-6}$', '$r=10^{-2}$']
+    labels = ['$r=10^{-6}$', '$r=3.6 \cdot 10^{-5}$', '$r=7.2 \cdot 10^{-5}$', '$r=10^{-2}$']
     t_vals = np.linspace(1, 50000, 40)
     ys = []
+    hs = []
     for t in t_vals:
         b = demes.Builder()
         b.add_deme('popA', epochs=[dict(end_time=t, start_size=10000), 
                                 dict(end_time=0, start_size=5000)])
         g = b.resolve()
-        y = moments.Demes.LD(g, ['popA'], u=u, r=r_vals).H2(0)
-        ys.append(y)
+        model = moments.Demes.LD(g, ['popA'], u=u, r=r_vals)
+        ys.append(model.H2(0))
+        hs.append(model.H(pops=[0]))
     ys = np.array(ys)
-    for i in range(4):
-        ax2.plot(t_vals, ys[:, i], label=labels[i], color='black', linestyle=styles[i])
-    ax2.legend(framealpha=0)
-    ax2.set_xlabel('time since two-fold contraction (generations)')
-    ax2.set_ylabel('$D^+$')
-    ax2.set_xlim(0,)
-    ax2.set_ylim(0,)
-    ax2.spines['top'].set_visible(False)
-    ax2.spines['right'].set_visible(False)
-    # ax.invert_xaxis()
+    hs = np.array(hs)
 
+    # subfig B
+    for i in range(4):
+        ax1.plot(t_vals, ys[:, i], label=labels[i], color='black', linestyle=styles[i])
+    ax1.legend(framealpha=0)
+    ax1.set_xlabel('time since two-fold contraction (generations)')
+    ax1.set_ylabel('$E[D^+]$')
+    ax1.set_xlim(0,)
+    ax1.set_ylim(0,7.6e-7)
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.grid(axis='y', alpha=0.2)
+
+
+    # subfig D
+    for i in range(4):
+        ax3.plot(t_vals, ys[:, i]/hs[:, 0]**2, label=labels[i], color='black', linestyle=styles[i])
+    ax3.legend(framealpha=0)
+    ax3.set_xlabel('time since two-fold contraction (generations)')
+    ax3.set_ylabel('E[$D^+]/E[\pi]^2$')
+    ax3.set_xlim(0,)
+    ax3.set_ylim(0.8,3.1)
+    ax3.spines['top'].set_visible(False)
+    ax3.spines['right'].set_visible(False)
+    ax3.grid(axis='y', alpha=0.2)
 
     plt.savefig('figure_contraction_trajectories.png', dpi=244)
     plt.show()
@@ -240,6 +265,4 @@ def bottleneck():
     return
 
 
-
-
-bottleneck()
+contraction()

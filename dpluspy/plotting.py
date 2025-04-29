@@ -195,8 +195,13 @@ def plot_d_plus_curves_comparison(
         rows = -(num_stats // -cols)
     figsize = (cols * ax_size, rows * ax_size)
 
-    bins = np.asarray(bins)
-    x = (bins[1:] + bins[:-1]) / 2
+    if isinstance(bins, list):
+        assert len(bins) == len(models) + len(means)
+        xs = [(b[1:] + b[:-1]) / 2 for b in [np.asarray(b) for b in bins]]
+    else:
+        bins = np.asarray(bins)
+        x = (bins[1:] + bins[:-1]) / 2
+        xs = [x for i in range(len(models) + len(means))]
 
     x_label = "$r$"
     if cM == True:
@@ -227,10 +232,12 @@ def plot_d_plus_curves_comparison(
         j = 0
         k = statistics.index(stat)
         for model in models:    
+            x = xs[j]
             y = [model[l][k] for l in range(len(x))]
             ax.plot(x, y, color=colors[j], label=labels[j])
             j += 1
         for mean, v in zip(means, varcovs):
+            x = xs[j]
             err = np.array([v[l][k, k] ** 0.5 * 1.96 for l in range(len(x))])
             y = np.array([mean[j][k] for j in range(len(x))])
             if fill:

@@ -37,3 +37,35 @@ rule parse_mutation_maps:
             -o {output.vcf_file} -b {output.bed_file}
         """
 
+
+
+
+        
+
+
+rule download_roulette_maps_hg19:
+    # Download Roulette mutation maps in hg19.
+    output: 
+        "raw/roulette_hg19/hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz" 
+    params:
+        link = ("http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/hg19/"
+                "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz"),
+        prefix = "raw/roulette_hg19/"
+    shell:
+        """
+        wget {params.link} -P {params.prefix}
+        """
+
+
+rule process_roulette_maps_hg19:
+    input:
+        "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz"
+    output:
+        vcf_file = "mutation_map_hg19_chr{chrom}.npy",
+        bed_file = "mutation_map_hg19_chr{chrom}.bed.gz"
+    shell:
+        """
+        python ../../tools/parse_mut_vcf.py -i {input} \
+            -o {output.vcf_file} -b {output.bed_file}
+        """
+

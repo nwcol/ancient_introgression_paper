@@ -1139,6 +1139,8 @@ def _load_recombination_map(
         raise ValueError('Unrecognized file format')
     if unit not in ('cM', 'M'):
         raise ValueError('Unrecognized map unit')
+    if np.any(x) < 1:
+        raise ValueError('All physical coordinates must be greater than 1')
     if unit == 'cM':
         map_coords *= 0.01
     if inverse:
