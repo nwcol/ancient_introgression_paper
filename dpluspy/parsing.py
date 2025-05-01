@@ -13,6 +13,15 @@ import warnings
 from . import utils
 
 
+def parse():
+    """
+    From a VCF and a BED file, compute ``D+`` and ``H`` statistics and their
+    respective denominators in some configuration of genomic windows.
+    """
+
+    return 
+
+
 def compute_statistics(
     vcf_file,
     bed_file=None,
@@ -204,8 +213,9 @@ def compute_denominators(
     :param L: Optional length for a uniform recombination map. When no interval
         is given, also determines the sequence length.
     :param r: Optional recombination rate for a uniform recombination map. 
-    :param interval: 2-tuple or list specifying the start end end of a 
-        contiguous interval within which to parse (default None).
+    :param interval: 2-tuple or list specifying the start end end of a half-
+        open contiguous interval (lower position inclusive, upper noninclusive,
+        with both 1-indexed) within which to parse (default None).
     :param interval_between: 2-tuple of 2-tuples, specifying the interval of 
         the left and right loci when parsing denominators between two windows 
         (default None). When given, the ``H`` row in the array is left as 0.
@@ -948,7 +958,7 @@ def _pi_xy(genotypes_i, genotypes_j):
 def _count_locus_pairs(site_map, bins, weights=None, verbose=False):
     """
     Compute the numbers of site pairs that fall within each of a series of 
-    recombination bins, in a contiguous genomic region. 
+    recombination bins, in a contiguous genomic window. 
 
     Used to compute ``D+`` and its denominator. 
 
@@ -959,6 +969,7 @@ def _count_locus_pairs(site_map, bins, weights=None, verbose=False):
     :weights: An array with length equal to `sitemap` assigning a weight to each 
         site (default None). Computing counts without weights is equivalent to 
         giving every site weight 1.
+
     :returns: Array of binned locus pair counts.
     """
     num_bins = len(bins) - 1
@@ -970,6 +981,8 @@ def _count_locus_pairs(site_map, bins, weights=None, verbose=False):
     if weights is not None:
         if len(weights) != len(site_map):
             raise ValueError('Length mismatch between `site_map` and `weights`')
+    if not np.all(np.diff(site_map) >= 0):
+        raise ValueError('`site_map` must increase monotonically')
 
     if weights is not None:
         if bins[0] == 0:
@@ -1012,15 +1025,13 @@ def _count_locus_pairs_between(
     verbose=False
 ):
     """
-    Compute the numbers of site pairs that fall within each of a series of 
-    recombination bins between two separate and internally contiguous genomic
-    blocks. The left block `1` must have lower map coordinates than the right
-    block. 
+    Compute binned counts of locus pairs between two discontinuous genomic
+    windows.
 
     Used to compute D+ and its denominator. 
 
     :params sitemap1, sitemap2: Array giving the recombination map coordinates 
-        of sites in linear units (cM or M) for the left and right blocks.
+        of sites in linear units (cM or M) for the left and right windows.
     :param bins: Array of recombination bin edges, given in the same unit as 
         the map (cM or M). 
     :params weights1, weights1: Array with lengths equal to `sitemap1` and 
@@ -1034,11 +1045,16 @@ def _count_locus_pairs_between(
     if len(site_map_l) == 0 or len(site_map_r) == 0:
         print(utils._current_time(), 'Empty windows: returning 0')
         return sums
+    if not np.all(np.diff(site_map_l) >= 0):
+        raise ValueError('`site_map_l` must increase monotonically')
+    if not np.all(np.diff(site_map_r) >= 0):
+        raise ValueError('`site_map_r` must increase monotonically')
     
-    if not np.max(site_map_l) <= np.min(site_map_r):
-        raise ValueError('Left window must have coords lower than right window')
+    if site_map_l[-1] > site_map_r[0]:
+        raise ValueError(
+            '`site_map_r` must have higher coords than `site_map_l`')
     if (weights_l is not None) ^ (weights_r is not None):
-        raise ValueError('You must provide weights for both blocks')
+        raise ValueError('You must provide weights for both windows')
     if weights_l is not None:
         if len(weights_l) != len(site_map_l):
             raise ValueError("Map and weight lengths mismatch for block 1")
@@ -1052,7 +1068,6 @@ def _count_locus_pairs_between(
         assert np.all(indices >= 0)
         cum_weights2 = np.concatenate(([0], np.cumsum(weights_r)))
         cum_sum0 = cum_weights2[indices]
-        sums = np.zeros(num_bins, dtype=np.float64)
         for i, b in enumerate(bins[1:]):
             indices = np.searchsorted(site_map_r, site_map_l + b)
             assert np.all(indices >= 0)
@@ -1064,7 +1079,6 @@ def _count_locus_pairs_between(
                     f"locus pairs summed (between) in bin {i}")
     else:
         edge0 = np.searchsorted(site_map_r, site_map_l + bins[0])
-        sums = np.zeros(num_bins, dtype=np.int64)
         for i, b in enumerate(bins[1:]):
             edge1 = np.searchsorted(site_map_r, site_map_l + b)
             sums[i] = (edge1 - edge0).sum() 
@@ -1139,7 +1153,7 @@ def _load_recombination_map(
         raise ValueError('Unrecognized file format')
     if unit not in ('cM', 'M'):
         raise ValueError('Unrecognized map unit')
-    if np.any(x) < 1:
+    if np.any(coords) < 1:
         raise ValueError('All physical coordinates must be greater than 1')
     if unit == 'cM':
         map_coords *= 0.01

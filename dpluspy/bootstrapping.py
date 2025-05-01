@@ -143,7 +143,7 @@ def means_across_regions(regions):
     raw_means = np.full(sums.shape, np.nan, dtype=np.float64)
     np.divide(sums, ext_denoms, where=ext_denoms > 0, out=raw_means)
     if np.any(np.isnan(raw_means)):
-        warnings.warn("NaN means exist in output")
+        warnings.warn("nan means exist in output")
     means = [raw_means[i] for i in range(len(raw_means))]
 
     return means
@@ -212,25 +212,27 @@ def weighted_bootstrap(
 
 def weighted_means_across_regions(regions):
     """
-    Compute mutation-rate weighted D+ across a set of regions.
+    Compute mutation-rate weighted D+ across a dictionary of regions.
     """
     sums = 0.0
+    pair_counts = 0.0
+    num_sites = 0.0
     mut_prods = 0.0
-    mut_sum = 0.0
-    num_sites = 0
     for key in regions:
         sums += regions[key]['sums']
+        pair_counts += regions[key]['denoms'][:-1]
+        num_sites += regions[key]['denoms'][-1]
         mut_prods += regions[key]['mut_facs'][:-1]
-        mut_sum += regions[key]['mut_facs'][-1]
-        num_sites += regions[key]['num_sites']
-    mean_mut = mut_sum / num_sites 
-    weighted_denoms = mut_prods / mean_mut ** 2
+    # Compute the u-weighted denominator
+    facs = mut_prods / (mut_prods.sum() / pair_counts.sum())
+    weighted_denoms = mut_prods / facs
     denoms = np.append(weighted_denoms, num_sites)
+    
     ext_denoms = np.repeat(denoms[:, np.newaxis], sums.shape[1], axis=1)
     raw_means = np.full(sums.shape, np.nan, dtype=np.float64)
     np.divide(sums, ext_denoms, where=ext_denoms > 0, out=raw_means)
     if np.any(np.isnan(raw_means)):
-        warnings.warn("NaN means exist in output")
+        warnings.warn("nan means exist in output")
     means = [raw_means[i] for i in range(len(raw_means))]
 
     return means
