@@ -9,6 +9,144 @@ import warnings
 from . import utils
 
 
+## Subsetting empirical statistics
+
+
+def subset_statistics(
+    statistics, 
+    to_pops=None, 
+    min_r=None, 
+    max_r=None,
+    return_dict=False
+):
+    """
+    Subset a dictionary holding statistics by populations or bins. 
+
+    :param statistics: A dictionary with fields 'means', 'varcovs', 'pop_ids',
+        and 'bins'.
+    :type statistics: dict
+    :param to_pops: List of population IDs to subset to (default None).
+    :param min_r: Minimum lower bin edge, inclusive (default None).
+    :param max_r: Maximum upper bin edge, inclusive (default None).
+    :param return_dict: If True, return a dictionary with the same fields as
+        required for the input- otherwise return bins, means and varcovs in a 
+        tuple (default False).
+
+    :returns: Dictionary of subsetted statistics.
+    :rtype: dict
+    """
+    means = statistics['means']
+    varcovs = statistics['varcovs']
+    pop_ids = statistics['pop_ids']
+    if to_pops is None:
+        to_pops = pop_ids
+    for pop_id in to_pops:
+        if pop_id not in pop_ids:
+            raise ValueError(f'"{pop_id}" is not represented in the data')
+    if min_r is not None or max_r is not None:
+        if min_r is not None:
+            min_idx = np.where(bins >= min_r)[0][0]
+        else:
+            min_idx = 0
+        if max_r is not None:
+            max_idx = np.where(bins <= max_r)[0][-1]
+        else:
+            max_idx = len(bins) - 1
+        means = means[min_idx:max_idx] + [means[-1]]
+        varcovs = varcovs[min_idx:max_idx] + [varcovs[-1]]
+    else:
+        bins = statistics['bins']
+    new_means = subset_means(means, pop_ids, to_pops)
+    new_varcovs = subset_varcovs(varcovs, pop_ids, to_pops)
+
+    if return_dict:
+        subset_stats = {
+            'pop_ids': pop_ids,
+            'bins': bins,
+            'means': new_means,
+            'varcovs': new_varcovs
+        }
+        return subset_stats
+    else:
+        return bins, new_means, new_varcovs
+
+
+def load_statistics(filename, to_pops=None):
+    # deprecated
+    stats = pickle.load(open(filename, "rb"))
+    bins = stats["bins"]
+    if to_pops is not None:
+        all_ids = stats["pop_ids"]
+        means = subset_means(stats["means"], all_ids, to_pops)
+        varcovs = subset_varcovs(stats["varcovs"], all_ids, to_pops)
+        pop_ids = to_pops
+    else:
+        pop_ids = stats["pop_ids"]
+        means = stats["means"]
+        varcovs = stats["varcovs"]
+
+    return pop_ids, bins, means, varcovs
+
+
+def subset_means(means, pop_ids, to_pops):
+    """
+    Subset a list of binned statistics representing `pop_ids` to `to_pops`. The
+    returned statistics will be in an order determined by `to_pops`.
+
+    :param means: List of 1d arrays to subset.  
+    :type means: list of np.ndarray
+    :param pop_ids: List of populations represented in `means`.
+    :type pop_ids: list of str
+    :param to_pops: List of populations to subset to. One and two-population
+        statistics from this list will be returned.
+    :typr to_pops: list of str
+
+    :returns: A list of 1d arrays subset to `to_pops`.
+    :rtype: list of np.ndarray
+    """
+    for pop in to_pops:
+        if pop not in pop_ids:
+            raise ValueError(f'"{pop}" not in `pop_ids`')
+    stats = utils._get_Dplus_names(list(range(len(pop_ids))))
+    to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
+    to_stats = []
+    for i, idx0 in enumerate(to_pop_idx):
+        for idx1 in to_pop_idx[i:]:
+            _idx0, _idx1 = sorted([idx0, idx1])
+            to_stats.append(f"D+_{_idx0}_{_idx1}")
+    to_idx = np.array([stats.index(to_stat) for to_stat in to_stats])
+    new_means = [means[i][to_idx] for i in range(len(means))]
+
+    return new_means
+
+
+def subset_varcovs(varcovs, pop_ids, to_pops):
+    """
+    Marginalize a list of bin-wise covariance matrices from `pop_ids` to `pops`.
+
+    :returns: A list of 2d covariance matrices subset to `to_pops`.
+    :rtype: list of np.ndarray
+    """
+    for pop in to_pops:
+        if pop not in pop_ids:
+            raise ValueError(f'"{pop}" not in `pop_ids`')
+    stats = utils._get_Dplus_names(list(range(len(pop_ids))))
+    to_pop_idx = [pop_ids.index(pop) for pop in to_pops]
+    to_stats = []
+    for i, idx0 in enumerate(to_pop_idx):
+        for idx1 in to_pop_idx[i:]:
+            _idx0, _idx1 = sorted([idx0, idx1])
+            to_stats.append(f"D+_{_idx0}_{_idx1}")
+    to_idx = np.array([stats.index(to_stat) for to_stat in to_stats])
+    mesh = np.ix_(to_idx, to_idx)
+    new_varcovs = [varcovs[i][mesh] for i in range(len(varcovs))]
+
+    return new_varcovs
+
+
+## Loading statistics
+
+
 def load_raw_stats(filenames, load_mut_facs=False):
     """
     Load statistics from .pkl files. The expected format of each file is
@@ -75,7 +213,7 @@ def load_bootstrap_means(filename, to_pops=None, size=None):
     return ret_means, bins, ret_pop_ids
 
 
-def bootstrap(regions, num_reps=None, get_reps=False):
+def bootstrap(regions, num_reps=1000):
     """
     Perform a bootstrap to obtain covariance matrices for D+ and H statistics,
     estimated in genomic blocks. Operates upon sums of D+, H, and their
@@ -87,16 +225,11 @@ def bootstrap(regions, num_reps=None, get_reps=False):
     :param num_reps: Number of bootstrap replicates to perform; if None, then 
         uses the number of regions (default None).
     :type num_reps: int
-    :param get_reps: If True, return a list of bootstrap replicate means in 
-        addition to means and covariances (default False).
-    :type get_reps: bool
     
     :returns: Lists of mean and covariance arrays for each D+ bin and for the H
         statistics. Optionally also a list of bootstrap replicate means.
     :rtype: tuple (2 or 3-tuple of lists)
     """
-    if num_reps is None:
-        num_reps = len(regions)
     means = means_across_regions(regions)
     labels = list(regions.keys())
     sample_size = len(regions)
@@ -114,12 +247,18 @@ def bootstrap(regions, num_reps=None, get_reps=False):
         if varcov_matrix.shape == ():
             varcov_matrix = varcov_matrix.reshape((1, 1))
         varcovs.append(varcov_matrix)
-    if get_reps:
-        ret = (means, varcovs, bootstrap_means)
-    else:
-        ret = (means, varcovs)
 
-    return ret
+    return means, varcovs
+
+
+def get_bootstrap_replicates(regions, num_reps=1000):
+    """
+    
+    """
+
+    bootstrap_means = []
+
+    return bootstrap_means
 
 
 def means_across_regions(regions):

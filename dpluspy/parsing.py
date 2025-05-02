@@ -107,7 +107,7 @@ def compute_statistics(
     if r is not None:
         if L is None:
             raise ValueError("You must provide `L`.")
-        rec_map = _get_uniform_recombination_map(L, r)
+        rec_map = _get_uniform_recombination_map(r, L)
     else:
         rec_map = _load_recombination_map(
             rec_map_file, interp_method=interp_method
@@ -188,7 +188,6 @@ def compute_denominators(
     bed_file=None,
     rec_map_file=None,
     interp_method='linear',
-    L=None,
     r=None,
     interval=None,
     interval_between=None,
@@ -209,10 +208,10 @@ def compute_denominators(
         format (default None). 
     :param interp_method: Optional method for interpolating recombination map
         coordinates (default 'linear'). Must be a valid `kind` argument to
-        `scipy.interpolate.interp1d`. 
-    :param L: Optional length for a uniform recombination map. When no interval
-        is given, also determines the sequence length.
-    :param r: Optional recombination rate for a uniform recombination map. 
+        `scipy.interpolate.interp1d`.
+    :param r: Optional recombination rate for a uniform recombination map.
+        You must provide `interval` or `interval_between` when using a uniform
+        recombination map. 
     :param interval: 2-tuple or list specifying the start end end of a half-
         open contiguous interval (lower position inclusive, upper noninclusive,
         with both 1-indexed) within which to parse (default None).
@@ -221,31 +220,33 @@ def compute_denominators(
         (default None). When given, the ``H`` row in the array is left as 0.
     :param r_bins: Recombination distance bin edges, given in units of ``r``. 
     """
-    if interval is not None:
-        within = True
-        assert len(interval) == 2
-        interval = (int(interval[0]), int(interval[1]))
-        tot_interval = interval
-    elif interval_between is not None:
-        within = False
-        assert len(interval_between) == 2
-        left_interval = interval_between[0]
-        right_interval = interval_between[1]
-        assert len(left_interval) == len(right_interval) == 2
-        assert right_interval[0] >= left_interval[1]
-        interval_between = (
-            (int(left_interval[0]), int(left_interval[1])),
-            (int(right_interval[0]), int(right_interval[1]))
-        )
-        tot_interval = (interval_between[0][0], interval_between[1][1])
+    if interval is not None or interval_between is not None:
+        if interval is not None:
+            within = True
+            assert len(interval) == 2
+            interval = (int(interval[0]), int(interval[1]))
+            tot_interval = interval
+        else:
+            within = False
+            assert len(interval_between) == 2
+            left_interval = interval_between[0]
+            right_interval = interval_between[1]
+            assert len(left_interval) == len(right_interval) == 2
+            assert right_interval[0] >= left_interval[1]
+            interval_between = (
+                (int(left_interval[0]), int(left_interval[1])),
+                (int(right_interval[0]), int(right_interval[1])))
+            tot_interval = (interval_between[0][0], interval_between[1][1])
+        if tot_interval[0] < 1:
+            raise ValueError('Interval start must be >= 1')
+        all_positions = np.arange(tot_interval[0], tot_interval[-1])
     else:
+        if bed_file is None:
+            raise ValueError('You must provide either an interval or BED file')
+        all_positions = utils._read_bed_file_positions(bed_file) + 1
         within = True
-        print(utils._current_time(), 'No interval was given: Parsing all sites')
+        print(utils._current_time(), 'No interval given: Parsing all sites')
     
-    if L is None:
-        if tot_interval is not None:
-            L = tot_interval[-1]
-
     if r_bins is None:
         raise ValueError('You must provide `r_bins`')
     if isinstance(r_bins, str):
@@ -253,41 +254,28 @@ def compute_denominators(
     bins = utils._map_function(r_bins)
 
     if r is not None:
-        if L is None:
-            raise ValueError("please provide L")
-        rec_map = _get_uniform_recombination_map(L, r)
+        rec_map = _get_uniform_recombination_map(r, tot_interval[-1])
     else:
         rec_map = _load_recombination_map(
-            rec_map_file, interp_method=interp_method
-        )
-
-    if bed_file is not None:
-        all_positions = utils._read_bed_file_positions(bed_file) + 1
-    else:
-        if L is None:
-            raise ValueError('L or a bed_file is required to compute denoms')
-        all_positions = np.arange(1, L + 1)
+            rec_map_file, interp_method=interp_method)
 
     if within:
         if interval is None:
             positions = all_positions
         else:
             positions = all_positions[
-                (all_positions >= interval[0]) & (all_positions < interval[1])
-            ]
+                (all_positions >= interval[0]) & (all_positions < interval[1])]
         pos_map = rec_map(positions)
         denoms = _count_locus_pairs(pos_map, bins)
         denoms = np.append(denoms, len(positions))
     else:
         left_positions = all_positions[
-            (all_positions >= left_interval[0]) 
-            & (all_positions < left_interval[1])
-        ]
+            (all_positions >= left_interval[0])
+             & (all_positions < left_interval[1])]
         pos_map_left = rec_map(left_positions)
         right_positions = all_positions[
             (all_positions >= right_interval[0]) 
-            & (all_positions < right_interval[1])
-        ]
+            & (all_positions < right_interval[1])]
         pos_map_right = rec_map(right_positions)
         denoms = _count_locus_pairs_between(pos_map_left, pos_map_right, bins)
         denoms = np.append(denoms, 0)
@@ -1093,23 +1081,23 @@ def _count_locus_pairs_between(
 ## Utilities
 
 
-def _get_uniform_recombination_map(L, r):
+def _get_uniform_recombination_map(r, L):
     """
     Generate a function that interpolates map coordinates for a uniform 
     recombination with rate `r` and length `L`. 
 
-    :param L: Length of the map.
     :param r: Map rate, in units of r (recombination frequency).
+    :param L: Length of the map.
 
     :returns: Function that interpolates for a uniform map, in M.
     :rtype: scipy.interpolate.interp1d 
     """
     coords = np.arange(1, L + 1)
-    map_coords = r * coords
+    map_coords = utils._map_function(r) * np.arange(L)
     mapfunc = scipy.interpolate.interp1d(
         coords, 
         map_coords, 
-        kind='linear', 
+        kind='nearest', 
         bounds_error=False, 
         fill_value=(map_coords[0], map_coords[-1])
     )
@@ -1205,7 +1193,8 @@ def _read_genotypes(
     vcf_file, 
     bed_file=None, 
     multiallelic=False,
-    missing_to_ref=True,
+    missing_to_ref=False,
+    filtered=False,
     interval=None,
     verbose=0
 ):
@@ -1239,11 +1228,10 @@ def _read_genotypes(
     :returns: Array of 1-indexed sites, array of genotypes, list of sample IDs
     """
     if bed_file is not None:
-        regions, bed_chrom = utils._read_bed_file(bed_file)
+        regions, _ = utils._read_bed_file(bed_file)
         mask = utils._regions_to_mask(regions)
         masked = True
     else:
-        bed_chrom = None
         masked = False
 
     if interval is not None:
@@ -1258,7 +1246,6 @@ def _read_genotypes(
 
     _sites = []
     _genotypes = []
-    vcf_chrom = None
     counter = 0
 
     with open_func(vcf_file, 'rb') as fin:
@@ -1269,24 +1256,17 @@ def _read_genotypes(
                     sample_ids = line.split()[9:]
                 continue
             split_line = line.split()
-            chrom = split_line[0]
             pos1 = int(split_line[1])
-
             if verbose > 1:
                 if counter % verbose == 0 and counter > 1:
                     print(utils._current_time(),
                         f'parsed position {pos1} line {counter}')
             counter += 1
-
-            #if vcf_chrom is None:
-            #    vcf_chrom = chrom
-            #    if bed_chrom is not None:
-            #        if vcf_chrom.strip('chr') != bed_chrom.strip('chr'):
-            #            raise ValueError('BED and VCF chromosomes must match')
-            #else:
-            #    if vcf_chrom != chrom:
-            #        raise ValueError('VCF files must hold 1 chromosome only')
-
+            if intervaled:
+                if pos1 < interval[0]:
+                    continue
+                if pos1 >= interval[1]:
+                    break
             if masked:
                 pos0 = pos1 - 1
                 if pos0 >= len(mask):
@@ -1294,27 +1274,35 @@ def _read_genotypes(
                 if mask[pos0] == True:
                     continue
 
-            if intervaled:
-                if pos1 < interval[0]:
+            if filtered:
+                filtr = split_line[6]
+                if filtr not in ('PASS', '.'):
                     continue
-                if pos1 >= interval[1]:
-                    break
             
-            ref = split_line[4]
-            alts = split_line[3].split(',')
+            ref = split_line[3]
+            alts = split_line[4].split(',')
             alleles = [ref] + alts
 
             if np.any([len(allele) > 1 for allele in alleles]):
                 continue
-
             if not multiallelic:
                 if len(alts) > 1:
                     continue
 
             split_samples = [sample.split(':') for sample in split_line[9:]]
-            gt_strs = [sample[0] for sample in split_samples]
-            alleles = [re.split("/|\\|", gt) for gt in gt_strs]
-            _genotypes.append(np.array(alleles))
+            genotype_strs = [sample[0] for sample in split_samples]
+            genotype_list = [re.split("/|\\|", gt) for gt in genotype_strs]
+            skip_line = False
+            for i, gt in enumerate(genotype_list):
+                for j, allele in enumerate(gt):
+                    if allele == '.':
+                        if missing_to_ref:
+                            genotype_list[i][j] = '0'
+                        else:
+                            skip_line = True
+            if skip_line:
+                continue
+            _genotypes.append(np.array(genotype_list))
             _sites.append(pos1)
 
     sites = np.array(_sites, dtype=np.int64)
