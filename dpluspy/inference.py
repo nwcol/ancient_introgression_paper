@@ -12,7 +12,7 @@ import sys
 import os
 import pickle
 
-from . import utils
+from . import utils, bootstrapping
 from .datastrucs import DplusStats
 
 
@@ -36,8 +36,9 @@ def load_statistics(data_file, graph=None):
     if graph:
         _pop_ids = data["pop_ids"]
         pop_ids = graph_data_overlap(graph, _pop_ids)
-        means = utils.subset_means(data["means"], _pop_ids, pop_ids)
-        varcovs = utils.subset_varcovs(data["varcovs"], _pop_ids, pop_ids)
+        means = bootstrapping.subset_means(data["means"], _pop_ids, pop_ids)
+        varcovs = bootstrapping.subset_varcovs(
+            data["varcovs"], _pop_ids, pop_ids)
     else:
         pop_ids = data['pop_ids']
         means = data['means']
