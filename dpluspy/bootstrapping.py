@@ -38,6 +38,7 @@ def subset_statistics(
     means = statistics['means']
     varcovs = statistics['varcovs']
     pop_ids = statistics['pop_ids']
+    bins = statistics['bins']
     if to_pops is None:
         to_pops = pop_ids
     for pop_id in to_pops:
@@ -54,12 +55,15 @@ def subset_statistics(
             max_idx = len(bins) - 1
         means = means[min_idx:max_idx] + [means[-1]]
         varcovs = varcovs[min_idx:max_idx] + [varcovs[-1]]
+        bins = bins[min_idx:max_idx + 1]
     else:
         bins = statistics['bins']
     new_means = subset_means(means, pop_ids, to_pops)
     new_varcovs = subset_varcovs(varcovs, pop_ids, to_pops)
 
     if return_dict:
+        if to_pops:
+            pop_ids = to_pops
         subset_stats = {
             'pop_ids': pop_ids,
             'bins': bins,
@@ -305,7 +309,6 @@ def means_across_replicates(replicates):
     return means
 
 
-
 def weighted_bootstrap(
     regions,
     num_reps=None, 
@@ -355,16 +358,15 @@ def weighted_means_across_regions(regions):
     """
     sums = 0.0
     pair_counts = 0.0
-    num_sites = 0.0
     mut_prods = 0.0
+    num_sites = 0.0
     for key in regions:
         sums += regions[key]['sums']
         pair_counts += regions[key]['denoms'][:-1]
-        num_sites += regions[key]['denoms'][-1]
         mut_prods += regions[key]['mut_facs'][:-1]
+        num_sites += regions[key]['denoms'][-1]
     # Compute the u-weighted denominator
-    facs = mut_prods / (mut_prods.sum() / pair_counts.sum())
-    weighted_denoms = mut_prods / facs
+    weighted_denoms = mut_prods / (mut_prods.sum() / pair_counts.sum())
     denoms = np.append(weighted_denoms, num_sites)
     
     ext_denoms = np.repeat(denoms[:, np.newaxis], sums.shape[1], axis=1)

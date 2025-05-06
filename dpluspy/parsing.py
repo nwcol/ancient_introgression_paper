@@ -13,13 +13,151 @@ import warnings
 from . import utils
 
 
-def parse():
+def parse_statistics(
+    vcf_file,
+    bed_file,
+    pop_file=None,
+    pop_mapping=None,
+    rec_map_file=None,
+    interp_method='linear',
+    r=None,
+    r_bins=None,
+    phased=False,
+    cross_pop=True,
+    mut_map_file=None,
+    mut_map_col=None,
+    regions=None,
+    regions_file=None,
+    chrom=None
+):
     """
     From a VCF and a BED file, compute ``D+`` and ``H`` statistics and their
-    respective denominators in some configuration of genomic windows.
+    respective denominators given a configuration of genomic windows. Returns 
+    a dictionary of region statistics. Each set of region statistics is stored
+    in a dictionary with keys 'denoms', 'sums', 'pop_ids', 'bins' and optionally
+    'mut_facs'.
     """
+    if not (regions is not None) ^ (regions_file is not None):
+        raise ValueError('You must provide either `regions` or `regions_file`')
+    if regions_file:
+        regions = np.loadtxt(regions_file)
+    for region in regions:
+        assert len(region) >= 2 and len(region) <= 3
+    if chrom is None:
+        chrom = ""
 
-    return 
+    stats = {}
+
+    for i, region in enumerate(regions):
+        region_stats = {}
+        if len(region) == 2:
+            interval = region
+            interval_between = None 
+        else:
+            interval = region[:2]
+            if region[1] != region[2]:
+                interval_between = ((region[0], region[1]), (region[1], region[2]))
+            else:
+                interval_between = None
+
+        # compute denominators
+        denoms = compute_denominators(
+            bed_file=bed_file,
+            rec_map_file=rec_map_file,
+            interp_method=interp_method,
+            r=r,
+            interval=interval,
+            r_bins=r_bins
+        )
+        if interval_between:
+            denoms += compute_denominators(
+                bed_file=bed_file,
+                rec_map_file=rec_map_file,
+                interp_method=interp_method,
+                r=r,
+                interval_between=interval_between,
+                r_bins=r_bins 
+            )
+        region_stats['denoms'] = denoms
+        num_sites = denoms[-1]
+        region_stats['num_sites'] = num_sites
+        if num_sites == 0:
+            print(utils._current_time(), 
+                  f'Chromosome {chrom} window {i} is empty')
+            continue
+
+        if mut_map_file:
+            mut_facs, _ = compute_mutation_factors(
+                mut_map_file,
+                bed_file=bed_file,
+                rec_map_file=rec_map_file,
+                interp_method=interp_method,
+                r=r,
+                interval=interval,
+                r_bins=r_bins,
+                mut_map_col=mut_map_col
+            )
+            if interval_between:
+                mut_facs += compute_mutation_factors(
+                    mut_map_file,
+                    bed_file=bed_file,
+                    rec_map_file=rec_map_file,
+                    interp_method=interp_method,
+                    r=r,
+                    interval_between=interval_between,
+                    r_bins=r_bins,
+                    mut_map_col=mut_map_col
+                )[0]
+            region_stats['mut_facs'] = mut_facs
+
+        # Compute sums
+        sums, pop_ids = compute_statistics(
+            vcf_file,
+            bed_file=bed_file,
+            pop_file=pop_file,
+            pop_mapping=pop_mapping,
+            rec_map_file=rec_map_file,
+            interp_method=interp_method,
+            r=r,
+            interval=interval,
+            r_bins=r_bins,
+            phased=phased,
+            cross_pop=cross_pop
+        )
+        if interval_between:
+            _sums = compute_statistics(
+                vcf_file,
+                bed_file=bed_file,
+                pop_file=pop_file,
+                pop_mapping=pop_mapping,
+                rec_map_file=rec_map_file,
+                interp_method=interp_method,
+                r=r,
+                interval_between=interval_between,
+                r_bins=r_bins,
+                phased=phased,
+                cross_pop=cross_pop
+            )[0]
+            if np.sum(_sums) == 0:
+                print(utils._current_time(),
+                    f'Chromosome {chrom} window overhang {i} has zero sum')
+            sums += _sums
+        if np.sum(sums) == 0:
+            print(utils._current_time(),
+                  f'Chromosome {chrom} window {i} has zero sum')
+
+        region_stats['pop_ids'] = pop_ids
+        region_stats['sums'] = sums
+        if isinstance(r_bins, str):
+            r_bins = np.loadtxt(r_bins)
+        region_stats['bins'] = r_bins
+        key = f'{chrom}:{i}:{region}'
+        stats[key] = region_stats
+
+        print(utils._current_time(), 
+            f'Parsed chromosome {chrom} window {i}')
+        
+    return stats
 
 
 def compute_statistics(
@@ -29,7 +167,6 @@ def compute_statistics(
     pop_mapping=None,
     rec_map_file=None,
     interp_method='linear',
-    L=None,
     r=None,
     interval=None,
     interval_between=None,
@@ -74,30 +211,28 @@ def compute_statistics(
     :param cross_pop: If True, compute cross-population statistics (default
         True).
     """
-    if interval is not None:
-        within = True
-        assert len(interval) == 2
-        interval = (int(interval[0]), int(interval[1]))
-        tot_interval = interval
-    elif interval_between is not None:
-        within = False
-        assert len(interval_between) == 2
-        left_interval = interval_between[0]
-        right_interval = interval_between[1]
-        assert len(left_interval) == len(right_interval) == 2
-        assert right_interval[0] >= left_interval[1]
-        interval_between = (
-            (int(left_interval[0]), int(left_interval[1])),
-            (int(right_interval[0]), int(right_interval[1]))
-        )
-        tot_interval = (interval_between[0][0], interval_between[1][1])
+    if interval is not None or interval_between is not None:
+        if interval is not None:
+            within = True
+            assert len(interval) == 2
+            interval = (int(interval[0]), int(interval[1]))
+            tot_interval = interval
+        else:
+            within = False
+            assert len(interval_between) == 2
+            left_interval = interval_between[0]
+            right_interval = interval_between[1]
+            assert len(left_interval) == len(right_interval) == 2
+            assert right_interval[0] >= left_interval[1]
+            interval_between = (
+                (int(left_interval[0]), int(left_interval[1])),
+                (int(right_interval[0]), int(right_interval[1])))
+            tot_interval = (interval_between[0][0], interval_between[1][1])
+        if tot_interval[0] < 1:
+            raise ValueError('Interval start must be >= 1')
     else:
         within = True
-        print(utils._current_time(), 'No interval was given: Parsing all sites')
-    
-    if L is None:
-        if tot_interval is not None:
-            L = tot_interval[-1]
+        print(utils._current_time(), 'No interval given: Parsing all sites')
 
     if pop_file is not None and pop_mapping is not None:
         raise ValueError('You cannot use both `pop_file` and `pop_mapping`')
@@ -105,9 +240,7 @@ def compute_statistics(
         pop_mapping = _load_pop_file(pop_file)
 
     if r is not None:
-        if L is None:
-            raise ValueError("You must provide `L`.")
-        rec_map = _get_uniform_recombination_map(r, L)
+        rec_map = _get_uniform_recombination_map(r, tot_interval[-1])
     else:
         rec_map = _load_recombination_map(
             rec_map_file, interp_method=interp_method
@@ -239,13 +372,16 @@ def compute_denominators(
             tot_interval = (interval_between[0][0], interval_between[1][1])
         if tot_interval[0] < 1:
             raise ValueError('Interval start must be >= 1')
-        all_positions = np.arange(tot_interval[0], tot_interval[-1])
     else:
         if bed_file is None:
             raise ValueError('You must provide either an interval or BED file')
-        all_positions = utils._read_bed_file_positions(bed_file) + 1
         within = True
         print(utils._current_time(), 'No interval given: Parsing all sites')
+    
+    if bed_file is not None:
+        all_positions = utils._read_bed_file_positions(bed_file) + 1
+    else:
+        all_positions = np.arange(tot_interval[0], tot_interval[-1])
     
     if r_bins is None:
         raise ValueError('You must provide `r_bins`')
@@ -254,7 +390,7 @@ def compute_denominators(
     bins = utils._map_function(r_bins)
 
     if r is not None:
-        rec_map = _get_uniform_recombination_map(r, tot_interval[-1])
+        rec_map = _get_uniform_recombination_map(r, all_positions[-1])
     else:
         rec_map = _load_recombination_map(
             rec_map_file, interp_method=interp_method)
@@ -289,7 +425,6 @@ def compute_mutation_factors(
     bed_file=None,
     rec_map_file=None,
     interp_method='linear',
-    L=None,
     r=None,
     interval=None,
     interval_between=None,
@@ -314,8 +449,6 @@ def compute_mutation_factors(
     :param interp_method: Optional method for interpolating recombination map
         coordinates (default 'linear'). Must be a valid `kind` argument to
         `scipy.interpolate.interp1d`. 
-    :param L: Optional length for a uniform recombination map. When no interval
-        is given, `L` also determines the sequence length.
     :param r: Optional recombination rate for a uniform recombination map. 
     :param interval: 2-tuple or list specifying the start end end of a 
         contiguous interval within which to parse (default None).
@@ -324,46 +457,41 @@ def compute_mutation_factors(
         (default None). When given, the ``H`` row in the array is left as 0.
     :param r_bins: Recombination distance bin edges, given in units of ``r``. 
     """
-    if interval is not None:
-        within = True
-        assert len(interval) == 2
-        interval = (int(interval[0]), int(interval[1]))
-        tot_interval = interval
-    elif interval_between is not None:
-        within = False
-        assert len(interval_between) == 2
-        left_interval = interval_between[0]
-        right_interval = interval_between[1]
-        assert len(left_interval) == len(right_interval) == 2
-        assert right_interval[0] >= left_interval[1]
-        interval_between = (
-            (int(left_interval[0]), int(left_interval[1])),
-            (int(right_interval[0]), int(right_interval[1]))
-        )
-        tot_interval = (interval_between[0][0], interval_between[1][1])
+    if interval is not None or interval_between is not None:
+        if interval is not None:
+            within = True
+            assert len(interval) == 2
+            interval = (int(interval[0]), int(interval[1]))
+            tot_interval = interval
+        else:
+            within = False
+            assert len(interval_between) == 2
+            left_interval = interval_between[0]
+            right_interval = interval_between[1]
+            assert len(left_interval) == len(right_interval) == 2
+            assert right_interval[0] >= left_interval[1]
+            interval_between = (
+                (int(left_interval[0]), int(left_interval[1])),
+                (int(right_interval[0]), int(right_interval[1])))
+            tot_interval = (interval_between[0][0], interval_between[1][1])
+        if tot_interval[0] < 1:
+            raise ValueError('Interval start must be >= 1')
     else:
+        if bed_file is None:
+            raise ValueError('You must provide either an interval or BED file')
         within = True
-        print(utils._current_time(), 'No interval was given: Parsing all sites')
+        print(utils._current_time(), 'No interval given: Parsing all sites')
     
-    if L is None:
-        if tot_interval is not None:
-            L = tot_interval[-1]
-
-    if r is not None:
-        if L is None:
-            raise ValueError('You must provide `L`.')
-        rec_map = _get_uniform_recombination_map(L, r)
-    else:
-        rec_map = _load_recombination_map(
-            rec_map_file, interp_method=interp_method
-        )
-
     if bed_file is not None:
         all_positions = utils._read_bed_file_positions(bed_file) + 1
     else:
-        if L is None:
-            raise ValueError('You must provide `L` or `bed_file`')
-        all_positions = np.arange(1, L + 1)
+        all_positions = np.arange(tot_interval[0], tot_interval[-1])
+
+    if r is not None:
+        rec_map = _get_uniform_recombination_map(r, all_positions[-1])
+    else:
+        rec_map = _load_recombination_map(
+            rec_map_file, interp_method=interp_method)
 
     if r_bins is None:
         raise ValueError('You must provide `r_bins`')
@@ -382,7 +510,7 @@ def compute_mutation_factors(
         mut_map = _load_mutation_map(
             mut_map_file, positions, map_col=mut_map_col
         )
-        mut_facs= _count_locus_pairs(pos_map, bins, weights=mut_map)
+        mut_facs = _count_locus_pairs(pos_map, bins, weights=mut_map)
         sum_mut = np.sum(mut_map)
         mut_facs = np.append(mut_facs, sum_mut)
         num_sites = len(positions)

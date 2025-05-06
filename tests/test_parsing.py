@@ -250,7 +250,7 @@ class TestGenotypeEstimators(unittest.TestCase):
         result = parsing._genotype_Dplus_between(gt3, gt3, map1l, map1r, bins1)
         self.assertTrue(np.all(result == [0]))   
    
-    def _test_cross_genotype_within(self):
+    def test_cross_genotype_within(self):
         # Single-haplotype tests (not exhaustive)
         map1 = np.array([0, 0])
         bins1 = np.array([0, 1])
@@ -447,7 +447,84 @@ class TestDenomParsing(unittest.TestCase):
 class TestMutFacParsing(unittest.TestCase):
 
     def test_default_mut_fac_parsing(self):
-        pass
+        bedgraph_file = os.path.join(os.path.dirname(__file__),
+            'test_files/mutation_map.bedgraph')
+        npy_file = os.path.join(os.path.dirname(__file__),
+            'test_files/mutation_map.npy')
+        unif_map = os.path.join(os.path.dirname(__file__),
+            'test_files/uniform_recmap.txt')
+        het_map = os.path.join(os.path.dirname(__file__),
+            'test_files/heterogeneous_recmap.txt')
+        bins = np.array([0, 1e-8, 4e-8, 6e-8, 1e-7])
+
+        expected = np.array([[3.4875e-16, 2.725e-16, 0, 0, 4.1e-8]])
+        result = parsing.compute_mutation_factors(
+            bedgraph_file, r=1e-8, interval=(1, 6), r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            npy_file, r=1e-8, interval=(1, 6), r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            bedgraph_file, rec_map_file=unif_map, interval=(1, 6), r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            npy_file, rec_map_file=unif_map, interval=(1, 6), r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+
+        expected = np.array([1.25e-16, 3.4875e-16, 6.25e-17, 8.5e-17, 4.1e-8])
+        result = parsing.compute_mutation_factors(
+            bedgraph_file, rec_map_file=het_map, interval=(1, 6), r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            npy_file, rec_map_file=het_map, interval=(1, 6), r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        
+    def test_masked_mut_fac_parsing(self):
+        mask_file = os.path.join(os.path.dirname(__file__),
+            'test_files/mask_1_3_5.bed')
+        bedgraph_file = os.path.join(os.path.dirname(__file__),
+            'test_files/mutation_map.bedgraph')
+        npy_file = os.path.join(os.path.dirname(__file__),
+            'test_files/mutation_map.npy')
+        unif_map = os.path.join(os.path.dirname(__file__),
+            'test_files/uniform_recmap.txt')
+        het_map = os.path.join(os.path.dirname(__file__),
+            'test_files/heterogeneous_recmap.txt')
+        bins = np.array([0, 1e-8, 4e-8, 6e-8, 1e-7])
+
+        expected = np.array([[0, 1.475e-16, 0, 0, 2.35e-8]])
+        result = parsing.compute_mutation_factors(
+            bedgraph_file, r=1e-8, bed_file=mask_file, r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            npy_file, r=1e-8, bed_file=mask_file, r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(bedgraph_file, 
+            rec_map_file=unif_map, bed_file=mask_file, r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            npy_file, rec_map_file=unif_map, bed_file=mask_file, r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+
+        expected = np.array([0, 1.25e-16, 0, 2.25e-17, 2.35e-8])
+        result = parsing.compute_mutation_factors(
+            bedgraph_file, rec_map_file=het_map, bed_file=mask_file, r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
+        result = parsing.compute_mutation_factors(
+            npy_file, rec_map_file=het_map, bed_file=mask_file, r_bins=bins
+        )[0]
+        self.assertTrue(np.all(np.isclose(result, expected)))
 
 
 ## "Naive" pair-counting functions to check the fast vectorized ones.

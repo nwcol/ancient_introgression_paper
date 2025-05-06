@@ -91,13 +91,15 @@ def plot_d_plus_curves_comparison(
     fill=True,
     rows=None,
     cols=None,
-    ax_size=3,
+    ax_size=2,
     plot_H=False,
     cM=False,
     out=None,
     show=True,
     sharey=False,
-    title=None
+    title=None,
+    ylim=None,
+    plot_grid=False
 ):
     """
     Plot any number of model expectations and empirical data sets alongside
@@ -253,7 +255,8 @@ def plot_d_plus_curves_comparison(
                     label=labels[j]
                 )
             j += 1
-            ax.legend(framealpha=0, loc='upper right')
+            if len(models) + len(means) > 1:
+                ax.legend(framealpha=0, loc='upper right')
 
         # ax setup
         ax.set_xscale("log")
@@ -263,6 +266,10 @@ def plot_d_plus_curves_comparison(
             ax.set_ylabel("$D^+$")
         stat_name = stat_names[k]
         ax.set_title(stat_name, y=0.85)
+        if ylim is not None:
+            ax.set_ylim(ylim,)
+        if plot_grid:
+            ax.grid(alpha=0.3)
 
     if plot_H:
         ax = axs[num_stats - 1]
@@ -290,10 +297,15 @@ def plot_d_plus_curves_comparison(
                     label=label, ecolor=colors[j], capsize=2
                 )
                 j += 1
-        ax.legend(framealpha=0, loc='upper right')
+        if len(models) + len(means) > 1:
+            ax.legend(framealpha=0, loc='upper right')
         ax.set_xticks(list(range(len(Hs_to_plot))), labels=H_labels)
         ax.set_xlim(-0.2, len(Hs_to_plot) - 0.8)
         ax.set_title('$H$', y=0.85)
+        if ylim is not None:
+            ax.set_ylim(ylim,)
+        if plot_grid:
+            ax.grid(alpha=0.3)
 
     if title:
         fig.suptitle(title)

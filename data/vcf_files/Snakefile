@@ -1,0 +1,159 @@
+
+
+configfile: "config.yaml"
+
+
+rule all:
+    input:
+        expand("African/Africans.variants.chr{chrom}.vcf.gz", chrom=config["chroms"]),
+        expand("Eurasian/Eurasians.variants.chr{chrom}.vcf.gz", 
+            chrom=config["chroms"])
+
+## African data set (genome sequences of 24 contemperary African people)
+
+rule extract_sgdp_vcfs:
+    # Extract desired VCFs from the SGDP tarball and their index files.
+    input:
+        config["sgdp_archive"]
+    output:
+        vcf_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz",
+        index_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz.tbi"
+    params:
+        vcf_file = "{sample}.annotated.nh2.variants.vcf.gz",
+        index_file = "{sample}.annotated.nh2.variants.vcf.gz.tbi"
+    shell:
+        """
+        tar -xvf {input} {params.vcf_file}
+        mv {params.vcf_file} raw/sgdp
+        tar -xvf {input} {params.index_file}
+        mv {params.index_file} raw/sgdp
+        """
+
+rule split_and_reduce_sgdp_vcfs:
+    # Split SGDP VCFs into respective chromosomes, and use bcftools annotate
+    # to remove some fields that we don't require from them.
+    input:
+        vcf_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz",
+        index_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz.tbi"
+    output:
+        "raw/sgdp/{sample}.variants.chr{chrom}.vcf.gz"
+    params:
+        chrom = "{chrom}"
+    shell:
+        """
+        bcftools view -r {params.chrom} -Ou {input.vcf_file} | \
+            bcftools annotate \
+                -x ID,QUAL,INFO,FORMAT/PL,FORMAT/AD -o {output}
+        """
+
+rule index_split_and_reduced_sgdp_files:
+    # These files must be indexed before merging.
+    input:
+        "raw/sgdp/{sample}.variants.chr{chrom}.vcf.gz"
+    output:
+        "raw/sgdp/{sample}.variants.chr{chrom}.vcf.gz.csi"
+    shell:
+        """
+        bcftools index {input}
+        """
+
+rule merge_sgdp_african_vcfs:
+    # Merge SGDP VCF files together without doing any filtering.
+    input:
+        vcf_files = expand("raw/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz", 
+            sample=config["sgdp_samples"]),
+        index_files = expand("raw/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
+            sample=config["sgdp_samples"])
+    output:
+        "African/Africans.variants.chr{chrom}.vcf.gz"
+    shell:
+        """
+        bcftools merge -0 {input.vcf_files} -Ou | \
+            bcftools annotate -x ^FORMAT/GT -o {output}
+        """
+
+## Eurasian data set (genome sequences of 4 archaic, 3 ancient, and 3 
+## contemperary humans)
+
+rule extract_archaic_gvcf_variants:
+    input:
+        vcf_file = config["archaic_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz",
+        index_file = config["archaic_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz"
+    output:
+        "raw/eurasian/{sample}.variants.chr{chrom}.vcf.gz"
+    shell:
+        """
+        bcftools view -c1 -Ou {input.vcf_file} | \
+            bcftools annotate \
+                -x QUAL,INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ \
+                -o {output}
+        """
+
+rule extract_chagyrskaya_gvcf_variants:
+    input:
+        vcf_file = config["archaic_dir"] + "{sample}/chr{chrom}.noRB.vcf.gz",
+        index_file = config["archaic_dir"] + "{sample}/chr{chrom}.noRB.vcf.gz.csi"
+    output:
+        "raw/eurasian/{sample}.variants.chr{chrom}.vcf.gz"
+    shell:
+        """
+        bcftools view -c1 -Ou {input.vcf_file} | \
+            bcftools annotate \
+                -x QUAL,INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ \
+                -o {output}
+        """
+
+rule extract_ancient_gvcf_variants:
+    # Extract variant sites from GVCF files holding ancient AMH sequences.
+    input:
+        vcf_file = config["ancient_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz",
+        index_file = config["ancient_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz"
+    output:
+        "raw/eurasian/{sample}.variants.chr{chrom}.vcf.gz"
+    shell:
+        """
+        bcftools view -c1 -Ou {input.vcf_file} | \
+            bcftools annotate \
+                -x QUAL,INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ \
+                -o {output}
+        """
+
+rule index_eurasian_gvcf_variants:
+    input:
+        "raw/eurasian/{sample}.variants.chr{chrom}.vcf.gz"
+    output:
+        "raw/eurasian/{sample}.variants.chr{chrom}.vcf.gz.csi"
+    shell:
+        """
+        bcftools index {input}
+        """
+
+rule merge_contemperary_human_vcfs:
+    # These are merged separately so that we can use the -0 "missing to ref" flag
+    input:
+        vcf_files = expand("raw/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz",
+                sample=config["contemp_samples"]),
+        index_files = expand("raw/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
+            sample=config["contemp_samples"])
+    output:
+        "raw/eurasian/Contemperary.variants.chr{chrom}.vcf.gz"
+    shell:
+        """
+        bcftools merge -0 {input.vcf_files} -o {output} 
+        """
+
+rule merge_eurasian_vcfs:
+    input:
+        vcf_files = expand("raw/eurasian/{sample}.variants.chr{{chrom}}.vcf.gz", 
+            sample=config["ancient_samples"]),
+        pre_assembled = "raw/eurasian/Contemperary.variants.chr{chrom}.vcf.gz",
+        index_files = expand("raw/eurasian/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
+                sample=config["ancient_samples"]),
+        pre_assembled_index = "raw/eurasian/Contemperary.variants.chr{chrom}.vcf.gz.csi"
+    output:
+        "Eurasian/Eurasians.variants.chr{chrom}.vcf.gz"
+    shell:
+        """
+        bcftools merge -0 {input.vcf_files} {input.pre_assembled} -Ou | \
+            bcftools annotate -x ^FORMAT/GT -o {output} 
+        """

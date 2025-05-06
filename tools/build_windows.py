@@ -5,6 +5,7 @@
 import argparse
 import numpy as np
 import sys
+import pandas
 
 
 def get_args():
@@ -12,11 +13,24 @@ def get_args():
     parser.add_argument('-cyto', '--cyto_band_file', required=True, 
         help='Input band file')
     parser.add_argument('-chrom', '--chrom_num', required=True, 
-        help='Chromosome number')
+        help='Chromosome number, prefixed by `chr`')
     parser.add_argument('-size', '--window_size', required=True, type=int,
-        help='Desired window size')
+        help='Desired window size in Mb')
+    parser.add_argument('-flank', '--flank', required=True, type=int,
+        help='Length of flank around centromeres and chromosome ends in Mb')
 
     return parser.parse_args()
+
+
+def _main():
+
+    args = get_args()
+    full_df = pandas.read_csv(args.cyto_band_file, sep='\t', 
+        names=['chrom', 'start', 'end', 'name', 'stain'])
+    df = full_df[full_df['chrom'] == args.chrom_num]
+    
+
+    return
 
 
 def main():

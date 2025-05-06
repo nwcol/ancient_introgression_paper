@@ -62,19 +62,8 @@ class TestBootstrap(unittest.TestCase):
 
     def test_bootstrap_with_sampling(self):
         # Construct a dataset by random sampling
-        mu = np.array([1e-6, 3e-6, 2e-6])
-        Sigma = np.array(
-            [[6e-14, 2e-14, 1.5e-14],
-             [2.5e-14, 4e-14, 2e-14],
-             [2e-14, 1e-14, 7e-14]]
-        )
-        reps = {}
-        for i in range(500):
-            sample = np.random.multivariate_normal(mu, Sigma)
-            sums = np.stack((sample, np.ones(3)), axis=0)
-            reps[i] = {'sums': sums, 'denoms': np.array([1, 1])}
-
-
+        pass
+    
 
 class TestMeansAcrossRegions(unittest.TestCase):
 
