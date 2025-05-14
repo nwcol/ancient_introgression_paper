@@ -1,28 +1,4 @@
-"""
-Compute ``D+`` and ``H`` from sequences in a VCF file, and emit them in a .pkl
-file with this structure:
-{
-    'chr0:0': {
-        'sums': np.ndarray([[...]]),
-        'denoms': np.ndarray([...]),
-        'pop_ids': [...],
-        'bins': np.ndarray([...])
-    }
-    'chr0:1': {...}
-    ...
-}
-Where '0' and '1' are indices of genomic regions. When `--merge` is not thrown,
-pairs of genomic regions '(0, 0)', '(0, 1)', ... will appear in the output file 
-instead. Regions with 0 locus pairs spanning less distance than the highest bin 
-edge are discarded. 
 
-Regions should be specified in a whitespace-separated plaintext file. This file
-should have as many rows as there are genomic regions, with three columns:
-left/right locus start, left locus end, and right locus end. 
-
-When a mutation map is provided, 'denoms' is replaced by 'mut_facs', which are 
-used for weighting statistics when performing bootstraps.
-"""
 
 import argparse
 import pickle
@@ -52,7 +28,6 @@ def get_args():
         help='Output filepath')
     return parser.parse_args()
 
-
 def main():
     args = get_args()
     stats = parsing.parse_statistics(
@@ -70,5 +45,4 @@ def main():
     return
 
 
-if __name__ == '__main__':
-    main()
+main()
