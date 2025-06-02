@@ -6,7 +6,7 @@ error = reports/job_$(Cluster).err
 output = reports/job_$(Cluster).out
 
 requirements = (Target.HasCHTCStaging == true)
-container_image = file:///staging/nwcollier/dplus-container.sif
+container_image = file:///staging/nwcollier/dpluspy-container.sif
 
 executable = test_container.sh
 

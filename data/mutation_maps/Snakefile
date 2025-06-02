@@ -5,12 +5,42 @@ into .npy files. Also create .bed files representing map coverage.
 
 
 CHROMS = list(range(1, 23))
+
+
+rule all:
+    input: expand("roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz", chrom=CHROMS)
+
+rule build_windowed_maps_1kb:
+    input:
+        script = "../../tools/build_windowed_map.py",
+        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
+        mask = "../bed_files/filterbed_exons_1e-4M/mask_chr{chrom}.bed.gz"
+    params:
+        scale = "1000"
+    output:
+        "roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.site_map} \
+            -b {input.mask} \
+            --scale {params.scale} \
+            -o {output}
+        """
+
+
+
+
+
+
+
+
 npy_files = [f"mutation_map_hg19_chr{chrom}.npy" for chrom in CHROMS]
 bed_files = [f"mutation_map_hg19_chr{chrom}.bed.gz" for chrom in CHROMS]
 
 
-rule all:
-    input: npy_files, bed_files
+
+
 
 
 rule download_mutation_maps:
