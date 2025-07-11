@@ -1,0 +1,7 @@
+filterbed/mask_chr10.bed.gz	56387503
+filterbed/mask_chr11.bed.gz	56471773
+filterbed/mask_chr12.bed.gz	56593074
+filterbed/mask_chr13.bed.gz	44100422
+filterbed/mask_chr14.bed.gz	38476379
+filterbed/mask_chr15.bed.gz	33662150
+filterbed/mask_chr16.bed.gz	30350861

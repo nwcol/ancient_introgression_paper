@@ -4,16 +4,36 @@
 
 .old/
 data/.old/
-data/bed_files/*/     
+
+data/bed_files/.old/  
+data/bed_files/raw/
+data/bed_files/buffers/
+data/bed_files/filterbed/
+data/bed_files/filterbed_1e-4M_exon_buffer/
+data/bed_files/filterbed_10kb_exon_buffer/
+data/bed_files/filterbed_20kb_exon_buffer/
+data/bed_files/filterbed_50kb_exon_buffer/
+data/bed_files/filterbed_intergenic/
+data/bed_files/filterbed_roulette/
+
 data/mutation_maps/*/
 data/recombination_maps/*/
-data/vcf_files/*/
+
+data/vcf_files/.old/
+data/vcf_files/raw/
+data/vcf_files/sgdp/
 
 statistics/
-simulations/
+simulations/roulette*/
 models/000*/
 models/working/
-models/analytic
+models/analytic/
+models/library/
+models/
 working/
+simulations/
+theory/
 
-notebooks/*.nb
+analyses/B_map_stratification/data
+analyses/exon_buffers/data
+analyses/mutation_weighting_sim/data

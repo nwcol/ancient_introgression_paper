@@ -1,32 +1,6 @@
-chroms: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 sgdp_archive: '/media/nick/Elements/Data/Simons/vcfs.variants.public_samples.279samples.tar'
-sgdp_samples:
-- LP6005443-DNA_E02
-- LP6005443-DNA_A01
-- LP6005443-DNA_G02
-- LP6005441-DNA_G02
-- LP6005441-DNA_H02
-- LP6005443-DNA_H08
-- LP6005443-DNA_B09
-- SS6004480
-- LP6005443-DNA_G08
-- LP6005441-DNA_B11
-- LP6005441-DNA_A11
-- LP6005677-DNA_D03
-- LP6005592-DNA_C05
-- LP6005442-DNA_F11
-- LP6005442-DNA_E11
-- LP6005441-DNA_E07
-- LP6005592-DNA_C03
-- LP6005441-DNA_B08
-- LP6005441-DNA_A08
-- SS6004471
-- LP6005442-DNA_G11
-- LP6005442-DNA_B02
-- LP6005442-DNA_A02
-- SS6004475
 archaic_dir: '/media/nick/Elements/Data/Archaic_hg19/'
-ancient_dir: '/media/nick/Elements/Data/Ancient/'
+ancient_human_dir: '/media/nick/Elements/Data/Ancient/'
 ancient_samples:
 - Vindija
 - Altai
@@ -40,12 +14,7 @@ archaic_samples:
 - Altai
 - Chagyrskaya
 - Denisova
-mhuman_samples:
+ancient_human_samples:
 - UstIshim
 - Loschbour
 - Stuttgart
-contemp_samples:
-- LP6005442-DNA_B02
-- LP6005442-DNA_A02
-- SS6004475
-

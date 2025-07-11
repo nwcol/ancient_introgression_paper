@@ -1,0 +1,29 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -74.53050701482319, num_iter: 11, max_iter: 100, flag: 2, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 721350.5289699835, start_size: 17089.15309780277}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 645797.6640141596, start_size: 2998.3064030116343}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 4001.423709048202}
+- name: Vindija
+  ancestors: [ND]
+  epochs:
+  - {end_time: 55000, start_size: 2269.11423835037}
+- name: Yoruba1
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 26056.477702734024}
+pulses:
+- sources: [Yoruba1]
+  dest: Vindija
+  time: 200000
+  proportions: [0.0809206140878322]

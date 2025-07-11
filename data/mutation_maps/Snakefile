@@ -8,13 +8,17 @@ CHROMS = list(range(1, 23))
 
 
 rule all:
-    input: expand("roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz", chrom=CHROMS)
+    input: 
+        expand("roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz", chrom=CHROMS),
+        expand("roulette_b37_10kb/roulette_10kb_chr{chrom}.csv.gz", chrom=CHROMS),
+        expand("roulette_b37_16bit/roulette_b37_chr{chrom}.npy", chrom=CHROMS)
+
 
 rule build_windowed_maps_1kb:
     input:
         script = "../../tools/build_windowed_map.py",
         site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
-        mask = "../bed_files/filterbed_exons_1e-4M/mask_chr{chrom}.bed.gz"
+        mask = "../bed_files/raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
     params:
         scale = "1000"
     output:
@@ -26,6 +30,37 @@ rule build_windowed_maps_1kb:
             -b {input.mask} \
             --scale {params.scale} \
             -o {output}
+        """
+
+
+rule build_windowed_maps_10kb:
+    input:
+        script = "../../tools/build_windowed_map.py",
+        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
+        mask = "../bed_files/raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
+    params:
+        scale = "10000"
+    output:
+        "roulette_b37_10kb/roulette_10kb_chr{chrom}.csv.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.site_map} \
+            -b {input.mask} \
+            --scale {params.scale} \
+            -o {output}
+        """
+
+
+rule make_16bit_site_maps:
+    input: 
+        script = "../../tools/scale_mutation_map.py",
+        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy"
+    output: 
+        "roulette_b37_16bit/roulette_b37_chr{chrom}.npy"
+    shell:
+        """
+        python {input.script} {input.site_map} {output}
         """
 
 
