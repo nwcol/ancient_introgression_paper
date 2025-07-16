@@ -5,8 +5,8 @@ requirements = (Target.HasCHTCStaging == true)
 container_image = file:///staging/nwcollier/dpluspy-container.sif
 
 
-executable = run_mutation_sim.sh      
-arguments = $(chrom) $(mask)
+executable = reparse.sh      
+arguments = $(chrom)
 
 
 should_transfer_files = YES
@@ -14,11 +14,11 @@ when_to_transfer_output = ON_EXIT
 
 
 transfer_input_files = \
-    run_simulation.py, compute_stats.py, \
+    compute_stats.py, \
+    simulated_chr$(chrom).vcf, \
     data/recombination_maps/Behrer/sexavg_chr$(chrom).txt.gz, \
-    data/mutation_maps/roulette_b37_1kb/roulette_1kb_chr22.csv.gz, \
+    data/mutation_maps/roulette_b37_1kb/roulette_1kb_chr$(chrom).csv.gz, \ 
     data/bed_files/filterbed_1e-4M_exon_buffer/mask_chr$(chrom).bed.gz, \
-    data/intervals/chromosome_arms/arms_chr$(chrom).txt, \
     data/intervals/1e-4_exon_buffer_1.3Mb/intervals_chr$(chrom).txt
 
 

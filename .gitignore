@@ -35,5 +35,8 @@ simulations/
 theory/
 
 analyses/B_map_stratification/data
+
 analyses/exon_buffers/data
+
 analyses/mutation_weighting_sim/data
+analyses/mutation_weighting_sim/local_test/
