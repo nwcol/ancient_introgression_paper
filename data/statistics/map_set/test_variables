@@ -1,0 +1,11 @@
+19,Behrer,sexavg_chr19.txt.gz,pos,cM
+19,hapmap,genetic_map_GRCh37_chr19.txt.gz,Position(bp),Map(cM)
+19,Hinch,maps_chr.19.txt.gz,Physical_Pos,AA_Map
+19,omniFIN,FIN-19-final.txt.gz,Position(bp),Map(cM)
+19,omniLWK,LWK-19-final.txt.gz,Position(bp),Map(cM)
+19,omniYRI,YRI-19-final.txt.gz,Position(bp),Map(cM)
+19,pyrhoFIN,FIN_recombination_map_hapmap_format_hg19_chr_19.txt.gz,Position(bp),Map(cM)
+19,pyrhoLWK,LWK_recombination_map_hapmap_format_hg19_chr_19.txt.gz,Position(bp),Map(cM)
+19,pyrhoYRI,YRI_recombination_map_hapmap_format_hg19_chr_19.txt.gz,Position(bp),Map(cM)
+19,ZhouFHS,FHS.chr19.1000.plinkmap.txt.gz,Position(bp),Map(cM)
+19,ZhouJHS,JHS.chr19.1000.plinkmap.txt.gz,Position(bp),Map(cM)

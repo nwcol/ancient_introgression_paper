@@ -2,10 +2,14 @@
 **.snakemake/
 **.Rhistory
 
-.old/
-data/.old/
+old/
+data/old/
 
-data/bed_files/.old/  
+
+working/
+
+
+data/bed_files/old/  
 data/bed_files/raw/
 data/bed_files/buffers/
 data/bed_files/filterbed/
@@ -16,23 +20,56 @@ data/bed_files/filterbed_50kb_exon_buffer/
 data/bed_files/filterbed_intergenic/
 data/bed_files/filterbed_roulette/
 
-data/mutation_maps/*/
-data/recombination_maps/*/
+data/mutation_maps/roulette_b37/
+data/mutation_maps/roulette_b37_1kb/
+data/mutation_maps/roulette_b37_10kb/
+data/mutation_maps/roulette_b37_16bit/
 
-data/vcf_files/.old/
+data/recombination_maps/Bherer_b37/
+data/recombination_maps/HapMapII_b37/
+data/recombination_maps/Hinch_b37/
+data/recombination_maps/omni_b37/
+data/recombination_maps/pyrho_hg19/
+data/recombination_maps/Zhou_b37/
+
+data/vcf_files/old/
 data/vcf_files/raw/
 data/vcf_files/sgdp/
 
-statistics/
+data/statistics/old/
+data/statistics/map_set/data/
+data/statistics/map_set/raw_stats/
+data/statistics/map_set/remotetest/
+
+
 simulations/roulette*/
-models/000*/
-models/working/
-models/analytic/
-models/library/
-models/
-working/
-simulations/
-theory/
+simulations/exploratory/
+
+simulations/pure_IM/
+simulations/pure_IM_grid/
+simulations/pulse_model/
+
+simulations/LRT_symmetry/trials/
+simulations/LRT_structure/trials/
+simulations/LRT_size_change/exploratory/
+
+simulations/LRT_pulse/exploratory/
+simulations/LRT_pulse/trials/
+
+simulations/LRT_migration/exploratory/
+simulations/LRT_migration/trials/
+
+
+models/000_2024_working/
+models/000_2025_working/
+
+models/exploratory/
+
+models/AMH_N_one_pulse/fitted_models/
+models/AMH_N_one_pulse/exploratory/
+
+models/Ghost_Denisova_pulse/
+
 
 analyses/B_map_stratification/data
 
