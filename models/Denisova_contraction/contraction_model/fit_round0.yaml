@@ -1,0 +1,17 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -19.009933254391647, num_iter: 18, max_iter: 4000, flag: 2, u: 1.3e-08}
+demes:
+- name: anc
+  epochs:
+  - {end_time: 796343.6947385077, start_size: 16037.650418294988}
+- name: Yoruba1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 0, start_size: 27871.718846372514}
+- name: Denisova
+  ancestors: [anc]
+  epochs:
+  - {end_time: 68404.8196174257, start_size: 5387.398628203105}
+  - {end_time: 65000, start_size: 90.14295251992931}

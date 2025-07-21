@@ -1,0 +1,19 @@
+time_units: generations
+generation_time: 1
+metadata:
+  opt_info: {ll: -0.613314066794499, num_iter: 16, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 5569.096241005407, start_size: 15029.12791088865}
+- name: popX
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 18019.654556913334}
+- name: popY
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 9351.606520598165}
+migrations:
+- demes: [popX, popY]
+  rate: 0.00011883734663489918

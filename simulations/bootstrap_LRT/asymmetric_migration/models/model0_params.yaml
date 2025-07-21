@@ -1,0 +1,39 @@
+parameters: 
+- name: N_A
+  lower_bound: 10
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        A: 
+          epochs: 
+            0: start_size
+- name: T_XY
+  lower_bound: 10
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        A: 
+          epochs: 
+            0: end_time
+- name: N_X
+  lower_bound: 10
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        popX: 
+          epochs: 
+            0: start_size
+- name: N_Y
+  lower_bound: 10
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        popY: 
+          epochs: 
+            0: start_size
+- name: m_XY
+  lower_bound: 1e-10
+  upper_bound: 0.01
+  values: 
+    - migrations: 
+        0: rate

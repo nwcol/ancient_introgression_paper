@@ -1,0 +1,28 @@
+
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+
+executable = migration_LRT_sim.sh      
+
+
+arguments = $(model) $(rep)
+
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+
+transfer_input_files = scripts, models
+
+
+request_cpus = 1
+request_memory = 4GB
+request_disk = 2GB
+
+queue model,rep from scripts/sim_vars.txt

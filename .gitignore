@@ -42,7 +42,7 @@ data/statistics/map_set/raw_stats/
 data/statistics/map_set/remotetest/
 
 
-simulations/roulette*/
+simulations/mutation_weighting/
 simulations/exploratory/
 
 simulations/pure_IM/
@@ -59,16 +59,23 @@ simulations/LRT_pulse/trials/
 simulations/LRT_migration/exploratory/
 simulations/LRT_migration/trials/
 
+simulations/bootstrap_LRT/*/trials/
+
 
 models/000_2024_working/
 models/000_2025_working/
 
 models/exploratory/
 
-models/AMH_N_one_pulse/fitted_models/
-models/AMH_N_one_pulse/exploratory/
+models/Neanderthal_human_pulse/fitted_models/
+models/Neanderthal_human_pulse/exploratory/
 
-models/Ghost_Denisova_pulse/
+models/Denisova_ghost_pulse/exploratory/
+
+models/Denisova_contraction/exploratory/
+
+models/Basal_Eurasian_deme/exploratory/
+models/OOA_topology/exploratory/
 
 
 analyses/B_map_stratification/data
@@ -77,3 +84,9 @@ analyses/exon_buffers/data
 
 analyses/mutation_weighting_sim/data
 analyses/mutation_weighting_sim/local_test/
+
+analyses/recombination_maps/data/
+
+
+theory/mathematica/
+
