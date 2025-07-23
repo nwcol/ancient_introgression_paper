@@ -1,0 +1,4 @@
+den_null_MLE.yaml,den_null_params.yaml,subset_Bherer.pkl,0,den_null_Bherer_rep0.csv
+den_null_MLE.yaml,den_null_params.yaml,subset_ZhouJHS.pkl,0,den_null_ZhouJHS_rep0.csv
+den_contraction_MLE.yaml,den_contraction_params.yaml,subset_Bherer.pkl,0,den_contraction_Bherer_rep0.csv
+den_contraction_MLE.yaml,den_contraction_params.yaml,subset_ZhouJHS.pkl,0,den_contraction_ZhouJHS_rep0.csv

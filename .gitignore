@@ -62,22 +62,6 @@ simulations/LRT_migration/trials/
 simulations/bootstrap_LRT/*/trials/
 
 
-models/000_2024_working/
-models/000_2025_working/
-
-models/exploratory/
-
-models/Neanderthal_human_pulse/fitted_models/
-models/Neanderthal_human_pulse/exploratory/
-
-models/Denisova_ghost_pulse/exploratory/
-
-models/Denisova_contraction/exploratory/
-
-models/Basal_Eurasian_deme/exploratory/
-models/OOA_topology/exploratory/
-
-
 analyses/B_map_stratification/data
 
 analyses/exon_buffers/data
@@ -90,3 +74,7 @@ analyses/recombination_maps/data/
 
 theory/mathematica/
 
+
+models/000_2024_working/
+models/000_2025_working/
+models/denisova_contraction/bootstrap_fits/

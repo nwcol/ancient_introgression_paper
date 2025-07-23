@@ -29,9 +29,10 @@ step_func0 = lambda: params1[4:] * 0.01
 bound_func0 = lambda p0: (np.array([0, 0]), np.array([p0[1], 1]))
 
 param_func1 = lambda p0: np.concatenate([p0, [params1[4], 0]])
-bound_func1 = lambda: (np.array([0, 0]), np.array([params1[1], 1]))
+bound_func1 = lambda: (np.array([0, 0]), np.array([params0[1], 1]))
 
 step_func2 = lambda: np.array([params1[5] * 0.01])
+bounds2 = (np.array([0]), np.array([1]))
 
 
 bound_func_model1 = lambda p1: (np.array([0, 0]), np.array([p1[1], 1]))

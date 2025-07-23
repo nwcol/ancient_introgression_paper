@@ -1,1 +1,1 @@
-The repository for a project to study ancient human demographic history using the two-locus genetic statistic `D+`. 
+This repository holds materials for my research of ancient human demographic history using the LD statistic `D+`. 
