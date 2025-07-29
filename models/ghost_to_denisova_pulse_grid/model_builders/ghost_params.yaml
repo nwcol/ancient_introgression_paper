@@ -1,0 +1,21 @@
+# For writing models with fixed introgression parameters
+parameters: 
+- name: T_Gho 
+  values: 
+    - demes:
+        Ghost: start_time
+
+- name: T_Gho_Den
+  values: 
+    - pulses: 
+        0: time
+    - demes: 
+        Ghost: 
+          epochs: 
+            0: end_time
+
+- name: p_Gho_Den
+  values: 
+    - pulses: 
+        0:
+          proportions: 0

@@ -1,0 +1,45 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -154.6597745072691, num_iter: 17, max_iter: 500, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 808150, start_size: 15028.685738551654}
+- name: Vindija
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 7000, start_size: 2523.0606250017295}
+- name: AMH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 115912.52788385461, start_size: 48152.01818570613}
+- name: Stuttgart
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 7000, start_size: 2370.6059962629415}
+- name: X
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 91782.65574620444, start_size: 48152.01818570613}
+- name: KhomaniSan1
+  ancestors: [X]
+  epochs:
+  - {end_time: 300, start_size: 9355.658460615881}
+  - {end_time: 0, start_size: 33.970556070226934}
+- name: Yoruba1
+  ancestors: [X]
+  epochs:
+  - {end_time: 0, start_size: 5665.970909569469}
+migrations:
+- demes: [Yoruba1, Stuttgart]
+  rate: 0.00019237196585200644
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 0.00011293140801527466
+- demes: [Stuttgart, KhomaniSan1]
+  rate: 1.4868575724099187e-05
+pulses:
+- sources: [AMH]
+  dest: Vindija
+  time: 150014.93575552755
+  proportions: [0.05897200180596891]

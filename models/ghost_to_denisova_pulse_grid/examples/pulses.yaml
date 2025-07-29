@@ -1,0 +1,22 @@
+time_units: generations
+demes:
+- name: popA 
+  epochs:
+  - {start_size: 1e4, end_time: 1e4}
+- name: popX 
+  ancestors: [popA]
+  epochs:
+  - {start_size: 1e4, end_time: 0}
+- name: popY
+  ancestors: [popA]
+  epochs:
+  - {start_size: 1e4, end_time: 0}
+pulses: 
+- sources: [popX]
+  dest: popY 
+  proportions: [0.10]
+  time: 1e3
+- sources: [popX]
+  dest: popY 
+  proportions: [0.05]
+  time: 5e3

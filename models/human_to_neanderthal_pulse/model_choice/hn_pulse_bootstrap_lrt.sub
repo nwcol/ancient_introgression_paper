@@ -1,0 +1,29 @@
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+
+executable = fit_to_bootrep.sh
+arguments = $(graph) $(params) $(data) $(rep) $(fout)
+
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+
+transfer_input_files = \
+    fit_to_bootrep.py, \
+    ../best_fit_models/$(graph), \
+    ../models/$(params), \
+    ../data/$(data)
+
+
+request_cpus = 1
+request_memory = 500MB
+request_disk = 1GB
+
+queue graph,params,data,rep,fout from bootstrap_variables.txt

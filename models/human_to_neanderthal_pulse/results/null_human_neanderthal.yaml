@@ -1,0 +1,6 @@
+time_units: years
+generation_time: 29
+demes: 
+- name: Yoruba1
+  epochs:
+  - {end_time: 0, start_size: 27000}

@@ -1,0 +1,30 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -49.20453345180141, num_iter: 17, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 757419.321483184, start_size: 16351.5515274303}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 657188.573561589, start_size: 4057.2497551175798}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 3865.686082684286}
+- name: Chagyrskaya
+  ancestors: [ND]
+  epochs:
+  - {end_time: 80000, start_size: 2095.4918977823104}
+- name: KhomaniSan1
+  ancestors: [A]
+  epochs:
+  - {end_time: 300, start_size: 29508.258738894427}
+  - {end_time: 0, start_size: 45.362489729918074}
+pulses:
+- sources: [KhomaniSan1]
+  dest: Chagyrskaya
+  time: 221985.2448223866
+  proportions: [0.08815040883446387]

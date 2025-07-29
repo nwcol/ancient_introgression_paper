@@ -1,0 +1,28 @@
+time_units: years
+generation_time: 29
+demes: 
+- name: A 
+  epochs: 
+  - {end_time: 800000, start_size: 16000}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 700000, start_size: 3000}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 4000}
+- name: Altai
+  ancestors: [ND]
+  epochs:
+  - {end_time: 110000, start_size: 2500}
+- name: KhomaniSan1
+  ancestors: [A]
+  epochs:
+  - {end_time: 300, start_size: 20000}
+  - {end_time: 0, start_size: 400}
+pulses:
+- sources: [KhomaniSan1]
+  dest: Altai
+  proportions: [0.08]
+  time: 200000

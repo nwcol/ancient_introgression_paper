@@ -1,0 +1,29 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -4.540337235909356, num_iter: 20, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: anc
+  epochs:
+  - {end_time: 731395.2864203533, start_size: 15419.784805037041}
+- name: S1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 65266.65275273323, start_size: 11523.881372474836}
+- name: S2
+  ancestors: [anc]
+  epochs:
+  - {end_time: 65266.65275273323, start_size: 22942.545206233564}
+- name: Yoruba1
+  start_time: 65266.65275273323
+  ancestors: [S1, S2]
+  proportions: [0.4960717813950322, 0.5039282186049678]
+  epochs:
+  - {end_time: 0, start_size: 11523.881372474836}
+- name: KhomaniSan1
+  start_time: 65266.65275273323
+  ancestors: [S1, S2]
+  proportions: [0.2351212162001923, 0.7648787837998077]
+  epochs:
+  - {end_time: 300, start_size: 22942.545206233564}
+  - {end_time: 0, start_size: 39.510067998268966}

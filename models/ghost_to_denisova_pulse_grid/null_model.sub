@@ -1,0 +1,35 @@
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+
+executable = fit_null_model.sh
+arguments = \
+    model00.yaml \
+    model00_params.yaml \
+    subset_Bherer.pkl \
+    model_00_fit$(Process).yaml \
+    model_00_fit$(Process).csv
+
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+
+transfer_input_files = \
+    scripts/fit_null_model.py, \
+    models/model00.yaml, \
+    params/model00_params.yaml, \
+    data/subset_Bherer.pkl
+
+
+request_cpus = 1
+request_memory = 500MB
+request_disk = 1GB
+
+
+queue 10

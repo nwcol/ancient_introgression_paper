@@ -78,3 +78,6 @@ theory/mathematica/
 models/000_2024_working/
 models/000_2025_working/
 models/denisova_contraction/bootstrap_fits/
+models/ghost_to_denisova_pulse_grid/models/
+models/ghost_to_denisova_pulse_grid/results/
+models/ghost_to_denisova_pulse/exploratory/free_params_attempt_1/models/

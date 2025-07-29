@@ -1,0 +1,28 @@
+time_units: years
+generation_time: 29
+demes:
+- name: anc 
+  epochs:
+  - {end_time: 600000, start_size: 16000}
+- name: S1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 8e4, start_size: 27000}
+- name: S2
+  ancestors: [anc]
+  epochs:
+  - {end_time: 8e4, start_size: 15000}
+- name: Yoruba1
+  start_time: 8e4
+  ancestors: [S1, S2]
+  proportions: [0.7, 0.3]
+  epochs:
+  - {end_time: 0, start_size: 27000}
+- name: KhomaniSan1
+  start_time: 8e4
+  ancestors: [S1, S2]
+  proportions: [0.3, 0.7]
+  epochs:
+  - {end_time: 300, start_size: 15000}
+  - {end_time: 0, start_size: 500}
+

@@ -1,0 +1,32 @@
+time_units: years
+generation_time: 29
+demes:
+- name: Anc 
+  epochs:
+  - {end_time: 800000, start_size: 16000}
+- name: Ghost
+  start_time: 900000
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 500000, start_size: 1e4}
+- name: Yoruba1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 27000}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 675000, start_size: 3000}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 4000}
+- name: Altai
+  ancestors: [ND]
+  epochs:
+  - {end_time: 110000, start_size: 2500}
+pulses:
+- sources: [Ghost]
+  dest: Denisova
+  proportions: [0.005]
+  time: 500000

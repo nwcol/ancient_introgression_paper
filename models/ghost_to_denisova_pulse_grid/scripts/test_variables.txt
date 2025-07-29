@@ -1,0 +1,5 @@
+model0.yaml,0,subset_Bherer.pkl,bestfit_model_0_rep0
+grid_model_1.yaml,1,subset_Bherer.pkl,bestfit_model_1
+grid_model_693.yaml,1,subset_Bherer.pkl,bestfit_model_693
+grid_model_694.yaml,2,subset_Bherer.pkl,bestfit_model_694
+grid_model_1386.yaml,2,subset_Bherer.pkl,bestfit_model_1386

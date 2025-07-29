@@ -1,0 +1,46 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -124.7733884023787, num_iter: 35, max_iter: 500, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 882012.2330942277, start_size: 14829.473192595326}
+- name: Vindija
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 55000, start_size: 2303.6959676296933}
+- name: NI
+  start_time: 100000.0
+  ancestors: [Vindija]
+  epochs:
+  - {end_time: 47000, start_size: 2303.6959676296933}
+- name: AMH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 50222.88986864517, start_size: 28334.923451457864}
+- name: Yoruba1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 0, start_size: 28334.923451457864}
+- name: OOA
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 45840.992968550774, start_size: 320.1224881764242}
+- name: UstIshim
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 45000, start_size: 320.1224881764242}
+- name: Loschbour
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 8000, start_size: 1730.2853734055072}
+pulses:
+- sources: [AMH]
+  dest: Vindija
+  time: 225000
+  proportions: [0.10548748836994248]
+- sources: [NI]
+  dest: OOA
+  time: 47000
+  proportions: [0.022]

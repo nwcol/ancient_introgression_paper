@@ -1,0 +1,10 @@
+parameters:
+
+- name: N_Yor
+  lower_bound: 1e4
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Yoruba1: 
+          epochs: 
+            0: start_size

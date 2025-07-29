@@ -1,0 +1,29 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -43.921858595833555, num_iter: 19, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 780291.0519006705, start_size: 16233.804192616726}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 673655.3336233285, start_size: 3766.43398447338}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 3919.192135242109}
+- name: Altai
+  ancestors: [ND]
+  epochs:
+  - {end_time: 110000, start_size: 2624.377652914421}
+- name: Yoruba1
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 27506.611305875216}
+pulses:
+- sources: [Yoruba1]
+  dest: Altai
+  time: 314994.28809728223
+  proportions: [0.1150135505871865]
