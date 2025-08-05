@@ -1,0 +1,45 @@
+time_units: years
+generation_time: 29
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 831504.0546156631, start_size: 15150.18517245899}
+- name: Vindija
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 45000, start_size: 2189.2939329268365}
+- name: IN
+  start_time: 100000
+  ancestors: [Vindija]
+  epochs:
+  - {end_time: 50000, start_size: 2189.2939329268365}
+- name: AMH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 70061.67024644559, start_size: 39082.94647828261}
+- name: KhomaniSan1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 300, start_size: 12676.669893324544}
+  - {end_time: 0, start_size: 38.3717859573744}
+- name: Yoruba1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 0, start_size: 8555.395088013724}
+- name: Loschbour
+  start_time: 6e4
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 7000, start_size: 1200}
+migrations:
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 1.5677305691288024e-05
+pulses:
+- sources: [AMH]
+  dest: Vindija
+  time: 180409.61664816955
+  proportions: [0.08315372965083295]
+- sources: [IN]
+  dest: Loschbour
+  time: 50000
+  proportions: [0.022]

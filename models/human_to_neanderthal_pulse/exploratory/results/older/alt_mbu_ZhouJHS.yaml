@@ -1,0 +1,29 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -62.04423206522729, num_iter: 17, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 779168.0599287053, start_size: 16135.72471425271}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 710935.3393014026, start_size: 2417.7619644402384}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 4058.034089894695}
+- name: Altai
+  ancestors: [ND]
+  epochs:
+  - {end_time: 110000, start_size: 2356.6583809635713}
+- name: Mbuti1
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 27363.466791788167}
+pulses:
+- sources: [Mbuti1]
+  dest: Altai
+  time: 265982.40619029425
+  proportions: [0.10474873776284466]

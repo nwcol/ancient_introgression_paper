@@ -1,29 +1,29 @@
 time_units: years
 generation_time: 29
 metadata:
-  opt_info: {ll: -42.9251283965905, num_iter: 19, max_iter: 100, flag: 0, u: 1.3e-08}
+  opt_info: {ll: -42.56003361205998, num_iter: 14, max_iter: 100, flag: 0, u: 1.3e-08}
 demes:
 - name: A
   epochs:
-  - {end_time: 794474.7607817415, start_size: 16044.38637977433}
+  - {end_time: 804371.4550939256, start_size: 15891.267692795935}
 - name: ND
   ancestors: [A]
   epochs:
-  - {end_time: 724010.4337379339, start_size: 2574.6370416585137}
+  - {end_time: 702586.8281564827, start_size: 3768.0608784069946}
 - name: Denisova
   ancestors: [ND]
   epochs:
-  - {end_time: 65000, start_size: 4052.0249820958206}
+  - {end_time: 65000, start_size: 3980.075789297876}
 - name: Vindija
   ancestors: [ND]
   epochs:
-  - {end_time: 55000, start_size: 2365.5361601939594}
+  - {end_time: 55000, start_size: 2366.133340353892}
 - name: Mbuti1
   ancestors: [A]
   epochs:
-  - {end_time: 0, start_size: 27589.914275064475}
+  - {end_time: 0, start_size: 27845.362613511363}
 pulses:
 - sources: [Mbuti1]
   dest: Vindija
-  time: 211044.57257501569
-  proportions: [0.0844603175765599]
+  time: 211914.32660715902
+  proportions: [0.08434396588020898]

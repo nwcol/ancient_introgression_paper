@@ -1,0 +1,28 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -24.044370772367976, num_iter: 16, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Yoruba1
+  epochs:
+  - {end_time: 800000, start_size: 14868.068511315443}
+  - {end_time: 135332.86701869598, start_size: 56209.6751905315}
+  - {end_time: 0, start_size: 7297.660025240573}
+- name: KhomaniSan1
+  start_time: 135332.86701869598
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 300, start_size: 10521.565562383008}
+  - {end_time: 0, start_size: 33.586341824659925}
+- name: Stuttgart
+  start_time: 61165.60709571138
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 7000, start_size: 2268.3843810637736}
+migrations:
+- demes: [Yoruba1, Stuttgart]
+  rate: 0.00011458285976394928
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 0.00011329507235204682
+- demes: [Stuttgart, KhomaniSan1]
+  rate: 1.3181883031348098e-05

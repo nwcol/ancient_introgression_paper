@@ -1,5 +1,6 @@
 datasets = ["Bherer"]
-models = ["model_ust", "model_los", "model_stu"]
+models = ["model_ust0", "model_los0", "model_stu0",
+          "model_ust1", "model_los1", "model_stu1"]
 with open("variables.txt", "w") as fout:
     for model in models:
         for dataset in datasets:

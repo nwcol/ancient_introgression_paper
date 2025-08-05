@@ -1,0 +1,29 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -56.27740493870675, num_iter: 26, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 724128.4987910173, start_size: 16994.617811727778}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 696019.8103563974, start_size: 1094.6991412712116}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 4017.6499125291193}
+- name: Chagyrskaya
+  ancestors: [ND]
+  epochs:
+  - {end_time: 80000, start_size: 2015.8076039244468}
+- name: Yoruba1
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 26441.445534296414}
+pulses:
+- sources: [Yoruba1]
+  dest: Chagyrskaya
+  time: 206052.49002792206
+  proportions: [0.08179609217210411]

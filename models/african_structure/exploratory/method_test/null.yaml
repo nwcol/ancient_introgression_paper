@@ -1,0 +1,20 @@
+time_units: years
+generation_time: 29
+demes:
+- name: anc 
+  epochs:
+  - {end_time: 800000, start_size: 16000}
+  - {end_time: 100000, start_size: 40000}
+- name: Yoruba1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 0, start_size: 8000}
+- name: KhomaniSan1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 300, start_size: 15000}
+  - {end_time: 0, start_size: 50}
+migrations: 
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 2e-4
+

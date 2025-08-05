@@ -1,0 +1,20 @@
+time_units: years
+generation_time: 29
+metadata: {opt_info: -4.132892835985754}
+demes:
+- name: anc
+  epochs:
+  - {end_time: 800000, start_size: 15118.692263582776}
+  - {end_time: 83982.32864766457, start_size: 47699.6568777717}
+- name: Yoruba1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 0, start_size: 6564.845976399365}
+- name: KhomaniSan1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 300, start_size: 9243.71441536055}
+  - {end_time: 0, start_size: 35.156727997331224}
+migrations:
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 0.000103675919547074

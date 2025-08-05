@@ -1,30 +1,30 @@
 time_units: years
 generation_time: 29
 metadata:
-  opt_info: {ll: -32.69479852492631, num_iter: 29, max_iter: 100, flag: 0, u: 1.3e-08}
+  opt_info: {ll: -32.71774693323793, num_iter: 29, max_iter: 100, flag: 0, u: 1.3e-08}
 demes:
 - name: A
   epochs:
-  - {end_time: 753036.3906045187, start_size: 16524.853822115907}
+  - {end_time: 753762.1684902482, start_size: 16514.286356644363}
 - name: ND
   ancestors: [A]
   epochs:
-  - {end_time: 693706.1602220305, start_size: 2228.512228588995}
+  - {end_time: 692909.7445628811, start_size: 2284.7865046458087}
 - name: Denisova
   ancestors: [ND]
   epochs:
-  - {end_time: 65000, start_size: 3964.8166026171125}
+  - {end_time: 65000, start_size: 3962.2882764691167}
 - name: Vindija
   ancestors: [ND]
   epochs:
-  - {end_time: 55000, start_size: 2296.86500299332}
+  - {end_time: 55000, start_size: 2301.4236242969955}
 - name: KhomaniSan1
   ancestors: [A]
   epochs:
-  - {end_time: 300, start_size: 34113.48448967508}
-  - {end_time: 0, start_size: 25.522424765366065}
+  - {end_time: 300, start_size: 34171.1193293783}
+  - {end_time: 0, start_size: 25.474288012297677}
 pulses:
 - sources: [KhomaniSan1]
   dest: Vindija
-  time: 230228.19671954686
-  proportions: [0.10815577179853123]
+  time: 231351.661680839
+  proportions: [0.10865833083924831]

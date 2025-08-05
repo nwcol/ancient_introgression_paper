@@ -1,0 +1,49 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -366.2135856724112, num_iter: 18, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 734407.5168632217, start_size: 16894.02848150569}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 635134.3812174182, start_size: 3848.5176189079207}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 3816.7667975479}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 55000.00000059123, start_size: 2369.307314462046}
+- name: Vindija
+  ancestors: [N]
+  epochs:
+  - {end_time: 55000, start_size: 2369.307314462046}
+- name: NI
+  ancestors: [N]
+  epochs:
+  - {end_time: 47000, start_size: 2369.307314462046}
+- name: AMH
+  ancestors: [A]
+  epochs:
+  - {end_time: 47000.00000000002, start_size: 27420.295744210853}
+- name: Yoruba1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 0, start_size: 21629.00792972384}
+- name: Stuttgart
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 7000, start_size: 2294.2920015778054}
+pulses:
+- sources: [AMH]
+  dest: N
+  time: 218686.88902618337
+  proportions: [0.0894630539258763]
+- sources: [NI]
+  dest: Stuttgart
+  time: 47000
+  proportions: [1.0000000439189904e-08]

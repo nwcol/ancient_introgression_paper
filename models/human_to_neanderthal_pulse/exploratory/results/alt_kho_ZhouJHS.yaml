@@ -1,30 +1,30 @@
 time_units: years
 generation_time: 29
 metadata:
-  opt_info: {ll: -50.23677996274836, num_iter: 14, max_iter: 100, flag: 0, u: 1.3e-08}
+  opt_info: {ll: -50.08590961622856, num_iter: 24, max_iter: 100, flag: 0, u: 1.3e-08}
 demes:
 - name: A
   epochs:
-  - {end_time: 755187.0142536564, start_size: 16379.349366527274}
+  - {end_time: 755594.9530119584, start_size: 16373.135348123533}
 - name: ND
   ancestors: [A]
   epochs:
-  - {end_time: 665490.783816896, start_size: 3392.106045445502}
+  - {end_time: 675200.7492626039, start_size: 2998.1265253517754}
 - name: Denisova
   ancestors: [ND]
   epochs:
-  - {end_time: 65000, start_size: 3900.8064449142344}
+  - {end_time: 65000, start_size: 3937.7439631901416}
 - name: Altai
   ancestors: [ND]
   epochs:
-  - {end_time: 110000, start_size: 2235.081303323769}
+  - {end_time: 110000, start_size: 2362.512678420041}
 - name: KhomaniSan1
   ancestors: [A]
   epochs:
-  - {end_time: 300, start_size: 29100.868387124774}
-  - {end_time: 0, start_size: 48.63985048677579}
+  - {end_time: 300, start_size: 29094.078985383545}
+  - {end_time: 0, start_size: 48.64343841538496}
 pulses:
 - sources: [KhomaniSan1]
   dest: Altai
-  time: 254577.73775261946
-  proportions: [0.10430823740449707]
+  time: 272902.40627425193
+  proportions: [0.10926618285112288]

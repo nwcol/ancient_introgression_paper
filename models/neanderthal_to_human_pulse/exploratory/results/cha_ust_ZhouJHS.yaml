@@ -1,0 +1,49 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -93.43712898825407, num_iter: 21, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 697307.9817792273, start_size: 17366.805192143063}
+- name: ND
+  ancestors: [A]
+  epochs:
+  - {end_time: 625001.4437925747, start_size: 2995.0494980182484}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 3731.239184946406}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 80000.00000000023, start_size: 2350.0261780984665}
+- name: Chagyrskaya
+  ancestors: [N]
+  epochs:
+  - {end_time: 80000, start_size: 2350.0261780984665}
+- name: NI
+  ancestors: [N]
+  epochs:
+  - {end_time: 47000, start_size: 2350.0261780984665}
+- name: AMH
+  ancestors: [A]
+  epochs:
+  - {end_time: 52459.01797012587, start_size: 24004.800384345283}
+- name: Yoruba1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 0, start_size: 101354.77048446621}
+- name: UstIshim
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 45000, start_size: 440.69098785367913}
+pulses:
+- sources: [AMH]
+  dest: N
+  time: 250802.61442044558
+  proportions: [0.08110545542345708]
+- sources: [NI]
+  dest: UstIshim
+  time: 47000
+  proportions: [0.02214409437558869]

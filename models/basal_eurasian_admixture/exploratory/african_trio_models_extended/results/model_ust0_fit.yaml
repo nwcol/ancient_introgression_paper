@@ -1,0 +1,26 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -15.758811502606177, num_iter: 7, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Yoruba1
+  epochs:
+  - {end_time: 800000, start_size: 15071.15022942406}
+  - {end_time: 70519.2047150357, start_size: 44654.51747505572}
+  - {end_time: 0, start_size: 10283.500238804914}
+- name: KhomaniSan1
+  start_time: 70519.2047150357
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 300, start_size: 10767.191465509362}
+  - {end_time: 0, start_size: 39.694056474096286}
+- name: UstIshim
+  start_time: 87218.7550432896
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 45000, start_size: 995.7597386392797}
+migrations:
+- demes: [Yoruba1, UstIshim]
+  rate: 0.0006089528299483343
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 2.2037197000717415e-05

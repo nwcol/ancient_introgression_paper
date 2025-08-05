@@ -1,0 +1,28 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -21.49936016700755, num_iter: 11, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Yoruba1
+  epochs:
+  - {end_time: 800000, start_size: 15081.767636599274}
+  - {end_time: 72619.65246064364, start_size: 42557.528128124504}
+  - {end_time: 0, start_size: 8011.912935389327}
+- name: KhomaniSan1
+  start_time: 72619.65245686361
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 300, start_size: 11872.700599085545}
+  - {end_time: 0, start_size: 37.714754395216545}
+- name: Loschbour
+  start_time: 72619.65246064364
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 8000, start_size: 978.7284676751392}
+migrations:
+- demes: [Yoruba1, Loschbour]
+  rate: 0.00016438519002365053
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 1.747499204867747e-05
+- demes: [Loschbour, KhomaniSan1]
+  rate: 2.3706521362800408e-05

@@ -1,0 +1,87 @@
+
+import demes
+import dpluspy
+import numpy as np
+import pandas
+import sys
+
+
+graph_file =  sys.argv[1]
+data_file = sys.argv[2]
+out_file = sys.argv[3]
+out_tbl = sys.argv[4]
+
+
+g = demes.load(graph_file)
+if g.pulses[0].dest == "Denisova":
+    param_file = "ghost_den_params_case0.yaml"
+else:
+    param_file = "ghost_den_params_case1.yaml"
+
+
+u = 1.3e-8
+pop_ids, bins, means, varcovs = dpluspy.inference.load_stats(
+    data_file, graph=graph_file)
+
+
+ll_log = []
+p_log = []
+thresh = 0.005
+counter = 0
+max_tries = 20
+converged = False
+while not converged:
+    dpluspy.inference.optimize(
+        graph_file,
+        param_file,
+        means,
+        varcovs,
+        pop_ids=pop_ids,
+        bins=bins,
+        u=u,
+        perturb=0.05,
+        method="lbfgsb",
+        log=True,
+        max_iter=1000,
+        verbose=10,
+        output="temp.yaml",
+        overwrite=True
+    )
+
+    # Pulse order check 
+    g = demes.load("temp.yaml")
+    if g.pulses[0].dest == "Denisova":
+        refit_param_file = "ghost_den_params_case0.yaml"
+    else:
+        refit_param_file = "ghost_den_params_case1.yaml"
+        
+    pnames, ps, ll = dpluspy.inference.optimize(
+        "temp.yaml",
+        refit_param_file,
+        means,
+        varcovs,
+        pop_ids=pop_ids,
+        bins=bins,
+        u=u,
+        method="powell",
+        log=True,
+        max_iter=100,
+        verbose=10,
+        output=out_file,
+        overwrite=True
+    )
+    p_log.append(ps)
+    if counter > 0:
+        diffs = np.abs((np.array(ll_log) - ll) / ll)
+        if np.any(diffs < thresh):
+            converged = True
+        if counter > max_tries:
+            raise ValueError("Failed to obtain convergence")
+    ll_log.append(ll)
+    counter += 1
+
+
+p_log = np.array(p_log)
+trial_log = {"ll": ll_log}
+trial_log.update({pname: p_log[:, i] for i, pname in enumerate(pnames)})
+pandas.DataFrame(trial_log).to_csv(out_tbl, index=False)

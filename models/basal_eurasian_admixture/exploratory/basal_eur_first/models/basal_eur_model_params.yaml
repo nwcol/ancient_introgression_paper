@@ -1,0 +1,177 @@
+parameters:
+- name: T_NH
+  lower_bound: 5e5
+  upper_bound: 1e6
+  values: 
+    - demes:  
+        Anc: 
+          epochs: 
+            0: end_time
+
+- name: T_Kho
+  upper_bound: 3e5
+  values: 
+    - demes:  
+        KhomaniSan1: start_time
+
+- name: T_OOA
+  upper_bound: 1.5e5
+  values: 
+    - demes:  
+        AMH: 
+          epochs: 
+            0: end_time
+
+- name: T_BasOOA
+  deescription: Split time of AdmixOOA and BasalOOA demes
+  lower_bound: 50000
+  values: 
+    - demes:  
+        AdmixOOA: start_time
+
+- name: T_Ust
+  deescription: Split time of UstIshim and Loschbour lineages
+  upper_bound: 50000
+  lower_bound: 45000
+  values: 
+    - demes:  
+        UstIshim: start_time
+
+- name: T_Stu
+  description: Formation time of Stuttgart deme
+  upper_bound: 45000
+  lower_bound: 8000
+  values: 
+    - demes:  
+        Stuttgart: start_time
+        Loschbour: start_time
+        BasalOOA: 
+          epochs: 
+            0: end_time
+        AdmixOOA: 
+          epochs: 
+            0: end_time
+      
+- name: N_Anc
+  lower_bound: 100
+  upper_bound: 2e4
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            0: start_size
+
+- name: N_Cha
+  lower_bound: 10
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Chagyrskaya: 
+          epochs: 
+            0: start_size
+        NI: 
+          epochs: 
+            0: start_size
+
+- name: N_AMH
+  lower_bound: 100
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        AMH: 
+          epochs: 
+            0: start_size
+
+- name: N_Kho
+  lower_bound: 100
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        KhomaniSan1: 
+          epochs: 
+            0: start_size
+- name: N_KhoBot
+  lower_bound: 10
+  upper_bound: 1e4
+  values:
+    - demes: 
+        KhomaniSan1: 
+          epochs: 
+            1: start_size
+
+- name: N_Yor
+  lower_bound: 100
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Yoruba1: 
+          epochs: 
+            0: start_size
+
+- name: N_Ust
+  lower_bound: 100
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        UstIshim: 
+          epochs: 
+            0: start_size
+
+- name: N_Los
+  lower_bound: 100
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        AdmixOOA: 
+          epochs: 
+            0: start_size
+        Loschbour: 
+          epochs: 
+            0: start_size
+
+- name: N_Stu
+  lower_bound: 100
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        BasalOOA: 
+          epochs: 
+            0: start_size
+        Stuttgart: 
+          epochs: 
+            0: start_size
+
+- name: p_Bas_Stu
+  lower_bound: 0.01
+  upper_bound: 0.99
+  values: 
+    - demes: 
+        Stuttgart: 
+          proportions: 0
+
+- name: m_KhoYor
+  lower_bound: 1e-8
+  upper_bound: 1e-2
+  values: 
+    - migrations: 
+        0: rate
+
+- name: m_LosYor
+  lower_bound: 1e-8
+  upper_bound: 1e-2
+  values: 
+    - migrations: 
+        1: rate
+
+- name: m_StuYor
+  lower_bound: 1e-8
+  upper_bound: 1e-2
+  values: 
+    - migrations: 
+        2: rate
+
+constraints:
+- params: [T_Kho, T_OOA]
+  constraint: greater_than
+- params: [T_OOA, T_BasOOA]
+  constraint: greater_than

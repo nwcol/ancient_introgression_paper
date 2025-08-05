@@ -1,0 +1,32 @@
+time_units: years
+generation_time: 29
+metadata: {opt_info: -43.08994488861166}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 853857.2993752414, start_size: 14505.08865602926}
+- name: Chagyrskaya
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 55000, start_size: 2120.0135061956835}
+- name: AMH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 83982.32864766457, start_size: 47699.6568777717}
+- name: Yoruba1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 0, start_size: 6564.845976399365}
+- name: KhomaniSan1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 300, start_size: 9243.71441536055}
+  - {end_time: 0, start_size: 35.156727997331224}
+migrations:
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 0.000103675919547074
+pulses:
+- sources: [AMH]
+  dest: Chagyrskaya
+  time: 132275.2034720911
+  proportions: [0.04364985015187031]
