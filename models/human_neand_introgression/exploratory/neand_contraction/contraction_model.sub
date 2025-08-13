@@ -1,0 +1,33 @@
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+
+executable = fit_model.sh
+arguments = \
+    contraction_model.yaml \
+    contraction_model_params.yaml \ 
+    subset_Bherer.pkl \
+    contraction_model_fit_$(Process).yaml
+
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+
+transfer_input_files = \
+    fit_model.py, \
+    contraction_model.yaml, \
+    contraction_model_params.yaml, \
+    ../data/subset_Bherer.pkl
+
+
+request_cpus = 1
+request_memory = 400MB
+request_disk = 1GB
+
+queue 30

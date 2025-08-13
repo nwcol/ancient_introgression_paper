@@ -1,0 +1,29 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -158.988734947115, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 777799.9448639088, start_size: 16035.585442322794}
+- name: Yoruba1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 28091.00255859902}
+- name: N
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 62994.75978872894, start_size: 3041.4831361496463}
+- name: Vindija
+  ancestors: [N]
+  epochs:
+  - {end_time: 45000, start_size: 1038.369500465537}
+- name: Chagyrskaya
+  ancestors: [N]
+  epochs:
+  - {end_time: 55000, start_size: 354.4599104822292}
+pulses:
+- sources: [Yoruba1]
+  dest: N
+  time: 223210.78317044466
+  proportions: [0.07464923277397603]

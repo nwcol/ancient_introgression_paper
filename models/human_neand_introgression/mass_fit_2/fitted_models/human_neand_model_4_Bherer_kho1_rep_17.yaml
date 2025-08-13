@@ -1,0 +1,54 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -404.63113184525577, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 788470.5052542704, start_size: 15682.349597570035}
+- name: KhomaniSan1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 24919.28998462652}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 723420.7345394507, start_size: 2687.9604877149304}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 3908.0791011938168}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 133617.79123225666, start_size: 2888.0682177663834}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 909.3293882678028}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 69675.84586561235, start_size: 2888.0682177663834}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 670.7135870148338}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 1265.3701675608495}
+migrations:
+- demes: [N, Denisova]
+  rate: 4.3616762259630164e-07
+- demes: [Denisova, Altai]
+  rate: 4.3616762259630164e-07
+pulses:
+- sources: [KhomaniSan1]
+  dest: Altai
+  time: 133617.7912313751
+  proportions: [0.02638691875741513]
+- sources: [KhomaniSan1]
+  dest: WN
+  time: 133617.791230838
+  proportions: [0.03928379552972699]

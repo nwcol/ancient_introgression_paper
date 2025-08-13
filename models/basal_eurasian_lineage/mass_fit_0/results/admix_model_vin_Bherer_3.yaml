@@ -1,0 +1,70 @@
+time_units: years
+generation_time: 29
+metadata: {opt_info: -501.3466413452948}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 808757.4051919689, start_size: 15616.77526346879}
+- name: Vindija
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 45000, start_size: 2322.334890701138}
+- name: NI
+  start_time: 100000
+  ancestors: [Vindija]
+  epochs:
+  - {end_time: 49000, start_size: 2322.334890701138}
+- name: AMH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 62233.765681902565, start_size: 29335.980100689416}
+- name: Yoruba1
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 0, start_size: 14609.98497874691}
+- name: OOA
+  ancestors: [AMH]
+  epochs:
+  - {end_time: 53095.96909653234, start_size: 794.0420446020717}
+- name: BasalEUA
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 9552.555912980622, start_size: 8442.836379967748}
+- name: AdmixOOA
+  ancestors: [OOA]
+  epochs:
+  - {end_time: 47843.768648363686, start_size: 794.0420446020717}
+- name: UstIshim
+  ancestors: [AdmixOOA]
+  epochs:
+  - {end_time: 45000, start_size: 1574.8886170327764}
+- name: WestEUA
+  ancestors: [AdmixOOA]
+  epochs:
+  - {end_time: 9552.555913015152, start_size: 1124.616010851742}
+- name: Stuttgart
+  ancestors: [WestEUA]
+  epochs:
+  - {end_time: 5000, start_size: 3076.362170827959}
+- name: Loschbour
+  ancestors: [WestEUA]
+  epochs:
+  - {end_time: 7000, start_size: 9999.999999985692}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 1.000000000043828e-08
+- demes: [Loschbour, Yoruba1]
+  rate: 0.000984248240909851
+pulses:
+- sources: [AMH]
+  dest: Vindija
+  time: 225000
+  proportions: [0.10106536587531541]
+- sources: [NI]
+  dest: AdmixOOA
+  time: 49000
+  proportions: [0.023]
+- sources: [BasalEUA]
+  dest: Stuttgart
+  time: 9552.555912980622
+  proportions: [0.7385894428700869]

@@ -1,0 +1,54 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -458.0352524057514, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 768711.7479486811, start_size: 16022.037095146214}
+- name: Mbuti1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 27735.730917601526}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 540675.8433467532, start_size: 10062.913400882864}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 3337.2050067240757}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 133957.11967989375, start_size: 2478.2271906339324}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 1008.023344520475}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 70664.94436641841, start_size: 2478.2271906339324}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 784.3342046027855}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 1422.2363713837597}
+migrations:
+- demes: [N, Denisova]
+  rate: 1.0000000003212062e-08
+- demes: [Denisova, Altai]
+  rate: 1.0000000003212062e-08
+pulses:
+- sources: [Mbuti1]
+  dest: Altai
+  time: 133957.11967983784
+  proportions: [0.026599372701147577]
+- sources: [Mbuti1]
+  dest: WN
+  time: 118077.38781301447
+  proportions: [0.03853307746455456]

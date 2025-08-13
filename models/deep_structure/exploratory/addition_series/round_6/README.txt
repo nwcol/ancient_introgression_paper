@@ -1,0 +1,1 @@
+removes structure in Denisova to see what behavior results

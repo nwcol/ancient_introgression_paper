@@ -1,0 +1,57 @@
+time_units: years
+generation_time: 29
+metadata: {opt_info: -422.7355723514605}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 802583.2574060406, start_size: 15527.05952139661}
+- name: Chagyrskaya
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 55000, start_size: 2329.6731044626613}
+- name: NI
+  start_time: 55000.000001468376
+  ancestors: [Chagyrskaya]
+  epochs:
+  - {end_time: 49000, start_size: 2329.6731044626613}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 65314.96501033516, start_size: 32276.718055873833}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 12089.91670543312}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 61759.84389050224, start_size: 248.9365119506927}
+  - {end_time: 7000, start_size: 1500}
+- name: UstIshim
+  start_time: 48000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 9999.99999997752}
+- name: Stuttgart
+  start_time: 61759.84389050224
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 5000, start_size: 5941.326555432646}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 1.0000000000002328e-08
+- demes: [Loschbour, Yoruba1]
+  rate: 9.641557850178028e-05
+pulses:
+- sources: [MH]
+  dest: Chagyrskaya
+  time: 163658.98208769524
+  proportions: [0.050247315116489284]
+- sources: [NI]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.030982239235951833]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 7000.000000056477
+  proportions: [0.33331286277955596]

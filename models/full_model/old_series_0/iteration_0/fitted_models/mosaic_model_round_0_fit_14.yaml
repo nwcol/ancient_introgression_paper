@@ -1,0 +1,89 @@
+description: First round of fitting the focal eight-deme model
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -1559.2718674605235, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 811012.2075516065, start_size: 15477}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 744936.4071127307, start_size: 2241.448144967715}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 4219.183226638963}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 115311.14163923105, start_size: 3568.077995165506}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 11.89756233080026}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 67608.28712293837, start_size: 3568.077995165506}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 347.3782062546864}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 877.5337555050182}
+- name: NI
+  start_time: 67621.19615863089
+  ancestors: [WN]
+  epochs:
+  - {end_time: 49000, start_size: 3568.077995165506}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 75487.8582183941, start_size: 31999.0527872108}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 13389.098227975224}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 61179.51835646361, start_size: 959.1001511282241}
+  - {end_time: 7000, start_size: 1500}
+- name: UstIshim
+  start_time: 48000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 9999.999999968602}
+- name: Stuttgart
+  start_time: 61179.51835646361
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 5000, start_size: 6027.724198964317}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 1.0000000015229259e-08
+- demes: [Loschbour, Yoruba1]
+  rate: 9.377725083497006e-05
+- demes: [Altai, Denisova]
+  rate: 1.0000000902386243e-08
+- demes: [Altai, WN]
+  rate: 1.0000038984271114e-08
+- demes: [Vindija, Chagyrskaya]
+  rate: 0.0006686125934485282
+pulses:
+- sources: [MH]
+  dest: N
+  time: 275361.17456903687
+  proportions: [0.08413439201902326]
+- sources: [NI]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.03069948512382839]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 7001
+  proportions: [0.32945594227821134]

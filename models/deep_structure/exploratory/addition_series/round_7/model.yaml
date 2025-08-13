@@ -1,0 +1,45 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -32.75787950151931, num_iter: 2030, max_iter: 10000, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 811779.4038893826, start_size: 15065.993447657915}
+- name: Stem
+  start_time: 959735.1606643453
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 6e4, start_size: 10000.0}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 105840.79264568478, start_size: 12047.585626459311}
+- name: Yoruba1
+  start_time: 105840.79264568478
+  ancestors: [Stem, MH]
+  proportions: [0.16204186746819801, 0.837958132531802]
+  epochs:
+  - {end_time: 0, start_size: 125949.11769773906}
+- name: KhomaniSan1
+  start_time: 105840.79264568478
+  ancestors: [Stem, MH]
+  proportions: [0.1, 0.9]
+  epochs:
+  - {end_time: 400, start_size: 1e4}
+  - {end_time: 0, start_size: 50}
+- name: Stuttgart
+  start_time: 6e4
+  ancestors: [Stem, Yoruba1]
+  proportions: [0.30, 0.70]
+  epochs:
+  - {end_time: 5000, start_size: 3488.693651988956}
+- name: Denisova
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 60000, start_size: 4021.7095679309905}
+migrations:
+- demes: [Yoruba1, Stuttgart]
+  rate: 9.110975371772591e-05
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 9.110975371772591e-05

@@ -1,0 +1,54 @@
+time_units: years 
+generation_time: 29
+demes: 
+- name: Anc 
+  epochs: 
+  - {start_size: 15500, end_time: 1.4e6}
+- name: Stem1 
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 15500, end_time: 8e5}
+  - {start_size: 20000, end_time: 1e5}
+- name: Stem2 
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 10000, end_time: 5.5e4}
+- name: Vindija 
+  start_time: 8e5
+  ancestors: [Stem1]
+  epochs:
+  - {start_size: 3000, end_time: 45000}
+- name: Yoruba1 
+  start_time: 1e5
+  ancestors: [Stem2, Stem1]
+  proportions: [0.1, 0.9]
+  epochs:
+  - {start_size: 1e4, end_time: 0}
+- name: Loschbour 
+  start_time: 6.5e4
+  ancestors: [Yoruba1]
+  epochs:
+  - {start_size: 1000, end_time: 50000}
+  - {start_size: 1000, end_time: 7000}
+- name: Stuttgart 
+  start_time: 5.5e4
+  ancestors: [Stem2, Loschbour]
+  proportions: [0.50, 0.50]
+  epochs:
+  - {start_size: 2000, end_time: 5000}
+migrations: 
+- demes: [Stem1, Stem2]
+  rate: 1e-4
+pulses: 
+- sources: [Stem1]
+  dest: Vindija
+  proportions: [0.08]
+  time: 3e5
+- sources: [Vindija]
+  dest: Loschbour
+  proportions: [0.02]
+  time: 4.8e4
+- sources: [Loschbour]
+  dest: Stuttgart
+  proportions: [0.30]
+  time: 1e4 

@@ -1,0 +1,32 @@
+time_units: years
+generation_time: 29
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 787970.4061884722, start_size: 16546.12602194387}
+- name: MH 
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 46470.22995545264, start_size: 31268.315733080875}
+- name: Stuttgart
+  ancestors: [MH]
+  epochs:
+  - {end_time: 5000, start_size: 2111.913414448075}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 1e4}
+- name: Denisova
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 60000, start_size: 2604.4448781430506}
+- name: D
+  start_time: 557867.7432377903
+  ancestors: [Denisova]
+  epochs:
+  - {end_time: 60000, start_size: 2604.4448781430506}
+migrations:
+- demes: [D, Denisova]
+  rate: 2.688555893042139e-05
+- demes: [Yoruba1, Stuttgart]
+  rate: 2.688555893042139e-05

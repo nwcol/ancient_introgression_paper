@@ -1,0 +1,84 @@
+description: Eight-deme model incorporating well-supported features
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -1632.51427107869, num_iter: 10000, max_iter: 10000, flag: 2, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 662345.1031130652, start_size: 17487.87498667897}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 618002.0536035694, start_size: 1791.953615678573}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 3513.7629486767987}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 122375.04938722304, start_size: 2925.402260118572}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 317.3673529237054}
+- name: NW
+  ancestors: [N]
+  epochs:
+  - {end_time: 70490.02005577873, start_size: 2925.402260118572}
+- name: Chagyrskaya
+  ancestors: [NW]
+  epochs:
+  - {end_time: 55000, start_size: 755.5099326611762}
+- name: Vindija
+  ancestors: [NW]
+  epochs:
+  - {end_time: 45000, start_size: 1301.1807780301983}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 70403.21716138054, start_size: 27223.311112261137}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 12057.63459200575}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 60745.76079984975, start_size: 622.1385573393544}
+  - {end_time: 7000, start_size: 1374.9503666815203}
+- name: UstIshim
+  start_time: 48000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 4213.582668171628}
+- name: Stuttgart
+  start_time: 60745.76079984975
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 5000, start_size: 4031.3235626878713}
+migrations:
+- demes: [N, Denisova]
+  rate: 2.226808794142864e-06
+- demes: [Denisova, Altai]
+  rate: 2.226808794142864e-06
+- demes: [Stuttgart, Loschbour]
+  rate: 3.89859553489603e-05
+- demes: [Stuttgart, Yoruba1]
+  rate: 3.3942592717123606e-05
+- demes: [Yoruba1, Loschbour]
+  rate: 0.00010027603337845687
+pulses:
+- sources: [MH]
+  dest: N
+  time: 346653.307149507
+  proportions: [0.14999898406845888]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.020863634359281392]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 9051.906897777453
+  proportions: [0.3343696523023476]

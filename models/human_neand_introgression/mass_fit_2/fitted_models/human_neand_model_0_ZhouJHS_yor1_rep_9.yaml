@@ -1,0 +1,46 @@
+description: Model of Neanderthal, Denisova, Yoruba lineages without introgression
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -658.5102965313403, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 699146.317377954, start_size: 16908.367136125722}
+- name: Yoruba1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 27064.044300612626}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 646643.9885236146, start_size: 9655.243851056575}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 2575.277189042169}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 115847.43293978187, start_size: 2944.4951647845087}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 32.08669518158244}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 61876.04999202648, start_size: 2944.4951647845087}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 344.9559186671395}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 937.2597896316207}
+migrations:
+- demes: [N, Denisova]
+  rate: 9.976042368297985e-06
+- demes: [Denisova, Altai]
+  rate: 9.976042368297985e-06

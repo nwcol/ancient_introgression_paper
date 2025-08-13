@@ -1,0 +1,56 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -45.40073102388718, num_iter: 30, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 1477809.2755981523, start_size: 13754.586722918986}
+- name: Stem1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 696717.198117499, start_size: 13754.586722918986}
+  - {end_time: 81837.13241189142, start_size: 11904.837240823503}
+- name: Stem2
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 18572.80586755118, start_size: 6293.869249391869}
+- name: Vindija
+  start_time: 696717.198117499
+  ancestors: [Stem1]
+  epochs:
+  - {end_time: 45000, start_size: 2412.819140118702}
+- name: Yoruba1
+  start_time: 81837.13241189142
+  ancestors: [Stem2, Stem1]
+  proportions: [0.20018310868616063, 0.7998168913138394]
+  epochs:
+  - {end_time: 0, start_size: 566261.7614292912}
+- name: Loschbour
+  start_time: 50277.685318225704
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 50000, start_size: 189.39799668314404}
+  - {end_time: 7000, start_size: 1270.1263734605066}
+- name: Stuttgart
+  start_time: 18572.80586755118
+  ancestors: [Stem2, Loschbour]
+  proportions: [0.3556577488452967, 0.6443422511547032]
+  epochs:
+  - {end_time: 5000, start_size: 2000}
+migrations:
+- demes: [Stem1, Stem2]
+  rate: 2.3258353374201733e-05
+pulses:
+- sources: [Stem1]
+  dest: Vindija
+  time: 300000.0
+  proportions: [0.2]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 48000.0
+  proportions: [0.021709418215976266]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 10000.0
+  proportions: [0.17507982033076927]

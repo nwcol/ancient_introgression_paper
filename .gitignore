@@ -77,8 +77,12 @@ theory/mathematica/
 
 models/000_2024_working/
 models/000_2025_working/
-models/denisova_contraction/bootstrap_fits/
-models/ghost_to_denisova_pulse_grid/models/
-models/ghost_to_denisova_pulse_grid/results/
-models/ghost_to_denisova_pulse/exploratory/*/models/
-models/ghost_to_denisova_pulse/exploratory/*/results/
+models/exploratory/denisova_contraction/bootstrap_fits/
+models/ghost_introgression/grid_fit/models/
+models/ghost_introgression/grid_fit/results/
+models/ghost_introgression/mass_fit_0/models/
+models/ghost_introgression/mass_fit_0/results/
+models/ghost_introgression/mass_fit_0_rerun/models/
+models/ghost_introgression/mass_fit_0_rerun/results/
+models/ghost_introgression/mass_fit_1/fitted_models/
+

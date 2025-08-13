@@ -1,0 +1,57 @@
+time_units: years
+generation_time: 29
+metadata: {opt_info: -450.9562762181629}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 799384.1511613122, start_size: 15723.053108537444}
+- name: Altai
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 115000, start_size: 2400.0901326124763}
+- name: NI
+  start_time: 115000.00000000009
+  ancestors: [Altai]
+  epochs:
+  - {end_time: 49000, start_size: 2400.0901326124763}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 68470.231193689, start_size: 31182.949067629244}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 12305.649154925937}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 61736.41526646066, start_size: 464.2889592934807}
+  - {end_time: 7000, start_size: 1500}
+- name: UstIshim
+  start_time: 48000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 9999.999999960555}
+- name: Stuttgart
+  start_time: 61736.41526646066
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 5000, start_size: 6103.88556631152}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 1.000000000002542e-08
+- demes: [Loschbour, Yoruba1]
+  rate: 9.602447599276681e-05
+pulses:
+- sources: [MH]
+  dest: Altai
+  time: 209098.94060197016
+  proportions: [0.056135772059527037]
+- sources: [NI]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.03133363905982153]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 7000.0000000262235
+  proportions: [0.3309705372285432]
