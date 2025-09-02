@@ -1,0 +1,33 @@
+log = reports/job_$(Cluster).log
+error = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+
+
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+
+executable = fit_model.sh
+arguments = \
+    full_model_round_2_init.yaml \
+    full_model_round_2_params.yaml \ 
+    subset_Bherer.pkl \
+    full_model_round_2_fit_$(Process).yaml
+
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+
+
+transfer_input_files = \
+    fit_model.py, \
+    full_model_round_2_init.yaml, \
+    full_model_round_2_params.yaml, \
+    ../data/subset_Bherer.pkl
+
+
+request_cpus = 1
+request_memory = 250MB
+request_disk = 1GB
+
+queue 30

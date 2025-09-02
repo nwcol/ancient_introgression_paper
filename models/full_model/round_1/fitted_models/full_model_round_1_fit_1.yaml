@@ -1,0 +1,95 @@
+description: Eight-deme model incorporating well-supported features
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -1415.4798498786124, num_iter: 8468, max_iter: 10000, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 824945.2058625126, start_size: 13949.580703907519}
+- name: Sup
+  start_time: 2000000.0
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 778861.8672486958, start_size: 20000.0}
+- name: ND
+  start_time: 824945.2058625126
+  ancestors: [Sup, Anc]
+  proportions: [0.0429763107594442, 0.9570236892405558]
+  epochs:
+  - {end_time: 778861.8672486958, start_size: 3034.147800157139}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 67412.46540429718, start_size: 38986.496975552036}
+- name: Denisova
+  start_time: 778861.8672486958
+  ancestors: [Sup, ND]
+  proportions: [0.021847452941396853, 0.9781525470586031]
+  epochs:
+  - {end_time: 60000, start_size: 2854.23541995119}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 116835.6043086785, start_size: 2798.3715360901992}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 75.44715866896114}
+- name: NW
+  start_time: 116835.6043086785
+  ancestors: [MH, N]
+  proportions: [0.009753465771323782, 0.9902465342286763]
+  epochs:
+  - {end_time: 61145.09623152937, start_size: 2798.3715360901992}
+- name: Chagyrskaya
+  ancestors: [NW]
+  epochs:
+  - {end_time: 55000, start_size: 251.80454546157068}
+- name: Vindija
+  ancestors: [NW]
+  epochs:
+  - {end_time: 45000, start_size: 873.5047073535113}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 13173.248971859013}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 60847.29583181811, start_size: 423.8010370556477}
+  - {end_time: 7000, start_size: 1349.3429174745318}
+- name: UstIshim
+  start_time: 47000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 9410.012271269052}
+- name: Stuttgart
+  start_time: 60847.29583181811
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 5000, start_size: 4680.696404596387}
+migrations:
+- demes: [N, Denisova]
+  rate: 8.236511803988623e-06
+- demes: [Denisova, Altai]
+  rate: 8.236511803988623e-06
+- demes: [Stuttgart, Loschbour]
+  rate: 2.8468677458290686e-06
+- demes: [Stuttgart, Yoruba1]
+  rate: 6.949652999487348e-06
+- demes: [Yoruba1, Loschbour]
+  rate: 0.0001235129428555448
+pulses:
+- sources: [MH]
+  dest: N
+  time: 399999.98821785173
+  proportions: [0.11142988210536335]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.024453172395972743]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 7000.001103279796
+  proportions: [0.34638964031952585]

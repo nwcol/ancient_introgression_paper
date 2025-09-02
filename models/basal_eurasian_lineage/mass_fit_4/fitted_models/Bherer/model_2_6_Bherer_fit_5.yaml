@@ -1,0 +1,76 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -188.18859765310617, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 1607903.0194549887, start_size: 15132.323446364217}
+- name: Stem1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 826722.5255345298, start_size: 15132.323446364217}
+  - {end_time: 149999.99999929356, start_size: 37285.16050272831}
+- name: Stem2
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 49000.00000013152, start_size: 21235.5681240003}
+- name: Vindija
+  start_time: 826722.5255345298
+  ancestors: [Stem1]
+  epochs:
+  - {end_time: 45000, start_size: 2082.4700644156947}
+- name: KhomaniSan1
+  start_time: 195670.76966575283
+  ancestors: [Stem2, Stem1]
+  proportions: [0.010000000000048668, 0.9899999999999514]
+  epochs:
+  - {end_time: 400, start_size: 999999.999990551}
+  - {end_time: 0, start_size: 22.414504296624912}
+- name: Yoruba1
+  start_time: 149999.99999929356
+  ancestors: [Stem2, Stem1]
+  proportions: [0.011488014858217632, 0.9885119851417824]
+  epochs:
+  - {end_time: 0, start_size: 6402.796976141763}
+- name: Loschbour
+  start_time: 51224.3465205466
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 49000.00000013152, start_size: 142.79061212780354}
+  - {end_time: 7000, start_size: 1420.2385918139635}
+- name: UstIshim
+  start_time: 47000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 1249.7451211147657}
+- name: Stuttgart
+  start_time: 49000.00000013152
+  ancestors: [Stem2, Loschbour]
+  proportions: [0.043263864503501684, 0.9567361354964983]
+  epochs:
+  - {end_time: 5000, start_size: 2912.279397130904}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 5.3418649073796456e-05
+- demes: [Loschbour, Yoruba1]
+  rate: 8.202891928930479e-05
+- demes: [Loschbour, Stuttgart]
+  rate: 1.0000000544886018e-08
+- demes: [Stem1, Stem2]
+  rate: 1.0000000000741291e-08
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 0.00018283941954620237
+pulses:
+- sources: [Stem1]
+  dest: Vindija
+  time: 195670.76966597495
+  proportions: [0.10691694094496544]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.01689605682091979]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 15000
+  proportions: [0.39039864056422574]

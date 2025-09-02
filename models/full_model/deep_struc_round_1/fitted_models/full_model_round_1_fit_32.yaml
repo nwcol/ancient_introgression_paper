@@ -1,0 +1,106 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -980.6235041971368, num_iter: 15000, max_iter: 15000, flag: 2, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 1690945.848449963, start_size: 11824.656849840621}
+- name: Stem1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 882690.5219016128, start_size: 11824.656849840621}
+  - {end_time: 113795.9137262971, start_size: 23331.3846567743}
+- name: Stem2
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 50000.13331395375, start_size: 5000.018854152424}
+- name: ND
+  start_time: 882690.5219016128
+  ancestors: [Stem1]
+  epochs:
+  - {end_time: 882690.5194768925, start_size: 4581.766019887876}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 2890.323772030703}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 116941.15631549103, start_size: 2479.338641936759}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 105.88180654901872}
+- name: NW
+  start_time: 116941.15631549103
+  ancestors: [Stem1, N]
+  proportions: [0.01843507271925537, 0.9815649272807446]
+  epochs:
+  - {end_time: 57715.50258926968, start_size: 2479.338641936759}
+- name: Chagyrskaya
+  ancestors: [NW]
+  epochs:
+  - {end_time: 55000, start_size: 112.50817576856133}
+- name: Vindija
+  ancestors: [NW]
+  epochs:
+  - {end_time: 45000, start_size: 786.0245327809788}
+- name: KhomaniSan1
+  start_time: 167539.81121919822
+  ancestors: [Stem2, Stem1]
+  proportions: [0.010026553050415157, 0.9899734469495849]
+  epochs:
+  - {end_time: 400, start_size: 30854.848324753493}
+  - {end_time: 0, start_size: 56.0138249440324}
+- name: Yoruba1
+  start_time: 113795.9137262971
+  ancestors: [Stem2, Stem1]
+  proportions: [0.017407235470311717, 0.9825927645296882]
+  epochs:
+  - {end_time: 0, start_size: 18770.425441965202}
+- name: Loschbour
+  start_time: 67150.6258356539
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 50000.13331395375, start_size: 1002.2014412260577}
+  - {end_time: 7000, start_size: 1600.1528874616824}
+- name: UstIshim
+  start_time: 47000.0
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000.0, start_size: 1002.2014412260577}
+- name: Stuttgart
+  start_time: 50000.13331395375
+  ancestors: [Stem2, Loschbour]
+  proportions: [0.07488537764205265, 0.9251146223579474]
+  epochs:
+  - {end_time: 5000, start_size: 2718.306202616649}
+migrations:
+- demes: [Stem1, Stem2]
+  rate: 5.283278806294296e-06
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 2.7527578460271016e-06
+- demes: [Yoruba1, Stuttgart]
+  rate: 2.1630733856012885e-05
+- demes: [Yoruba1, Loschbour]
+  rate: 7.189429844929726e-05
+- demes: [Stuttgart, Loschbour]
+  rate: 8.357789787634635e-06
+- demes: [Denisova, N]
+  rate: 8.189296584142334e-06
+- demes: [Denisova, Altai]
+  rate: 8.189296584142334e-06
+pulses:
+- sources: [Stem1]
+  dest: N
+  time: 350064.93278214405
+  proportions: [0.11597154064225462]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 49000.0
+  proportions: [0.015668201335916086]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 10000.0
+  proportions: [0.3827206327769569]

@@ -1,0 +1,260 @@
+parameters:
+- name: T_12
+  upper_bound: 2e6
+  lower_bound: 9e5
+  values:
+    - demes: 
+        Anc: 
+          epochs: 
+            0: end_time
+
+- name: T_1N
+  lower_bound: 5e5
+  upper_bound: 1e6
+  values:
+    - demes: 
+        Vindija: start_time 
+        Stem1: 
+          epochs: 
+            0: end_time
+
+- name: T_1_N
+  lower_bound: 1.2e5
+  upper_bound: 4e5
+  values:
+    - pulses: 
+        0: time
+
+- name: T_Kho
+  lower_bound: 5e4
+  upper_bound: 2e5
+  values: 
+    - demes: 
+        KhomaniSan1: start_time 
+
+- name: T_Yor
+  lower_bound: 5e4
+  upper_bound: 2e5
+  values: 
+    - demes: 
+        Yoruba1: start_time 
+        Stem1: 
+          epochs:
+            1: end_time
+
+- name: T_OOA 
+  lower_bound: 5e4
+  values: 
+    - demes:
+        Loschbour: start_time
+
+- name: T_LS 
+  lower_bound: 5e4
+  values: 
+    - demes:
+        Stuttgart: start_time
+        Stem2: 
+          epochs:
+            0: end_time
+        Loschbour: 
+          epochs:
+            0: end_time
+
+- name: T_L_S
+  upper_bound: 4.5e4
+  lower_bound: 8e3
+  values:
+    - pulses: 
+        2: time
+
+- name: N_Anc
+  lower_bound: 1e4
+  upper_bound: 2e4
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            0: start_size
+        Stem1: 
+          epochs: 
+            0: start_size
+
+- name: N_1
+  lower_bound: 5e3
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        Stem1: 
+          epochs: 
+            1: start_size
+
+- name: N_2
+  lower_bound: 5e3
+  upper_bound: 5e4
+  values: 
+    - demes: 
+        Stem2: 
+          epochs: 
+            0: start_size
+
+- name: N_Vin
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Vindija: 
+          epochs: 
+            0: start_size
+
+- name: N_Yor
+  lower_bound: 1e3
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Yoruba1: 
+          epochs: 
+            0: start_size
+
+- name: N_Kho
+  lower_bound: 1e3
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        KhomaniSan1: 
+          epochs: 
+            0: start_size
+- name: N_KhoBot
+  lower_bound: 10
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        KhomaniSan1: 
+          epochs: 
+            1: start_size
+
+- name: N_Stu
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Stuttgart: 
+          epochs: 
+            0: start_size
+
+- name: N_OOA
+  lower_bound: 10
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Loschbour: 
+          epochs: 
+            0: start_size
+- name: N_Los
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Loschbour: 
+          epochs: 
+            1: start_size
+
+- name: N_Ust
+  lower_bound: 10
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        UstIshim: 
+          epochs: 
+            0: start_size
+
+- name: p_1_N
+  lower_bound: 1e-2
+  upper_bound: 0.50
+  values: 
+    - pulses: 
+        0: 
+          proportions: 0
+
+- name: p_2_K
+  lower_bound: 1e-2
+  upper_bound: 0.99
+  values: 
+    - demes: 
+        KhomaniSan1: 
+          proportions: 0
+
+- name: p_2_Y
+  lower_bound: 1e-2
+  upper_bound: 0.99
+  values: 
+    - demes: 
+        Yoruba1: 
+          proportions: 0
+
+- name: p_2_S
+  lower_bound: 1e-2
+  upper_bound: 0.99
+  values: 
+    - demes: 
+        Stuttgart: 
+          proportions: 0
+
+- name: p_L_S
+  lower_bound: 1e-2
+  upper_bound: 0.99
+  values: 
+    - pulses: 
+        2: 
+          proportions: 0
+
+- name: m_12 
+  lower_bound: 1e-8
+  upper_bound: 1e-3
+  values: 
+    - migrations: 
+        0: rate
+
+- name: m_KY
+  lower_bound: 1e-8
+  upper_bound: 1e-3
+  values: 
+    - migrations: 
+        1: rate
+
+- name: m_SY
+  lower_bound: 1e-8
+  upper_bound: 1e-3
+  values: 
+    - migrations: 
+        2: rate
+
+- name: m_LY
+  lower_bound: 1e-8
+  upper_bound: 1e-3
+  values: 
+    - migrations: 
+        3: rate
+
+- name: m_LS
+  lower_bound: 1e-8
+  upper_bound: 1e-3
+  values: 
+    - migrations: 
+        4: rate
+
+constraints: 
+- params: [T_12, T_1N]
+  constraint: greater_than
+- params: [T_1N, T_1_N]
+  constraint: greater_than
+- params: [T_1_N, T_Kho]
+  constraint: greater_than
+- params: [T_Kho, T_Yor]
+  constraint: greater_than
+- params: [T_Yor, T_OOA]
+  constraint: greater_than
+- params: [T_OOA, T_LS]
+  constraint: greater_than
+
+
+

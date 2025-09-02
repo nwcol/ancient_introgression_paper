@@ -1,0 +1,67 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -66.7205801908245, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 1344065.8808738508, start_size: 14721.125868887219}
+- name: Stem1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 849690.7626203229, start_size: 14721.125868887219}
+  - {end_time: 98069.21075875955, start_size: 23711.43936354201}
+- name: Stem2
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 49000.00000015972, start_size: 12528.225522376686}
+- name: Vindija
+  start_time: 849690.7626203229
+  ancestors: [Stem1]
+  epochs:
+  - {end_time: 45000, start_size: 2222.9400389738457}
+- name: Yoruba1
+  start_time: 98069.21075875955
+  ancestors: [Stem2, Stem1]
+  proportions: [0.049024485544679676, 0.9509755144553204]
+  epochs:
+  - {end_time: 0, start_size: 25396.578557865338}
+- name: Loschbour
+  start_time: 51118.9062988586
+  ancestors: [Yoruba1]
+  epochs:
+  - {end_time: 49000.00000015972, start_size: 136.16478146861735}
+  - {end_time: 7000, start_size: 1542.1964324268388}
+- name: UstIshim
+  start_time: 47000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 979.8955670489836}
+- name: Stuttgart
+  start_time: 49000.00000015972
+  ancestors: [Stem2, Loschbour]
+  proportions: [0.05207786162706929, 0.9479221383729307]
+  epochs:
+  - {end_time: 5000, start_size: 3987.630722762708}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 1.0000000020670061e-08
+- demes: [Loschbour, Yoruba1]
+  rate: 4.9206601104587766e-05
+- demes: [Loschbour, Stuttgart]
+  rate: 1.0000000043618177e-08
+- demes: [Stem1, Stem2]
+  rate: 1.000000000070438e-08
+pulses:
+- sources: [Stem1]
+  dest: Vindija
+  time: 178249.40029547192
+  proportions: [0.0810500870946485]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.024592095496282752]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 15000
+  proportions: [0.3493659525763461]

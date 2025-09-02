@@ -1,0 +1,192 @@
+parameters:
+
+# T parameters
+
+- name: T_HN
+  lower_bound: 5e5
+  upper_bound: 1.5e6
+  values:
+    - demes: 
+        Vindija: start_time 
+        Anc: 
+          epochs: 
+            0: end_time
+
+- name: T_H_N
+  description: Time of human to Neanderthal pulse
+  upper_bound: 4e5
+  lower_bound: 1e5
+  values: 
+    - pulses: 
+        0: time
+
+- name: T_BStem
+  upper_bound: 2e6
+  lower_bound: 5e4
+  values:
+    - demes: 
+        BStem: start_time
+
+- name: T_OOA 
+  lower_bound: 5e4
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            1: end_time
+
+- name: T_LS
+  lower_bound: 1e4
+  values: 
+    - demes: 
+        Stuttgart: start_time 
+        BStem: 
+          epochs:
+            0: end_time
+        Loschbour: 
+          epochs: 
+            0: end_time
+
+# N parameters
+
+- name: N_A
+  lower_bound: 1e4
+  upper_bound: 2e4
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            0: start_size
+
+- name: N_H
+  lower_bound: 5e3
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            1: start_size
+
+- name: N_Vin
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Vindija: 
+          epochs: 
+            0: start_size
+
+- name: N_Yor
+  lower_bound: 1e3
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Yoruba1: 
+          epochs: 
+            0: start_size
+
+- name: N_OOA
+  lower_bound: 10
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Loschbour: 
+          epochs: 
+            0: start_size
+
+- name: N_Stu
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Stuttgart: 
+          epochs: 
+            0: start_size 
+            
+- name: N_Ust
+  lower_bound: 10
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        UstIshim: 
+          epochs: 
+            0: start_size
+
+- name: N_Los
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Loschbour: 
+          epochs: 
+            1: start_size
+
+# m parameters
+
+- name: m_SY
+  lower_bound: 1e-8
+  upper_bound: 1e-2
+  values: 
+    - migrations: 
+        0: rate
+
+- name: m_LY
+  lower_bound: 1e-8
+  upper_bound: 1e-2
+  values: 
+    - migrations: 
+        1: rate
+
+- name: m_LS
+  lower_bound: 1e-8
+  upper_bound: 1e-2
+  values: 
+    - migrations: 
+        2: rate
+
+# p parameters
+
+- name: p_H_N
+  lower_bound: 1e-4
+  upper_bound: 0.50
+  values: 
+    - pulses: 
+        0: 
+          proportions: 0
+
+- name: p_N_OOA
+  lower_bound: 1e-4
+  upper_bound: 0.05
+  values: 
+    - pulses: 
+        1: 
+          proportions: 0
+
+- name: p_L_S
+  lower_bound: 1e-4
+  upper_bound: 0.95
+  values: 
+    - pulses: 
+        2: 
+          proportions: 0
+
+- name: p_S_B
+  lower_bound: 1e-2
+  upper_bound: 0.99
+  values: 
+    - demes: 
+        Stuttgart: 
+          proportions: 0
+
+constraints: 
+- params: [T_HN, T_H_N]
+  constraint: greater_than
+- params: [T_H_N, T_OOA]
+  constraint: greater_than
+- params: [T_BStem, T_OOA]
+  constraint: greater_than
+- params: [T_OOA, T_LS]
+  constraint: greater_than
+
+
+

@@ -1,0 +1,53 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -24.127615596452646, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 947659.3962797566, start_size: 14228.91015274099}
+- name: Stem1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 844124.7672809821, start_size: 14228.91015274099}
+  - {end_time: 108333.45986243676, start_size: 16262.351588644367}
+- name: Stem2
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 73557.73542324718, start_size: 14294.010561461599}
+- name: Vindija
+  start_time: 844124.7672809821
+  ancestors: [Stem1]
+  epochs:
+  - {end_time: 45000, start_size: 2196.8429223632543}
+- name: KhomaniSan1
+  start_time: 108333.45986243676
+  ancestors: [Stem2, Stem1]
+  proportions: [0.35773752664051695, 0.642262473359483]
+  epochs:
+  - {end_time: 400, start_size: 22511.164172661207}
+  - {end_time: 0, start_size: 51.910942036960634}
+- name: Yoruba1
+  start_time: 108333.45986243676
+  ancestors: [Stem2, Stem1]
+  proportions: [0.40092147215383256, 0.5990785278461674]
+  epochs:
+  - {end_time: 0, start_size: 11981.970591731573}
+- name: Stuttgart
+  start_time: 73557.73542324718
+  ancestors: [Stem2, Yoruba1]
+  proportions: [0.4063685327758742, 0.5936314672241259]
+  epochs:
+  - {end_time: 5000, start_size: 2591.293053632259}
+migrations:
+- demes: [Stem1, Stem2]
+  rate: 1.160232778008607e-05
+- demes: [Yoruba1, KhomaniSan1]
+  rate: 4.234754544439635e-06
+- demes: [Yoruba1, Stuttgart]
+  rate: 0.00012349100636647258
+pulses:
+- sources: [Stem1]
+  dest: Vindija
+  time: 178455.4877724084
+  proportions: [0.08434255055088491]

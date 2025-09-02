@@ -1,0 +1,52 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -830.1424998115816, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 751887.5575845004, start_size: 15785.840528819248}
+- name: Sup
+  start_time: 2000000.0
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 751887.5575845004, start_size: 20000}
+- name: Yoruba1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 28490.71330670951}
+- name: ND
+  start_time: 751887.5575845004
+  ancestors: [Sup, Anc]
+  proportions: [0.009705599499659786, 0.9902944005003402]
+  epochs:
+  - {end_time: 736141.5471408344, start_size: 1339.7639472383614}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 3182.074768857292}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 122063.72872955837, start_size: 3471.6061528725677}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 304.6579399257245}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 62220.19986265741, start_size: 3471.6061528725677}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 322.19255945117897}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 821.3690045114682}
+migrations:
+- demes: [N, Denisova]
+  rate: 6.2384688296720215e-06
+- demes: [Denisova, Altai]
+  rate: 6.2384688296720215e-06
