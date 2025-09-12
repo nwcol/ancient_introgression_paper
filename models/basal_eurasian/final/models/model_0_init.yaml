@@ -1,0 +1,59 @@
+time_units: years 
+generation_time: 29
+demes: 
+- name: Anc
+  epochs: 
+  - {start_size: 16000, end_time: 800000}
+- name: ND
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 2200, end_time: 700000}
+- name: Vindija
+  ancestors: [ND]
+  epochs: 
+  - {start_size: 2200, end_time: 45000}
+- name: Denisova
+  ancestors: [ND]
+  epochs: 
+  - {start_size: 3000, end_time: 65000}
+- name: MH
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 30000, end_time: 70000}
+- name: Yoruba1 
+  ancestors: [MH]
+  epochs:
+  - {start_size: 15000, end_time: 0}
+- name: Loschbour 
+  ancestors: [MH]
+  epochs: 
+  - {start_size: 1000, end_time: 60000}
+  - {start_size: 1500, end_time: 8000}
+- name: UstIshim
+  start_time: 47000
+  ancestors: [Loschbour]
+  epochs: 
+  - {start_size: 1500, end_time: 45000}
+- name: Stuttgart
+  start_time: 60000
+  ancestors: [Loschbour]
+  epochs: 
+  - {start_size: 3000, end_time: 7000}
+pulses:
+- sources: [MH]
+  dest: Vindija 
+  time: 250000
+  proportions: [0.05]
+- sources: [Vindija]
+  dest: Loschbour 
+  time: 49000
+  proportions: [0.02]
+migrations: 
+- demes: [Stuttgart, Yoruba1]
+  rate: 1e-5
+- demes: [Loschbour, Yoruba1]
+  rate: 1e-5
+- demes: [Loschbour, Stuttgart]
+  rate: 1e-5
+- demes: [Denisova, Vindija]
+  rate: 1e-6

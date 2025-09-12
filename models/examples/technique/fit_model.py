@@ -13,10 +13,10 @@ out_file = sys.argv[4]
 
 # Parameters
 u = 1.3e-8
-perturb = 0.1
+perturb = 1
 verbose = 10
 criterion = 1e-4
-max_run_time = 172800.0
+max_run_time = 10.0
 
 
 pop_ids, bins, means, varcovs = dpluspy.inference.load_stats(
@@ -39,7 +39,7 @@ _, __, ll0 = dpluspy.inference.optimize(
     method="lbfgsb",
     approx_method="midpoint",
     log=True,
-    max_iter=400,
+    max_iter=1,
     verbose=verbose,
     output=out_file,
     overwrite=True
@@ -57,7 +57,7 @@ while not converged:
         method="fmin",
         approx_method="midpoint",
         log=True,
-        max_iter=200,
+        max_iter=50,
         verbose=verbose,
         output=out_file,
         overwrite=True

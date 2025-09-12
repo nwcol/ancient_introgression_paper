@@ -1,1 +1,0 @@
-Restart: attempt to replicate the weakly structured stem model

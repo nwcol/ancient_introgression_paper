@@ -1,0 +1,65 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -284.8067280907182, num_iter: 33, max_iter: 50, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 681925.9714851809, start_size: 18552.962597565496}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 628369.2777934276, start_size: 2516.4614831862905}
+- name: Vindija
+  ancestors: [ND]
+  epochs:
+  - {end_time: 45000, start_size: 1924.3621283387226}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 65000, start_size: 3143.768447681331}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 120348.46461054428, start_size: 25050.973455622046}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 23712.797200839017}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 44684.190643447684, start_size: 3319.484192763563}
+  - {end_time: 8000, start_size: 980.1415021719872}
+- name: UstIshim
+  start_time: 47000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 8041.906388850461}
+- name: Stuttgart
+  start_time: 44684.190643447684
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 7000, start_size: 3922.6947461763966}
+migrations:
+- demes: [Stuttgart, Yoruba1]
+  rate: 6.300922879134818e-05
+- demes: [Loschbour, Yoruba1]
+  rate: 6.105659026241534e-05
+- demes: [Loschbour, Stuttgart]
+  rate: 0.0002691766659219456
+- demes: [Denisova, Vindija]
+  rate: 3.033998508556099e-06
+pulses:
+- sources: [MH]
+  dest: Vindija
+  time: 211156.28776721164
+  proportions: [0.10575228683209655]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 49000
+  proportions: [0.020827734969831414]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 10000
+  proportions: [0.09273954144128546]

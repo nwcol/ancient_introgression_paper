@@ -1,6 +1,0 @@
-model_ust0.yaml,model_ust0_params.yaml,subset_Bherer.pkl,model_ust0_fit
-model_los0.yaml,model_los0_params.yaml,subset_Bherer.pkl,model_los0_fit
-model_stu0.yaml,model_stu0_params.yaml,subset_Bherer.pkl,model_stu0_fit
-model_ust1.yaml,model_ust1_params.yaml,subset_Bherer.pkl,model_ust1_fit
-model_los1.yaml,model_los1_params.yaml,subset_Bherer.pkl,model_los1_fit
-model_stu1.yaml,model_stu1_params.yaml,subset_Bherer.pkl,model_stu1_fit
