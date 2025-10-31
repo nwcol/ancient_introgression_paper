@@ -1,0 +1,47 @@
+time_units: years
+generation_time: 29
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 668700.1979624238, start_size: 16721.238036611263}
+- name: Sup
+  start_time: 1885000.0
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 553690.0352688624, start_size: 20000.0}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 553690.0352688624, start_size: 5067.1631363876895}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 29644.57008036183}
+- name: Denisova
+  start_time: 553690.0352688624
+  ancestors: [Sup, ND]
+  proportions: [0.015081050719109527, 0.9849189492808905]
+  epochs:
+  - {end_time: 0, start_size: 3307.2940213848747}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 9680.11309265999, start_size: 2836.5430351652826}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 0, start_size: 511.81835643817874}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 0, start_size: 2836.5430351652826}
+migrations:
+- demes: [N, Denisova]
+  rate: 3.3831909482220444e-06
+- demes: [Denisova, Altai]
+  rate: 3.3831909482220444e-06
+pulses:
+- sources: [MH]
+  dest: N
+  time: 135000
+  proportions: [0.052310009184846504]
