@@ -1,8 +1,0 @@
-time_units: generations
-generation_time: 1
-metadata:
-  opt_info: {ll: -12.428420747982505, num_iter: 2, max_iter: 100, flag: 0, u: 1.3e-08}
-demes:
-- name: popX
-  epochs:
-  - {end_time: 0, start_size: 13608.456093922634}

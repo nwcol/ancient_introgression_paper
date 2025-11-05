@@ -1,0 +1,24 @@
+log    = reports/job_$(Cluster).log
+error  = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+requirements    = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+request_cpus   = 1
+request_memory = 300MB
+request_disk   = 1GB
+
+executable = fit_model.sh
+arguments  = $(graph0) $(params0) $(graph1) $(params1) $(datafile) $(fstem)
+
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files    = \
+    fit_model.py, \
+    ../models/$(graph0), \ 
+    ../models/$(params0), \ 
+    ../models/$(graph1), \ 
+    ../models/$(params1), \ 
+    ../data_set_simulation/trials/$(datafile)
+
+queue graph0,params0,graph1,params1,datafile,fstem from fitting_vars.txt

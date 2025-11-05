@@ -1,0 +1,25 @@
+log    = reports/job_$(Cluster)_$(Process).log
+error  = reports/job_$(Cluster)_$(Process).err
+output = reports/job_$(Cluster)_$(Process).out
+requirements    = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/dpluspy-container.sif
+
+executable = parse_B_quartiles.sh      
+arguments  = $(chrom) $(quartile)
+
+should_transfer_files   = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files    = \
+    parse_B_quartiles.py, \
+    ../data/recombination_maps/Bherer/sexavg_chr$(chrom).txt.gz, \
+    ../data/mutation_maps/roulette_b37_16bit/roulette_b37_chr$(chrom).npy.gz, \
+    ../data/masks_B_strat/quartile_$(quartile)/mask_chr$(chrom).bed.gz, \
+    ../data/intervals/chromosome_arms/arms_chr$(chrom).txt, \
+    ../data/vcf_files/merged/merged.variants.chr$(chrom).vcf.gz, \
+    ../data/vcf_files/populations_sub
+
+request_cpus   = 1
+request_memory = 4GB
+request_disk   = 2GB
+
+queue quartile,chrom from variables.txt

@@ -1,9 +1,0 @@
-parameters: 
-- name: N_X
-  lower_bound: 10
-  upper_bound: 1e5
-  values: 
-    - demes: 
-        popX: 
-          epochs: 
-            0: start_size
