@@ -1,136 +1,61 @@
-"""
-Download the Roulette mutation maps in hg37 and extract the mutation rates 
-into .npy files. Also create .bed files representing map coverage.
-"""
 
 
+configfile: "../config.yaml"
 CHROMS = list(range(1, 23))
 
 
 rule all:
     input: 
-        expand("roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz", chrom=CHROMS),
-        expand("roulette_b37_10kb/roulette_10kb_chr{chrom}.csv.gz", chrom=CHROMS),
-        expand("roulette_b37_16bit/roulette_b37_chr{chrom}.npy", chrom=CHROMS)
-
-
-rule build_windowed_maps_1kb:
-    input:
-        script = "../../tools/build_windowed_map.py",
-        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
-        mask = "../bed_files/raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
-    params:
-        scale = "1000"
-    output:
-        "roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz"
-    shell:
-        """
-        python {input.script} \
-            -i {input.site_map} \
-            -b {input.mask} \
-            --scale {params.scale} \
-            -o {output}
-        """
-
-
-rule build_windowed_maps_10kb:
-    input:
-        script = "../../tools/build_windowed_map.py",
-        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
-        mask = "../bed_files/raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
-    params:
-        scale = "10000"
-    output:
-        "roulette_b37_10kb/roulette_10kb_chr{chrom}.csv.gz"
-    shell:
-        """
-        python {input.script} \
-            -i {input.site_map} \
-            -b {input.mask} \
-            --scale {params.scale} \
-            -o {output}
-        """
-
-
-rule make_16bit_site_maps:
-    input: 
-        script = "../../tools/scale_mutation_map.py",
-        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy"
-    output: 
-        "roulette_b37_16bit/roulette_b37_chr{chrom}.npy"
-    shell:
-        """
-        python {input.script} {input.site_map} {output}
-        """
-
-
-
-
-
-
-
-
-npy_files = [f"mutation_map_hg19_chr{chrom}.npy" for chrom in CHROMS]
-bed_files = [f"mutation_map_hg19_chr{chrom}.bed.gz" for chrom in CHROMS]
-
-
-
-
-
-
-rule download_mutation_maps:
-    output: 
-        "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz" 
-    params:
-        prefix = "http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/hg19/hg19_chr",
-        suffix = "_rate_v5.2_TFBS_correction_sorted.vcf.gz"
-    shell:
-        """
-        wget {params.prefix}{wildcards.chrom}{params.suffix}
-        """
+        expand("roulette/map_chr{chrom}.npy", chrom=CHROMS),
+        #expand("roulette_1kb/map_chr{chrom}.csv.gz", chrom=CHROMS),
+        #expand("roulette_10kb/map_chr{chrom}.csv.gz", chrom=CHROMS)
         
 
 rule parse_mutation_maps:
     input:
-        "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz"
+        script = "../../tools/parse_roulette_vcf.py",
+        infile = config["roulette_dir"] + "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz"
     output:
-        vcf_file = "mutation_map_hg19_chr{chrom}.npy",
-        bed_file = "mutation_map_hg19_chr{chrom}.bed.gz"
+        "roulette/map_chr{chrom}.npy",
     shell:
         """
-        python ../../tools/parse_mut_vcf.py -i {input} \
-            -o {output.vcf_file} -b {output.bed_file}
+        python {input.script} -i {input.infile} -o {output}
         """
 
 
+#rule build_windowed_maps_1kb:
+#    input:
+#        script = "../../tools/build_windowed_map.py",
+#        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
+#        mask = "../bed_files/raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
+#    params:
+#        scale = "1000"
+##    output:
+#        "roulette_b37_1kb/roulette_1kb_chr{chrom}.csv.gz"
+#    shell:
+#        """
+#        python {input.script} \
+#            -i {input.site_map} \
+#            -b {input.mask} \
+#            --scale {params.scale} \
+#            -o {output}
+#        """
 
 
-        
-
-
-rule download_roulette_maps_hg19:
-    # Download Roulette mutation maps in hg19.
-    output: 
-        "raw/roulette_hg19/hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz" 
-    params:
-        link = ("http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/hg19/"
-                "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz"),
-        prefix = "raw/roulette_hg19/"
-    shell:
-        """
-        wget {params.link} -P {params.prefix}
-        """
-
-
-rule process_roulette_maps_hg19:
-    input:
-        "hg19_chr{chrom}_rate_v5.2_TFBS_correction_sorted.vcf.gz"
-    output:
-        vcf_file = "mutation_map_hg19_chr{chrom}.npy",
-        bed_file = "mutation_map_hg19_chr{chrom}.bed.gz"
-    shell:
-        """
-        python ../../tools/parse_mut_vcf.py -i {input} \
-            -o {output.vcf_file} -b {output.bed_file}
-        """
-
+#rule build_windowed_maps_10kb:
+#    input:
+#        script = "../../tools/build_windowed_map.py",
+#        site_map = "roulette_b37/roulette_b37_chr{chrom}.npy",
+#        mask = "../bed_files/raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
+#    params:
+#        scale = "10000"
+#    output:
+#        "roulette_b37_10kb/roulette_10kb_chr{chrom}.csv.gz"
+#    shell:
+#        """
+#        python {input.script} \
+#            -i {input.site_map} \
+#            -b {input.mask} \
+#            --scale {params.scale} \
+#            -o {output}
+#        """

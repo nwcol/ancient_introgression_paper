@@ -1,0 +1,50 @@
+"""
+Create lower-resolution mutation maps for simulation.
+"""
+
+
+CHROMS = list(range(1, 23))
+
+
+rule all:
+    input: 
+        expand("roulette_1kb/map_chr{chrom}.csv.gz", chrom=CHROMS),
+        expand("roulette_10kb/map_chr{chrom}.csv.gz", chrom=CHROMS)
+
+
+rule build_windowed_maps_1kb:
+    input:
+        script = "../../tools/build_windowed_map.py",
+        mutmap = "../mutation_maps/roulette/map_chr{chrom}.npy",
+        mask = "../bed_files/1e-4M_buffer/mask_chr{chrom}.bed.gz"
+    params:
+        scale = "1000"
+    output:
+        "roulette_1kb/map_chr{chrom}.csv.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.mutmap} \
+            -b {input.mask} \
+            --scale {params.scale} \
+            -o {output}
+        """
+
+
+rule build_windowed_maps_10kb:
+    input:
+        script = "../../tools/build_windowed_map.py",
+        mutmap = "../mutation_maps/roulette/map_chr{chrom}.npy",
+        mask = "../bed_files/1e-4M_buffer/mask_chr{chrom}.bed.gz"
+    params:
+        scale = "10000"
+    output:
+        "roulette_10kb/map_chr{chrom}.csv.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.mutmap} \
+            -b {input.mask} \
+            --scale {params.scale} \
+            -o {output}
+        """

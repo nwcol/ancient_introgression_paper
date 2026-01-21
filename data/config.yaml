@@ -1,9 +1,37 @@
+# Path to the SGDP archive
+sgdp_path: '/media/nick/Elements/Data/Simons/vcfs.variants.public_samples.279samples.tar'
 
+# Path to directory with seven aDNA sequences
+ancient_sample_dir: '/media/nick/Elements/Data/aDNA_hg19/'
+
+# Labels for aDNA samples
 ancient_samples:
-- Vindija
-- Altai
-- Chagyrskaya
-- Denisova
-- UstIshim
-- Loschbour
-- Stuttgart
+- 'Vindija'
+- 'Altai'
+- 'Chagyrskaya'
+- 'Denisova'
+- 'UstIshim'
+- 'Loschbour'
+- 'Stuttgart'
+
+# Labels for SGDP samples
+sgdp_samples:
+- 'LP6005442-DNA_B02'
+- 'LP6005442-DNA_A02'
+- 'SS6004475'
+- 'LP6005677-DNA_D03'
+- 'LP6005592-DNA_C05'
+- 'LP6005592-DNA_C03'
+- 'LP6005441-DNA_B08'
+
+
+# Path to directory with masks annotating aDNA callability
+filterbed_dir: '/home/nick/Data/hg19_genetic_masks/filterbed/'
+
+
+# Path to directory with Roulette mutation maps (VCF format)
+roulette_dir: '/media/nick/Elements/Data/Roulette_hg19/'
+
+
+# Path to pyrho recombination map archive
+pyrho_path: '/home/nick/Data/hg19_recombination_maps/pyrho/hg19_maps.tar.gz'

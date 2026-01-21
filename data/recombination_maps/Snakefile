@@ -1,124 +1,183 @@
-## downloads and unzips a number of recombination rate maps
+"""
+downloads and prepares several recombination rate maps in genome build GRCh37 
+"""
 
 
+configfile: "../config.yaml"
 CHROMS = list(range(1, 23))
-PYRHO_POPS = ["YRI"]
-OMNI_POPS = ["YRI"]
+PYRHO_POPULS = ["YRI", "CEU", "CHB"]
+OMNI_POPULS = ["YRI", "CEU", "CHB"]
 
 
 rule all:
     input:
-        expand(
-            "pyrho/hg19/{p}/{p}_recombination_map_hg19_chr_{c}.bed.gz",
-            c=CHROMS, p=PYRHO_POPS
-        ),
-        expand(
-            "pyrho/hg38/{p}/{p}_recombination_map_hg38_chr_{c}.bed.gz",
-            c=CHROMS, p=PYRHO_POPS
-        ),
-        expand("deCODE/hg38/map_chr{c}.bed.gz", c=CHROMS),
-        expand("omni/hg37/YRI/YRI-{c}_final.txt.gz", c=CHROMS)
+        expand("Bherer/sexavg_chr{chrom}.txt.gz", chrom=CHROMS),
+        expand("Zhou/{group}/{group}.chr{chrom}.1000.plinkmap.txt.gz", chrom=CHROMS, group=["FHS", "JHS"]), 
+        expand("pyrho/{popul}/{popul}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt.gz", chrom=CHROMS, popul=PYRHO_POPULS),
+        expand("omni/{popul}/{popul}-{chrom}-final.txt.gz", chrom=CHROMS, popul=OMNI_POPULS)
 
 
-rule download_pyrho_maps_hg19:
+rule download_bherer_map:
     output:
-        "pyrho/hg_19_maps.tar"
+        "Refined_genetic_map_b37.tar.gz"
     params:
-        link = "https://zenodo.org/records/11437540/files/hg19_maps.tar.gz" 
+        link = "https://github.com/cbherer/Bherer_etal_SexualDimorphismRecombination/raw/refs/heads/master/Refined_genetic_map_b37.tar.gz"
     shell:
         """
-        wget -P pyrho/ {params.link}
-        gzip -d pyrho/hg19_maps.tar.gz
+        wget {params.link}
         """
 
 
-rule unzip_pyrho_maps_hg19:
+rule extract_bherer_map:
     input:
-        "pyrho/hg_19_maps.tar"        
+        "Refined_genetic_map_b37.tar.gz"
     output:
-        expand(
-            "pyrho/hg19/{{popul}}/{{popul}}_recombination_map_hg19_chr_{chrom}.bed.gz",
-            chrom=CHROMS
-        )
+        expand("Bherer/sexavg_chr{chrom}.txt", chrom=CHROMS),
+        temporary(directory("Refined_genetic_map_b37/")), 
+        temporary("Refined_genetic_map_b37.tar")
     shell:
         """
-        tar -xf pyrho/hg19_maps.tar -C pyrho/ hg19/{wildcards.popul} 
-        for x in pyrho/hg19/{wildcards.popul}/*;
-            do gzip $x
-        done
+        gzip -d {input}
+        tar -xf Refined_genetic_map_b37.tar
+        mv Refined_genetic_map_b37/* Bherer/
         """
 
 
-rule download_pyrho_maps_hg38:
+rule compress_bherer_map:
+    input: 
+        "Bherer/sexavg_chr{chrom}.txt"
     output:
-        "pyrho/hg_38_maps.tar"
+        "Bherer/sexavg_chr{chrom}.txt.gz"
+    shell:
+        """ 
+        gzip {input}
+        """ 
+
+
+rule download_zhou_maps:
+    output:
+        "{group}.map.tar.gz"
     params:
-        link = "https://zenodo.org/records/11437540/files/hg38_maps.tar.gz" 
+        link = "https://github.com/YingZhou001/IBDrecomb/raw/refs/heads/master/maps.b37/{group}.map.tar.gz"
     shell:
         """
-        wget -P pyrho/ {params.link}
-        gzip -d pyrho/hg38_maps.tar.gz
+        wget {params.link}
         """
 
 
-rule unzip_pyrho_maps_hg38:
+rule extract_zhou_maps:
     input:
-        "pyrho/hg_19_maps.tar"      
-    output:
-        expand(
-            "pyrho/hg38/{{popul}}/{{popul}}_recombination_map_hg38_chr_{chrom}.bed.gz",
-            chrom=CHROMS
-        )
+        "{group}.map.tar.gz"
+    params: 
+        tarball = "{group}.map.tar",
+        folder = "{group}.map"
+    output: 
+        expand("Zhou_original/{{group}}.map/{{group}}.chr{chrom}.1000.plinkmap.gz", chrom=CHROMS),
+        temporary("{group}.map.tar")
     shell:
-        """
-        tar -xf pyrho/hg38_maps.tar -C pyrho/ hg38/{wildcards.popul} 
-        for x in pyrho/hg38/{wildcards.pop}/*;
-            do gzip $x
-        done
-        """
-
-
-rule download_omni_maps_hg37:
-    ## from the phase 1 1kg data set
-    output:
-        expand("omni/hg37/YRI/YRI-{c}_final.txt.gz", c=CHROMS)
-    params:
-        link = (
-            "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/"
-            "20130507_omni_recombination_rates/"
-        ),
-        suffix = "_omni_recombination_20130507.tar",
-        pops = OMNI_POPS
-    shell:
-        """
-        for pop in {params.pops}; do
-            wget -P omni/hg37/ {params.link}$pop{params.suffix}
-            tar -xf omni/hg37/${{pop}}{params.suffix} -C omni/hg37
-        done
+        """ 
+        gzip -d {input}
+        tar -xf {params.tarball}
+        mv {params.folder} Zhou_original/
         """
 
 
-rule download_decode_map:
-    ## hg38. from Halldorsson et al 2019 sex average
-    output:
-        "deCODE/map_hg38.bed.gz"
-    params:
-        link = (
-            "https://www.science.org/doi/suppl/10.1126/science.aau1043/"
-            "suppl_file/aau1043_datas3.gz"
-        )
-    shell:
-        """
-        wget -O {output} {params.link}
-        """
-
-    
-rule split_decode_map:
+rule rearrange_zhou_maps:
     input:
-        "deCODE/map_hg38.bed.gz"
+        "Zhou_original/{group}.map/{group}.chr{chrom}.1000.plinkmap.gz"
     output:
-        "deCODE/hg38/map_chr{chrom}.bed.gz"
+        "Zhou/{group}/{group}.chr{chrom}.1000.plinkmap.txt"
+    shell:
+        """ 
+        ( echo  "chrom Map(cM) Position(bp)";
+        zcat {input} | tail -n +2 | cut -f4,3,1 -d " " ) > {output}
+        """
+
+
+rule compress_zhou_maps:
+    input: 
+        "Zhou/{group}/{group}.chr{chrom}.1000.plinkmap.txt"
+    output:
+        "Zhou/{group}/{group}.chr{chrom}.1000.plinkmap.txt.gz"
+    shell:
+        """ 
+        gzip {input}
+        """ 
+
+
+rule copy_pyrho_archive:
+    input:
+        config["pyrho_path"]
+    output:
+        "hg19_maps.tar.gz"
     shell:
         """
-        zcat {input} | awk "/chr{wildcards.chrom}\t/" > {output}
+        cp {input} {output}
+        """
+
+
+rule ungzip_pyrho_archive:
+    input:
+        "hg19_maps.tar.gz"
+    output:
+        temporary("hg19_maps.tar")
+    shell:
+        """
+        gzip -d {input}
+        """
+
+
+rule extract_pyrho_maps:
+    input:
+        "hg19_maps.tar"  
+    output:
+        "hg19/{popul}/{popul}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt"
+    shell:
+        """
+        tar -xf {input} {output}
+        """
+
+
+rule rename_pyrho_dir:
+    input:
+        expand("hg19/{popul}/{popul}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt", popul=PYRHO_POPULS, chrom=CHROMS)
+    output:
+        expand("pyrho/{popul}/{popul}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt", popul=PYRHO_POPULS, chrom=CHROMS)
+    shell:
+        """
+        mv hg19/* pyrho
+        rm -r hg19
+        """
+
+
+rule compress_pyrho_maps:
+    input: 
+        "pyrho/{popul}/{popul}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt"
+    output:
+        "pyrho/{popul}/{popul}_recombination_map_hapmap_format_hg19_chr_{chrom}.txt.gz"
+    shell:
+        """ 
+        gzip {input}
+        """ 
+
+
+rule download_omni_map:
+    params: 
+        link = "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130507_omni_recombination_rates/{popul}_omni_recombination_20130507.tar"
+    output:
+        temporary("{popul}_omni_recombination_20130507.tar")
+    shell:
+        """
+        wget {params.link}
+        """
+
+
+rule extract_omni_map:
+    input: 
+        "{popul}_omni_recombination_20130507.tar"
+    output:
+        expand("omni/{{popul}}/{{popul}}-{chrom}-final.txt.gz", chrom=CHROMS)
+    shell:
+        """
+        tar -xf {input} -C omni/
         """

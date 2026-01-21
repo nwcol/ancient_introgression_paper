@@ -1,102 +1,109 @@
 """
-Construct genetic masks.
+Constructs genetic masks.
 """
 
 
 configfile: "../config.yaml"
-
-
 CHROMS = list(range(1, 23))
 
 
 rule all:
     input:
-        expand("filterbed_intergenic/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("filterbed_10kb_exon_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("filterbed_20kb_exon_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("filterbed_50kb_exon_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("filterbed_1e-4M_exon_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
+        expand("intergenic/mask_chr{chrom}.bed.gz", chrom=CHROMS),
+        expand("10kb_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
+        expand("50kb_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
+        expand("1e-4M_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
 
 
-rule merge_filterbed:
-    # Merge callability filters for ancient genomes and the 1KG strict mask
+rule download_strict_mask:
+    output:
+        temporary("20140520.strict_mask.autosomes.bed")
+    params:
+        link = "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/accessible_genome_masks/20140520.strict_mask.autosomes.bed"
+    shell:
+        """
+        wget {params.link}
+        """
+
+
+rule split_strict_mask:
+    # Break the 1KG strict mask up by chromosome
     input:
-        script = "../../tools/bedfile_intersect.py",
-        filter_beds = expand("raw/filterbed/{sample}/chr{{chrom}}_mask.bed.gz", 
+        "20140520.strict_mask.autosomes.bed"
+    output:
+        "1KG_strict/mask_chr{chrom}.bed"
+    params:
+        chrom_num = "chr{chrom}"
+    shell:
+        """ 
+        awk '$1=="{params.chrom_num}"' {input} > {output}
+        """
+
+
+rule build_roulette_masks:
+    # Build masks denoting coverage of the Roulette mutation maps
+    input: 
+        script = "../../tools/make_map_coverage_bed_file.py",
+        npy_file = "../mutation_maps/roulette/map_chr{chrom}.npy"
+    output:
+        "roulette_coverage/mask_chr{chrom}.bed.gz"
+    params:
+        chrom_num = "chr{chrom}"
+    shell:
+        """
+        python {input.script} \
+            -i {input.npy_file} \
+            --chrom_num {params.chrom_num} \
+            -o {output}
+        """
+    
+
+rule intersect_masks:
+    # Merge callability filters for ancient genomes, the 1KG strict mask, and the Roulette mutation map coverage.
+    input:
+        script = "../../tools/intersect_bed_files.py",
+        filterbeds = expand(config["filterbed_dir"] + "{sample}/chr{{chrom}}_mask.bed.gz", 
             sample=config["ancient_samples"]),
-        strict_bed = "raw/phase3_strict_mask/strict_chr{chrom}.bed.gz"
+        strict_mask = "1KG_strict/mask_chr{chrom}.bed",
+        roulette_mask = "roulette_coverage/mask_chr{chrom}.bed.gz"
     output:
-        "filterbed/mask_chr{chrom}.bed.gz"
+        "basis/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i {input.filter_beds} {input.strict_bed} \
+            -i {input.filterbeds} {input.strict_mask} {input.roulette_mask} \
             -o {output}
         """
 
 
-rule merge_filterbed_and_roulette:
-    # Merge merged filterbed mask with Roulette mutation map coverage mask
+rule make_intergenic_mask:
     input:
-        script = "../../tools/bedfile_intersect.py",
-        filter_bed = "filterbed/mask_chr{chrom}.bed.gz",
-        roulette_bed = "raw/roulette_hg19_coverage/mask_chr{chrom}.bed.gz"
+        script = "../../tools/subtract_bed_files.py",
+        basis = "basis/mask_chr{chrom}.bed.gz",
+        exons = "exons/exons_chr{chrom}.bed.gz"
     output:
-        "filterbed_roulette/mask_chr{chrom}.bed.gz"
+        "intergenic/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i {input.filter_bed} {input.roulette_bed} \
-            -o {output}
-        """
-
-
-rule subtract_exons:
-    # Remove exonic intervals from the filterbed/strict/roulette mask
-    input:
-        script = "../../tools/bedfile_difference.py",
-        filter_bed = "filterbed_roulette/mask_chr{chrom}.bed.gz",
-        exon_bed = "raw/exons_hg19/{chrom}_exons.bed.gz"
-    output:
-        "filterbed_intergenic/mask_chr{chrom}.bed.gz"
-    shell:
-        """
-        python {input.script} \
-            -i1 {input.filter_bed} \
-            -i2 {input.exon_bed} \
+            -i1 {input.basis} \
+            -i2 {input.exons} \
             -o {output}
         """
 
 
 rule slop_exons_10kb:
     input:
-        script = "../../tools/bedfile_slop.py",
-        bed_file = "raw/exons_hg19/{chrom}_exons.bed.gz"
+        script = "../../tools/slop_bed_file.py",
+        exons = "exons/exons_chr{chrom}.bed.gz"
     params:
         buffer = "10000"
     output:
-        "buffers/exons_10kb_buffer/mask_chr{chrom}.bed.gz"
+        "buffers/10kb/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i {input.bed_file} \
-            --buffer {params.buffer} \
-            -o {output}
-        """
-
-
-rule slop_exons_20kb:
-    input:
-        script = "../../tools/bedfile_slop.py",
-        bed_file = "raw/exons_hg19/{chrom}_exons.bed.gz"
-    params:
-        buffer = "20000"
-    output:
-        "buffers/exons_20kb_buffer/mask_chr{chrom}.bed.gz"
-    shell:
-        """
-        python {input.script} \
-            -i {input.bed_file} \
+            -i {input.exons} \
             --buffer {params.buffer} \
             -o {output}
         """
@@ -104,16 +111,35 @@ rule slop_exons_20kb:
 
 rule slop_exons_50kb:
     input:
-        script = "../../tools/bedfile_slop.py",
-        bed_file = "raw/exons_hg19/{chrom}_exons.bed.gz"
+        script = "../../tools/slop_bed_file.py",
+        exons = "exons/exons_chr{chrom}.bed.gz"
     params:
         buffer = "50000"
     output:
-        "buffers/exons_50kb_buffer/mask_chr{chrom}.bed.gz"
+        "buffers/50kb/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i {input.bed_file} \
+            -i {input.exons} \
+            --buffer {params.buffer} \
+            -o {output}
+        """
+
+
+rule slop_exons_1e_4M:
+    input:
+        script = "../../tools/slop_bed_file_with_map.py",
+        exons = "exons/exons_chr{chrom}.bed.gz",
+        map_file = "../recombination_maps/Bherer/sexavg_chr{chrom}.txt.gz"
+    params:
+        buffer = "1e-4"
+    output:
+        "buffers/1e-4M/mask_chr{chrom}.bed.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.exons} \
+            -r {input.map_file} \
             --buffer {params.buffer} \
             -o {output}
         """
@@ -121,83 +147,48 @@ rule slop_exons_50kb:
 
 rule subtract_exons_10kb:
     input:
-        script = "../../tools/bedfile_difference.py",
-        filter_bed = "filterbed_roulette/mask_chr{chrom}.bed.gz",
-        buffer_bed = "buffers/exons_10kb_buffer/mask_chr{chrom}.bed.gz"
+        script = "../../tools/subtract_bed_files.py",
+        basis = "basis/mask_chr{chrom}.bed.gz",
+        exons_buffers = "buffers/10kb/mask_chr{chrom}.bed.gz"
     output:
-        "filterbed_10kb_exon_buffer/mask_chr{chrom}.bed.gz"
+        "10kb_buffer/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i1 {input.filter_bed} \
-            -i2 {input.buffer_bed} \
-            -o {output}
-        """
-
-
-rule subtract_exons_20kb:
-    input:
-        script = "../../tools/bedfile_difference.py",
-        filter_bed = "filterbed_roulette/mask_chr{chrom}.bed.gz",
-        buffer_bed = "buffers/exons_20kb_buffer/mask_chr{chrom}.bed.gz"
-    output:
-        "filterbed_20kb_exon_buffer/mask_chr{chrom}.bed.gz"
-    shell:
-        """
-        python {input.script} \
-            -i1 {input.filter_bed} \
-            -i2 {input.buffer_bed} \
+            -i1 {input.basis} \
+            -i2 {input.exons_buffers} \
             -o {output}
         """
 
 
 rule subtract_exons_50kb:
     input:
-        script = "../../tools/bedfile_difference.py",
-        filter_bed = "filterbed_roulette/mask_chr{chrom}.bed.gz",
-        buffer_bed = "buffers/exons_50kb_buffer/mask_chr{chrom}.bed.gz"
+        script = "../../tools/subtract_bed_files.py",
+        basis = "basis/mask_chr{chrom}.bed.gz",
+        exons_buffers = "buffers/50kb/mask_chr{chrom}.bed.gz"
     output:
-        "filterbed_50kb_exon_buffer/mask_chr{chrom}.bed.gz"
+        "50kb_buffer/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i1 {input.filter_bed} \
-            -i2 {input.buffer_bed} \
+            -i1 {input.basis} \
+            -i2 {input.exons_buffers} \
             -o {output}
         """
 
 
-rule slop_exons_1_4M:
+rule subtract_exons_1e_4M:
     input:
-        script = "../../tools/bedfile_rslop.py",
-        bed_file = "raw/exons_hg19/{chrom}_exons.bed.gz",
-        map_file = "../recombination_maps/Bherer_b37/sexavg_chr{chrom}.txt"
-    params:
-        distance = "1e-4"
+        script = "../../tools/subtract_bed_files.py",
+        basis = "basis/mask_chr{chrom}.bed.gz",
+        exons_buffers = "buffers/1e-4M/mask_chr{chrom}.bed.gz"
     output:
-        "buffers/exons_1e-4M_buffer/mask_chr{chrom}.bed.gz"
+        "1e-4M_buffer/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i {input.bed_file} \
-            -r {input.map_file} \
-            --buffer {params.distance} \
-            -o {output}
-        """
-
-
-rule subtract_exons_1_4M:
-    input:
-        script = "../../tools/bedfile_difference.py",
-        filter_bed = "filterbed_roulette/mask_chr{chrom}.bed.gz",
-        buffer_bed = "buffers/exons_1e-4M_buffer/mask_chr{chrom}.bed.gz"
-    output:
-        "filterbed_1e-4M_exon_buffer/mask_chr{chrom}.bed.gz"
-    shell:
-        """
-        python {input.script} \
-            -i1 {input.filter_bed} \
-            -i2 {input.buffer_bed} \
+            -i1 {input.basis} \
+            -i2 {input.exons_buffers} \
             -o {output}
         """
 

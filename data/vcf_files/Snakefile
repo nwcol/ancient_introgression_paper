@@ -1,47 +1,41 @@
 
 
-configfile: "config.yaml"
-
-
+configfile: "../config.yaml"
 CHROMS = list(range(1, 23))
-SGDP_SAMPLES = []
-with open("sgdp_populations", "r") as fin:
-    for line in fin:
-        SGDP_SAMPLES.append(line.split()[0])
 
 
 rule all:
     input:
         expand("merged/merged.variants.chr{chrom}.vcf.gz", chrom=CHROMS),
 
-## African data set (genome sequences of 24 contemperary African people)
 
 rule extract_sgdp_vcfs:
     # Extract desired VCFs from the SGDP tarball and their index files.
     input:
-        config["sgdp_archive"]
+        config["sgdp_path"]
     output:
-        vcf_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz",
-        index_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz.tbi"
+        vcf_file = "samples/sgdp/{sample}.annotated.nh2.variants.vcf.gz",
+        index_file = "samples/sgdp/{sample}.annotated.nh2.variants.vcf.gz.tbi"
     params:
         vcf_file = "{sample}.annotated.nh2.variants.vcf.gz",
         index_file = "{sample}.annotated.nh2.variants.vcf.gz.tbi"
     shell:
         """
         tar -xvf {input} {params.vcf_file}
-        mv {params.vcf_file} raw/sgdp
+        mv {params.vcf_file} samples/sgdp
         tar -xvf {input} {params.index_file}
-        mv {params.index_file} raw/sgdp
+        mv {params.index_file} samples/sgdp
         """
+
 
 rule split_and_reduce_sgdp_vcfs:
     # Split SGDP VCFs into respective chromosomes, and use bcftools annotate
     # to remove some fields that we don't require from them.
     input:
-        vcf_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz",
-        index_file = "raw/sgdp/{sample}.annotated.nh2.variants.vcf.gz.tbi"
+        vcf_file = "samples/sgdp/{sample}.annotated.nh2.variants.vcf.gz",
+        index_file = "samples/sgdp/{sample}.annotated.nh2.variants.vcf.gz.tbi"
     output:
-        "raw/sgdp/{sample}.variants.chr{chrom}.vcf.gz"
+        "samples/sgdp/{sample}.variants.chr{chrom}.vcf.gz"
     params:
         chrom = "{chrom}"
     shell:
@@ -51,33 +45,20 @@ rule split_and_reduce_sgdp_vcfs:
                 -x ID,QUAL,INFO,FORMAT/PL,FORMAT/AD -o {output}
         """
 
+
 rule index_split_and_reduced_sgdp_files:
     # These files must be indexed before merging.
     input:
-        "raw/sgdp/{sample}.variants.chr{chrom}.vcf.gz"
+        "samples/sgdp/{sample}.variants.chr{chrom}.vcf.gz"
     output:
-        "raw/sgdp/{sample}.variants.chr{chrom}.vcf.gz.csi"
+        "samples/sgdp/{sample}.variants.chr{chrom}.vcf.gz.csi"
     shell:
         """
         bcftools index {input}
         """
 
-rule merge_sgdp_vcfs:
-    # These are merged separately so that we can use the -0 "missing to ref" flag
-    input:
-        vcf_files = expand("raw/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz",
-                sample=SGDP_SAMPLES),
-        index_files = expand("raw/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
-            sample=SGDP_SAMPLES)
-    output:
-        "sgdp/sgdp.merged.variants.chr{chrom}.vcf.gz"
-    shell:
-        """
-        bcftools merge -0 {input.vcf_files} -o {output}
-        """
 
 rule index_merged_sgdp_vcfs:
-    # These are merged separately so that we can use the -0 "missing to ref" flag
     input:
         "sgdp/sgdp.merged.variants.chr{chrom}.vcf.gz"
     output:
@@ -87,12 +68,13 @@ rule index_merged_sgdp_vcfs:
         bcftools index {input}
         """
 
-rule extract_archaic_gvcf_variants:
+
+rule extract_ancient_gvcf_variants:
     input:
-        vcf_file = config["archaic_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz",
-        index_file = config["archaic_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz"
+        vcf_file = config["ancient_sample_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz",
+        index_file = config["ancient_sample_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz"
     output:
-        "raw/ancient/{sample}.variants.chr{chrom}.vcf.gz"
+        "samples/ancient/{sample}.variants.chr{chrom}.vcf.gz"
     shell:
         """
         bcftools view -c1 -Ou {input.vcf_file} | \
@@ -100,13 +82,14 @@ rule extract_archaic_gvcf_variants:
                 -x QUAL,INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ \
                 -o {output}
         """
+
 
 rule extract_chagyrskaya_gvcf_variants:
     input:
-        vcf_file = config["archaic_dir"] + "{sample}/chr{chrom}.noRB.vcf.gz",
-        index_file = config["archaic_dir"] + "{sample}/chr{chrom}.noRB.vcf.gz.csi"
+        vcf_file = config["ancient_sample_dir"] + "{sample}/chr{chrom}.noRB.vcf.gz",
+        index_file = config["ancient_sample_dir"] + "{sample}/chr{chrom}.noRB.vcf.gz.csi"
     output:
-        "raw/ancient/{sample}.variants.chr{chrom}.vcf.gz"
+        "samples/ancient/{sample}.variants.chr{chrom}.vcf.gz"
     shell:
         """
         bcftools view -c1 -Ou {input.vcf_file} | \
@@ -115,43 +98,32 @@ rule extract_chagyrskaya_gvcf_variants:
                 -o {output}
         """
 
-rule extract_ancient_gvcf_variants:
-    # Extract variant sites from GVCF files holding ancient AMH sequences.
-    input:
-        vcf_file = config["ancient_human_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz",
-        index_file = config["ancient_human_dir"] + "{sample}/chr{chrom}_mq25_mapab100.vcf.gz"
-    output:
-        "raw/ancient/{sample}.variants.chr{chrom}.vcf.gz"
-    shell:
-        """
-        bcftools view -c1 -Ou {input.vcf_file} | \
-            bcftools annotate \
-                -x QUAL,INFO,^FORMAT/GT,FORMAT/DP,FORMAT/GQ \
-                -o {output}
-        """
 
 rule index_gvcf_variants:
     input:
-        "raw/ancient/{sample}.variants.chr{chrom}.vcf.gz"
+        "samples/ancient/{sample}.variants.chr{chrom}.vcf.gz"
     output:
-        "raw/ancient/{sample}.variants.chr{chrom}.vcf.gz.csi"
+        "samples/ancient/{sample}.variants.chr{chrom}.vcf.gz.csi"
     shell:
         """
         bcftools index {input}
         """
 
+
 rule merge_vcfs:
     input:
-        ancient_vcfs = expand("raw/ancient/{sample}.variants.chr{{chrom}}.vcf.gz", 
+        ancient_vcfs = expand("samples/ancient/{sample}.variants.chr{{chrom}}.vcf.gz", 
             sample=config["ancient_samples"]),
-        ancient_csis = expand("raw/ancient/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
+        ancient_csis = expand("samples/ancient/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
                 sample=config["ancient_samples"]),
-        sgdp_vcf = "sgdp/sgdp.merged.variants.chr{chrom}.vcf.gz",
-        sgdp_csi = "sgdp/sgdp.merged.variants.chr{chrom}.vcf.gz.csi"
+        sgdp_vcfs = expand("samples/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz",
+                sample=config["sgdp_samples"]),
+        sgdp_csis = expand("samples/sgdp/{sample}.variants.chr{{chrom}}.vcf.gz.csi", 
+            sample=config["sgdp_samples"])
     output:
         "merged/merged.variants.chr{chrom}.vcf.gz"
     shell:
         """
-        bcftools merge -0 {input.ancient_vcfs} {input.sgdp_vcf} -Ou | \
+        bcftools merge -0 {input.ancient_vcfs} {input.sgdp_vcfs} -Ou | \
             bcftools annotate -x ^FORMAT/GT -o {output} 
         """
