@@ -1,0 +1,91 @@
+description: Eight-lineage model incorporating supported features
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -608.6552680223731, num_iter: 1, max_iter: 100, flag: 0, u: 1.1e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 920623.6802189966, start_size: 19616.388652784506}
+- name: Sup
+  start_time: 2000000.0
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 855766.8633949942, start_size: 20000.0}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 855766.8633949942, start_size: 3275.1050097943}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 57705.035086135475, start_size: 36810.606020416875}
+- name: Denisova
+  start_time: 855766.8633949942
+  ancestors: [Sup, ND]
+  proportions: [0.031228542557944845, 0.9687714574420552]
+  epochs:
+  - {end_time: 60000, start_size: 3777.606250923116}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 135955.34797159085, start_size: 3456.5632424174005}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 934.973441770917}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 68384.60981702562, start_size: 3456.5632424174005}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 646.8132050269041}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 1291.1746425205308}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 20477.49586768417}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 56249.16020188674, start_size: 113.21399753395681}
+  - {end_time: 8000, start_size: 1511.3335414734677}
+- name: UstIshim
+  start_time: 47000
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 45000, start_size: 3525.2978195904284}
+- name: Stuttgart
+  start_time: 56249.16020188674
+  ancestors: [Loschbour]
+  epochs:
+  - {end_time: 7000, start_size: 8190.098074447764}
+migrations:
+- demes: [N, Denisova]
+  rate: 3.979376162586669e-06
+- demes: [Denisova, Altai]
+  rate: 3.979376162586669e-06
+- demes: [Yoruba1, Loschbour]
+  rate: 7.140670077729511e-05
+pulses:
+- sources: [MH]
+  dest: N
+  time: 250000
+  proportions: [0.036514047774843156]
+- sources: [MH]
+  dest: WN
+  time: 110000
+  proportions: [0.005279673531992861]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 48000
+  proportions: [0.022155336020372896]
+- sources: [Loschbour]
+  dest: Stuttgart
+  time: 30214.902057656032
+  proportions: [0.6019511761803394]

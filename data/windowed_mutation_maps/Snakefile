@@ -9,7 +9,9 @@ CHROMS = list(range(1, 23))
 rule all:
     input: 
         expand("roulette_1kb/map_chr{chrom}.csv.gz", chrom=CHROMS),
-        expand("roulette_10kb/map_chr{chrom}.csv.gz", chrom=CHROMS)
+        expand("roulette_10kb/map_chr{chrom}.csv.gz", chrom=CHROMS),
+        expand("scaled_roulette_1kb/map_chr{chrom}.csv.gz", chrom=CHROMS),
+        expand("scaled_roulette_10kb/map_chr{chrom}.csv.gz", chrom=CHROMS)
 
 
 rule build_windowed_maps_1kb:
@@ -45,6 +47,40 @@ rule build_windowed_maps_10kb:
         python {input.script} \
             -i {input.mutmap} \
             -b {input.mask} \
+            --scale {params.scale} \
+            -o {output}
+        """
+
+
+rule scale_maps_1kb:
+    input:
+        script = "../../tools/scale_windowed_map.py",
+        mutmap = "roulette_1kb/map_chr{chrom}.csv.gz"
+    params:
+        scale = "1.158487" # 1.3e-08 / 1.122153e-08
+    output:
+        "scaled_roulette_1kb/map_chr{chrom}.csv.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.mutmap} \
+            --scale {params.scale} \
+            -o {output}
+        """
+
+
+rule scale_maps_10kb:
+    input:
+        script = "../../tools/scale_windowed_map.py",
+        mutmap = "roulette_10kb/map_chr{chrom}.csv.gz"
+    params:
+        scale = "1.158487" # 1.3e-08 / 1.122153e-08
+    output:
+        "scaled_roulette_10kb/map_chr{chrom}.csv.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.mutmap} \
             --scale {params.scale} \
             -o {output}
         """

@@ -20,20 +20,18 @@ rate_info = 'MR'
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--in_file', required=True,
+    parser.add_argument('-i', '--infile', required=True,
         help='Pathname of input Roulette VCF file')
-    parser.add_argument('-np', '--np_out', required=True,
-        help='Pathname of output .np file')
-    parser.add_argument('-bed', '--bed_out', required=True,
-        help='Pathname of output .np file')
+    parser.add_argument('-o', '--outfile', required=True,
+        help='Pathname of output .npy file')
     return parser.parse_args()
 
 
-def read_seq_len(file):
+def read_seq_length(file):
     """
     Obtain the sequence length from the input VCF file header. 
     """
-    seq_lens = dict()
+    seq_lengths = dict()
     with gzip.open(file, 'rb') as fin:
         for lineb in fin:
             line = lineb.decode()
@@ -44,25 +42,24 @@ def read_seq_len(file):
                     length = int(_length.split('=')[1])
                     # we only want autosomes;
                     if chrom_num.strip('chr').isnumeric():
-                        seq_lens[chrom_num] = length
+                        seq_lengths[chrom_num] = length
                 else:
                     pass
             else:
                 chrom_num = line.split()[0]
                 break
-    seq_len = seq_lens[chrom_num]
+    seq_length = seq_lengths[chrom_num]
     if chrom_num.isnumeric(): 
         chrom_num = f'chr{chrom_num}'
+    return chrom_num, seq_length
 
-    return chrom_num, seq_len
 
-
-def read_vcf_file(vcf_file, seq_len, verbosity):
+def read_vcf_file(vcf_file, seq_length, verbosity):
     """
     Read an array of mutation rates from a VCF file. 
     """
-    rates = np.zeros(seq_len, dtype=float)
-    mask = np.ones(seq_len, dtype=bool)
+    rates = np.zeros(seq_length, dtype=float)
+    mask = np.ones(seq_length, dtype=bool)
     counter = 0
 
     with gzip.open(vcf_file, 'rb') as fin:
@@ -87,21 +84,20 @@ def read_vcf_file(vcf_file, seq_len, verbosity):
     print(utils._current_time(), f'Parsed {counter} rows')
     rates = rates * coeff
     rates[mask] = np.nan
+    return rates
 
-    return rates, mask
+
+def parse_roulette_vcf(infile, outfile):
+    verbosity = 10000000
+    chrom_num, seq_length = read_seq_length(infile)
+    rates = read_vcf_file(infile, seq_length, verbosity)
+    np.save(outfile, rates)
+    return
 
 
 def main():
-    
     args = get_args()
-
-    verbosity = 10000000
-    chrom_num, seq_len = read_seq_len(args.in_file)
-    rates, mask = read_vcf_file(args.in_file, seq_len, verbosity)
-    np.save(args.np_out, rates)
-    regions = utils.mask_to_regions(mask)
-    utils._write_bed_file(args.bed_out, regions, chrom_num)
-
+    parse_roulette_vcf(args.infile, args.outfile)
     return
 
 

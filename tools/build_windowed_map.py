@@ -12,30 +12,23 @@ from dpluspy import utils
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--in_file", required=True,
-        help="Pathnames of input .npy file")
+    parser.add_argument("-i", "--infile", required=True,
+        help="Pathname of input .npy file")
     parser.add_argument("-scale", "--scale", type=int, required=True,
         help="Window scale, in bp")
-    parser.add_argument("-chrom", "--chrom", default="0", 
-        help="Chromosome number for output file")
-    parser.add_argument("-b", "--mask", default=None, 
+    parser.add_argument("-b", "--maskfile", required=True, 
         help="Pathname of optional BED genetic mask file")
-    parser.add_argument("-o", "--out_file", required=True, 
+    parser.add_argument("-o", "--outfile", required=True, 
         help="Pathname of output .bedgraph file")
     return parser.parse_args()
 
 
-def main():
-    args = get_args()
-    mut_map = np.load(args.in_file)
+def build_windowed_map(infile, scale, maskfile, outfile):
+    mut_map = np.load(infile)
     L = len(mut_map)
-    if args.mask is not None:
-        regions, chrom = utils._read_bed_file(args.mask)
-        mask = utils._regions_to_mask(regions, length=L)
-        mut_map[mask] = np.nan
-    else:
-        chrom = args.chrom
-    scale = args.scale
+    regions, chrom = utils._read_bed_file(maskfile)
+    mask = utils._regions_to_mask(regions, length=L)
+    mut_map[mask] = np.nan
     chrom_start = np.arange(0, L, scale)
     chrom_end = np.arange(scale, L + scale, scale)
     windows = np.stack((chrom_start, chrom_end), axis=1)
@@ -56,7 +49,13 @@ def main():
         "num_sites": num_sites, 
         "mut_map": windowed_map
     }
-    pandas.DataFrame(data).to_csv(args.out_file, index=False, na_rep="nan")
+    pandas.DataFrame(data).to_csv(outfile, index=False, na_rep="nan")
+    return
+
+
+def main():
+    args = get_args()
+    build_windowed_map(args.infile, args.scale, args.maskfile, args.outfile)
     return
 
 
