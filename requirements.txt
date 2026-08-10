@@ -1,5 +1,6 @@
-moments-popgen
-demes
 numpy
 scipy
-dpluspy
+pandas
+moments-popgen
+tskit
+matplotlib

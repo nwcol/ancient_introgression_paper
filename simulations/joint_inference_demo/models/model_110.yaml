@@ -1,0 +1,42 @@
+time_units: years
+generation_time: 29
+demes:
+- name: Anc 
+  epochs: 
+  - {start_size: 1.6e4, end_time: 8e5}
+- name: Sup 
+  start_time: 2e6
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 2e4, end_time: 7e5}
+- name: ND 
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 5e3, end_time: 7e5}
+- name: Den 
+  start_time: 7e5
+  ancestors: [Sup, ND]
+  proportions: [0.02, 0.98]
+  epochs: 
+  - {start_size: 3e3, end_time: 6e4}
+- name: Nea 
+  ancestors: [ND]
+  epochs: 
+  - {start_size: 2.5e3, end_time: 5e4}
+- name: Afr 
+  ancestors: [Anc]
+  epochs: 
+  - {start_size: 3e4, end_time: 6e4}
+- name: Yor 
+  ancestors: [Afr]
+  epochs: 
+  - {start_size: 3e4, end_time: 0}
+- name: Los 
+  ancestors: [Afr]
+  epochs: 
+  - {start_size: 2e3, end_time: 1e4}
+pulses: 
+- sources: [Afr]
+  dest: Nea 
+  proportions: [0.05]
+  time: 2.5e5

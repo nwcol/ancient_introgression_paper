@@ -1,0 +1,65 @@
+time_units: years
+generation_time: 29
+description: edited so SD pulse shows up as gene flow in plots
+metadata:
+  opt_info: {ll: -300.3878586055432, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 763016.4559538261, start_size: 17073.55158110975}
+- name: Sup
+  start_time: 2000000
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 756955, start_size: 20000}
+- name: Yoruba1
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 0, start_size: 28541.539569061984}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 756955.7820457867, start_size: 310.5279536461105}
+- name: Denisova
+  ancestors: [ND]
+  start_time: 756955.7820457867
+  epochs:
+  - {end_time: 60000, start_size: 3287.618179868829}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 121481.79511661893, start_size: 2761.50713861096}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 331.98728780820977}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 60509.446950990634, start_size: 2761.50713861096}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 231.29605200027086}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 819.1498083735285}
+migrations:
+- demes: [N, Denisova]
+  rate: 4.64673662023114e-06
+- demes: [Denisova, Altai]
+  rate: 4.64673662023114e-06
+pulses:
+- sources: [Sup]
+  dest: Denisova
+  time: 756955
+  proportions: [0.0134791383317768163]
+- sources: [Yoruba1]
+  dest: N
+  time: 250000
+  proportions: [0.05704158249341293]
+- sources: [Yoruba1]
+  dest: WN
+  time: 110000
+  proportions: [0.011293562121686907]

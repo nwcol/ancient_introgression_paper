@@ -1,0 +1,10 @@
+0,unif_rep_0
+0,unif_rep_1
+0,unif_rep_2
+0,unif_rep_3
+0,unif_rep_4
+1,lmr_var_rep_0
+1,lmr_var_rep_1
+1,lmr_var_rep_2
+1,lmr_var_rep_3
+1,lmr_var_rep_4

@@ -11,7 +11,7 @@ demes:
   start_time: 2000000.0
   ancestors: [Anc]
   epochs:
-  - {end_time: 668690.0352688624, start_size: 20000.0}
+  - {end_time: 668690, start_size: 20000.0}
 - name: ND
   ancestors: [Anc]
   epochs:
@@ -22,8 +22,7 @@ demes:
   - {end_time: 56667.74396152902, start_size: 29644.57008036183}
 - name: Denisova
   start_time: 668690.0352688624
-  ancestors: [Sup, ND]
-  proportions: [0.015081050719109527, 0.9849189492808905]
+  ancestors: [ND]
   epochs:
   - {end_time: 60000, start_size: 3307.2940213848747}
 - name: N
@@ -50,25 +49,23 @@ demes:
   ancestors: [MH]
   epochs:
   - {end_time: 0, start_size: 22860.670907055268}
-- name: OOA0
+- name: OOA
   ancestors: [MH]
   epochs:
   - {end_time: 54457.16886982641, start_size: 171.79712565242306}
-- name: OOA1
-  ancestors: [OOA0]
-  epochs:
   - {end_time: 47000, start_size: 1533.3972044687869}
 - name: Loschbour
-  ancestors: [OOA1]
+  ancestors: [OOA]
   epochs:
   - {end_time: 8000, start_size: 1533.3972044687869}
 - name: UstIshim
   start_time: 47000
-  ancestors: [OOA1]
+  ancestors: [OOA]
   epochs:
   - {end_time: 45000, start_size: 2783.9911053660453}
 - name: BE 
-  ancestors: [OOA0]
+  start_time: 54457.16886982641
+  ancestors: [OOA]
   epochs:
   - {end_time: 29185.62324857503, start_size: 6931.64095569029}
 - name: Stuttgart
@@ -85,6 +82,10 @@ migrations:
 - demes: [Yoruba1, Loschbour]
   rate: 6.164536151129991e-05
 pulses:
+- sources: [Sup]
+  dest: Denisova
+  time: 668690
+  proportions: [0.015081050719109527]
 - sources: [MH]
   dest: N
   time: 250000
@@ -94,7 +95,8 @@ pulses:
   time: 110000
   proportions: [0.01129960465111406]
 - sources: [Vindija]
-  dest: OOA1
+  dest: OOA
   time: 48000
   proportions: [0.020004473360091816]
+
 

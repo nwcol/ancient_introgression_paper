@@ -18,25 +18,23 @@ demes:
   ancestors: [MH]
   epochs:
   - {end_time: 0, start_size: 19720.778051879028}
-- name: OOA0 
+- name: OOA 
   ancestors: [MH]
   epochs:
   - {end_time: 52709.20430565564, start_size: 77.56711637682446}
-- name: OOA1 
-  ancestors: [OOA0]
-  epochs:
   - {end_time: 47000, start_size: 1491.3582438115395}
 - name: Loschbour
-  ancestors: [OOA1]
+  ancestors: [OOA]
   epochs:
   - {end_time: 8000, start_size: 1491.3582438115395}
 - name: UstIshim
   start_time: 47000
-  ancestors: [OOA1]
+  ancestors: [OOA]
   epochs:
   - {end_time: 45000, start_size: 2115.910387809461}
 - name: BE
-  ancestors: [OOA0]
+  start_time: 52709.20430565564
+  ancestors: [OOA]
   epochs:
   - {end_time: 22548.04093101375, start_size: 5148.338693196183}
 - name: Stuttgart
@@ -54,7 +52,7 @@ pulses:
   time: 250000
   proportions: [0.14126846851569752]
 - sources: [Vindija]
-  dest: OOA1
+  dest: OOA
   time: 48000
   proportions: [0.020083526617683766]
 
