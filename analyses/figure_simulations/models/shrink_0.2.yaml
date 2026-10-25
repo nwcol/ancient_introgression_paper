@@ -1,0 +1,6 @@
+time_units: generations
+demes:
+- name: pop1
+  epochs:
+  - {end_time: 4000, start_size: 1e4}
+  - {end_time: 0, start_size: 1e3}

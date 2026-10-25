@@ -1,0 +1,13 @@
+time_units: generations
+demes:
+- name: anc
+  epochs:
+  - {start_size: 1e4, end_time: 5e3}
+- name: pop1
+  ancestors: [anc]
+  epochs:
+  - {start_size: 1e5, end_time: 0}
+- name: pop2
+  ancestors: [anc]
+  epochs:
+  - {start_size: 5e4, end_time: 0}

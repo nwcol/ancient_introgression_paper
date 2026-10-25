@@ -1,0 +1,48 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -35.7600527449864, num_iter: 1, max_iter: 1, flag: 2, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 814948.8884006679, start_size: 15814.261493905366}
+- name: Sup
+  start_time: 2000000.0
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 717762.6744293998, start_size: 20000.0}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 717762.6744293998, start_size: 4817.473538759305}
+- name: Den
+  start_time: 717762.6744293998
+  ancestors: [Sup, ND]
+  proportions: [0.019272913268106248, 0.9807270867318938]
+  epochs:
+  - {end_time: 60000.0, start_size: 3046.1703846249484}
+- name: Nea
+  ancestors: [ND]
+  epochs:
+  - {end_time: 50000.0, start_size: 2613.07925835807}
+- name: Afr
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 61579.55856067662, start_size: 30323.792352700668}
+- name: Yor
+  ancestors: [Afr]
+  epochs:
+  - {end_time: 0, start_size: 37510.6145650592}
+- name: Los
+  ancestors: [Afr]
+  epochs:
+  - {end_time: 10000.0, start_size: 2006.9327927412169}
+pulses:
+- sources: [Afr]
+  dest: Nea
+  time: 250000.0
+  proportions: [0.0505975213017319]
+- sources: [Nea]
+  dest: Los
+  time: 50000.0
+  proportions: [0.02614473424545839]

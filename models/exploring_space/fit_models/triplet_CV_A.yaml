@@ -1,0 +1,25 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -33.12148361019315, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 206569.71668877665, start_size: 11652.45817269166}
+  - {end_time: 118894.16036365567, start_size: 1553.6809240311588}
+- name: Altai
+  ancestors: [A]
+  epochs:
+  - {end_time: 115000, start_size: 157.4520411455181}
+- name: CV
+  ancestors: [A]
+  epochs:
+  - {end_time: 90951.52534455428, start_size: 1553.6809240311588}
+- name: Vindija
+  ancestors: [CV]
+  epochs:
+  - {end_time: 45000, start_size: 2457.2016456406895}
+- name: Chagyrskaya
+  ancestors: [CV]
+  epochs:
+  - {end_time: 55000, start_size: 1646.386807221429}

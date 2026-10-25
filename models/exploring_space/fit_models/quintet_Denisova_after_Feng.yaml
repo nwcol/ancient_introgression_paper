@@ -1,0 +1,41 @@
+time_units: years
+description: DY end time edited down by 100 years to fix plot
+generation_time: 29
+metadata:
+  opt_info: {ll: -8494.653692854681, flag: 1, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 735211.9927173371, start_size: 13839.097389139366}
+- name: DY
+  ancestors: [A]
+  epochs:
+  - {end_time: 725111.9927171922, start_size: 94766.97066247679}
+- name: Denisova
+  ancestors: [DY]
+  epochs:
+  - {end_time: 60000, start_size: 3305.0116532425286}
+- name: Yoruba1
+  ancestors: [DY]
+  epochs:
+  - {end_time: 0, start_size: 26289.37140526687}
+- name: N
+  ancestors: [A]
+  epochs:
+  - {end_time: 159013.87226960974, start_size: 4175.979947441233}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 2659.014124757362}
+- name: CV
+  ancestors: [N]
+  epochs:
+  - {end_time: 75546.87195310839, start_size: 4175.979947441233}
+- name: Vindija
+  ancestors: [CV]
+  epochs:
+  - {end_time: 45000, start_size: 932.7869235247348}
+- name: Chagyrskaya
+  ancestors: [CV]
+  epochs:
+  - {end_time: 55000, start_size: 1143.3197897830685}

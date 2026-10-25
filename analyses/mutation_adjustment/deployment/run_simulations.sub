@@ -1,0 +1,20 @@
+
+log = log/$(Cluster).log
+error = log/$(Cluster).$(Process).err
+output = log/$(Cluster).$(Process).out
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/nwcollier/h2py-container.sif
+
+request_cpus   = 1
+request_memory = 4GB
+request_disk   = 4GB
+
+executable = simulate_chromosome.sh
+arguments = $(chrom) $(L) $(graphfile) $(popfile) $(outfile)
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = simulate_chromosome.py, data/data_chr$(chrom).zip, \
+    pops.txt, graph.yaml
+
+queue chrom,L,graphfile,popfile,outfile from variables.txt

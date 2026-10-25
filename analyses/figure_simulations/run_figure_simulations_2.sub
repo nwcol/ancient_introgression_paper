@@ -1,0 +1,22 @@
+
+log = log/$(Cluster).log
+error = log/$(Cluster).$(Process).err
+output = log/$(Cluster).$(Process).out
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/n/nwcollier/h2py-container.sif
+
+request_cpus   = 1
+request_memory = 4GB
+request_disk   = 4GB
+
+executable = ex_figure_simulations_2.sh
+arguments = $(graph) $(pops) $(phasing) $(outf)
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = \
+    scripts/simulate_windows_h2.py, \
+    models/$(pops), \
+    models/$(graph)
+
+queue graph,pops,phasing,outf from variables_2.txt

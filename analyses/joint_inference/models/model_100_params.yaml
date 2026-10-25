@@ -1,0 +1,104 @@
+parameters: 
+- name: T_NDH
+  upper_bound: 1.5e6
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            0: end_time
+
+- name: T_ND 
+  lower_bound: 2.5e5
+  values: 
+    - demes: 
+        ND: 
+          epochs: 
+            0: end_time
+        Sup: 
+          epochs: 
+            0: end_time
+        Den: start_time
+
+- name: T_LY
+  lower_bound: 5e4
+  upper_bound: 2.5e5
+  values: 
+    - demes: 
+        Afr: 
+          epochs:
+            0: end_time
+
+- name: N_A 
+  lower_bound: 1e3
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        Anc: 
+          epochs: 
+            0: start_size
+
+- name: N_ND 
+  lower_bound: 1e2
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        ND: 
+          epochs: 
+            0: start_size
+
+- name: N_Afr
+  lower_bound: 1e3
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Afr: 
+          epochs: 
+            0: start_size
+
+- name: N_Yor
+  lower_bound: 1e3
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Yor: 
+          epochs: 
+            0: start_size
+
+- name: N_Los
+  lower_bound: 1e2
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Los: 
+          epochs: 
+            0: start_size
+
+- name: N_Nea
+  lower_bound: 1e2
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        Nea: 
+          epochs: 
+            0: start_size
+
+- name: N_Den
+  lower_bound: 1e2
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        Den: 
+          epochs: 
+            0: start_size
+
+- name: p_S_D
+  lower_bound: 1e-6
+  upper_bound: 0.999
+  values: 
+    - demes: 
+        Den: 
+          proportions: 0
+      
+constraints: 
+- params: [T_NDH, T_ND]
+  constraint: greater_than 

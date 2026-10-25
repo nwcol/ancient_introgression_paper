@@ -1,0 +1,33 @@
+
+log = log/$(Cluster).log
+error = log/$(Cluster).$(Process).err
+output = log/$(Cluster).$(Process).out
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/n/nwcollier/h2py-container.sif
+
+request_cpus   = 1
+request_memory = 4GB
+request_disk   = 4GB
+
+executable = fit_model.sh
+arguments = \
+    --graph $(graph) \
+    --params $(params) \
+    --data $(data) \
+    --sample $(rep) \
+    -u 1.3e-8 \
+    --max_iter 2000 \
+    --perturb 0.1 \
+    --jitter 0.01 \
+    --max_runtime 172800 \
+    -o $(fout)
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = \
+    ../scripts/fit_model.py, \
+    ../bootstrapped_data/$(data), \
+    $(graph), \
+    $(params), \
+
+queue rep,graph,params,data,fout from variables.txt

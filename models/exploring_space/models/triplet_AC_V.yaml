@@ -1,0 +1,23 @@
+time_units: years
+generation_time: 29
+demes: 
+- name: A 
+  epochs: 
+  - {end_time: 800000, start_size: 16000}
+  - {end_time: 400000, start_size: 3000}
+- name: AC
+  ancestors: [A]
+  epochs:
+  - {end_time: 150000, start_size: 3000}
+- name: Altai
+  ancestors: [AC]
+  epochs:
+  - {end_time: 115000, start_size: 1000}
+- name: Vindija
+  ancestors: [A]
+  epochs:
+  - {end_time: 45000, start_size: 1000}
+- name: Chagyrskaya
+  ancestors: [AC]
+  epochs:
+  - {end_time: 55000, start_size: 1000}

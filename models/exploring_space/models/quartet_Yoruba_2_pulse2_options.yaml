@@ -1,0 +1,101 @@
+parameters:
+- name: T_NY
+  upper_bound: 1e6
+  values:
+    - demes:
+        A:
+          epochs:
+            0: end_time
+- name: T_pulse
+  values:
+    - pulses:
+        0: time
+- name: T_A_CV
+  lower_bound: 120000
+  values:
+    - demes:
+        N:
+          epochs:
+            0: end_time
+- name: T_CV
+  lower_bound: 55000
+  values: 
+    - demes: 
+        CV:
+          epochs: 
+            0: end_time
+
+- name: p_pulse
+  lower_bound: 1e-4
+  upper_bound: 0.5
+  values:
+    - pulses:
+        0:
+          proportions: 0
+- name: p_pulse1
+  lower_bound: 1e-8
+  upper_bound: 0.5
+  values:
+    - pulses:
+        1:
+          proportions: 0
+
+- name: N_A
+  lower_bound: 100
+  upper_bound: 1e5
+  values:
+    - demes:
+        A:
+          epochs:
+            0: start_size
+- name: N_Y
+  lower_bound: 100
+  upper_bound: 1e5
+  values:
+    - demes:
+        Yoruba1:
+          epochs:
+            0: start_size
+- name: N_N
+  lower_bound: 100
+  upper_bound: 1e5
+  values: 
+    - demes: 
+        N:
+          epochs: 
+            0: start_size
+        CV:
+          epochs:
+            0: start_size
+- name: N_Vin
+  lower_bound: 100
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        Vindija: 
+          epochs: 
+            0: start_size
+- name: N_Alt
+  lower_bound: 10
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        Altai:
+          epochs: 
+            0: start_size
+- name: N_Cha
+  lower_bound: 10
+  upper_bound: 1e6
+  values:
+    - demes:
+        Chagyrskaya:
+          epochs:
+            0: start_size
+
+constraints: 
+- params: [T_NY, T_pulse]
+  constraint: greater_than
+- params: [T_pulse, T_A_CV]
+  constraint: greater_than
+- params: [T_A_CV, T_CV]
+  constraint: greater_than

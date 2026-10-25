@@ -1,0 +1,37 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -366.8525219493899, flag: 0, u: 1.3e-08}
+demes:
+- name: A
+  epochs:
+  - {end_time: 662784.4959636695, start_size: 18390.231129774507}
+- name: Yoruba1
+  ancestors: [A]
+  epochs:
+  - {end_time: 0, start_size: 26385.479970856988}
+- name: N
+  ancestors: [A]
+  epochs:
+  - {end_time: 131278.31661964295, start_size: 3908.6707866552774}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 858.3643167030475}
+- name: CV
+  ancestors: [N]
+  epochs:
+  - {end_time: 63413.6158970988, start_size: 3908.6707866552774}
+- name: Vindija
+  ancestors: [CV]
+  epochs:
+  - {end_time: 45000, start_size: 1063.821699206519}
+- name: Chagyrskaya
+  ancestors: [CV]
+  epochs:
+  - {end_time: 55000, start_size: 396.3609341840326}
+pulses:
+- sources: [Yoruba1]
+  dest: N
+  proportions: [0.08]
+  time: 2e5
