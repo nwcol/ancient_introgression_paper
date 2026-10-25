@@ -1,0 +1,33 @@
+
+log = log/$(Cluster).log
+error = log/$(Cluster).$(Process).err
+output = log/$(Cluster).$(Process).out
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/n/nwcollier/h2py-container.sif
+
+request_cpus   = 1
+request_memory = 4GB
+request_disk   = 4GB
+
+executable = ex_blrt_fits_sfs_model_1.sh
+arguments = \
+    $(truth) \
+    $(graph0) \
+    $(params0) \
+    $(graph1) \
+    $(params1) \
+    $(prefix)
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = \
+    scripts/simulate_windows_sfs.py, \
+    scripts/fit_nested_models_sfs.py, \
+    models/pops.txt, \
+    models/$(truth), \
+    models/$(graph0), \
+    models/$(params0), \
+    models/$(graph1), \
+    models/$(params1)
+
+queue truth,graph0,params0,graph1,params1,prefix from sfs_variables_model_1.txt

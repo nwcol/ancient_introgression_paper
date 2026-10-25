@@ -4,39 +4,32 @@ intervals where all inputs had coverage.
 """
 
 import argparse
+import h2py
 import numpy as np
-
-from dpluspy import utils
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--infiles', nargs='*', required=True,
+    parser.add_argument('-i', '--inputs', nargs='*', required=True,
         help='Input BED filepaths')
-    parser.add_argument('-o', '--outfile', required=True,
+    parser.add_argument('-o', '--output', required=True,
         help='Output BED filepath')
     return parser.parse_args()
 
 
-def intersect_bed_files(infiles, outfile):
+def intersect_bed_files(inputs, output):
     """
     Load BED files, form their intersection, and save it.
     """
-    region_arrs = []
-    chrom_nums = []
-    for file in infiles:
-        regions, chrom = utils._read_bed_file(file)
-        region_arrs.append(regions)
-        chrom_nums.append(chrom)
-    chrom_num = chrom_nums[0]
-    intersection = utils._intersect_regions(region_arrs)
-    utils._write_bed_file(outfile, intersection, chrom_num)
+    masks = [h2py.GeneticMask.from_bed_file(f) for f in inputs]
+    result = h2py.masks.intersect_masks(masks)
+    result.to_bed_file(output)
     return
 
 
 def main():
     args = get_args()
-    intersect_bed_files(args.infiles, args.outfile)
+    intersect_bed_files(args.inputs, args.output)
     return 
 
 

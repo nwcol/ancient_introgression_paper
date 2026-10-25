@@ -1,0 +1,27 @@
+In [1]: import h2py
+
+In [2]: import numpy as np
+
+In [3]: for x in ["accessible", "accessible_intergenic", "accessible_1e-4M_ccds_flank", "accessible_1e-3M_ccds_flank", "accessible_10kb_ccds_flank", "accessible_100kb_ccds_flank"]:
+   ...:     n = 0
+   ...:     for i in range(1, 23):
+   ...:         mask = h2py.GeneticMask.from_bed_file(f"{x}/mask_chr{i}.bed.gz")
+   ...:         n += np.sum(mask.mask)
+   ...:     print(x, f"n sites: {n}")
+   ...: 
+accessible n sites: 1156452089
+accessible_intergenic n sites: 1141551114
+accessible_1e-4M_ccds_flank n sites: 662995355
+accessible_1e-3M_ccds_flank n sites: 382191382
+accessible_10kb_ccds_flank n sites: 782954481
+accessible_100kb_ccds_flank n sites: 387479996
+
+In [4]: for x in [ "accessible_50kb_ccds_flank"]:
+   ...:     n = 0
+   ...:     for i in range(1, 23):
+   ...:         mask = h2py.GeneticMask.from_bed_file(f"{x}/mask_chr{i}.bed.gz")
+   ...:         n += np.sum(mask.mask)
+   ...:     print(x, f"n sites: {n}")
+   ...: 
+accessible_50kb_ccds_flank n sites: 512937977
+

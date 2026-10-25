@@ -1,0 +1,29 @@
+time_units: generations
+generation_time: 1
+metadata:
+  opt_info: {ll: -317.91613649440615, u: 1.3e-08}
+demes:
+- name: anc
+  epochs:
+  - {end_time: 24596.13105971429, start_size: 15954.549088085832}
+- name: pop1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 0, start_size: 29135.890826001632}
+- name: anc23
+  ancestors: [anc]
+  epochs:
+  - {end_time: 19672.168585815707, start_size: 5654.085453576414}
+- name: pop2
+  ancestors: [anc23]
+  epochs:
+  - {end_time: 2000, start_size: 2977.432864985926}
+- name: pop3
+  ancestors: [anc23]
+  epochs:
+  - {end_time: 2000, start_size: 2877.4885038138955}
+pulses:
+- sources: [pop1]
+  dest: pop2
+  time: 4500.378234185555
+  proportions: [0.03321035095130739]

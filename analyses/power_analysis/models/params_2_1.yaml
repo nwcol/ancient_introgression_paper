@@ -1,0 +1,78 @@
+parameters:
+- name: Tanc
+  upper_bound: 5e4
+  values:
+    - demes:
+        anc:
+          epochs:
+            0: end_time
+
+- name: Tanc23
+  lower_bound: 2e3
+  values:
+    - demes:
+        anc23:
+          epochs:
+            0: end_time
+        sup:
+          epochs:
+            0: end_time
+        pop3: start_time
+
+- name: Nanc
+  lower_bound: 1e3
+  upper_bound: 1e5
+  values: 
+    - demes:
+        anc:
+          epochs: 
+            0: start_size
+
+- name: Nanc23
+  lower_bound: 1e2
+  upper_bound: 1e5
+  values:
+    - demes:
+        anc23:
+          epochs:
+            0: start_size
+
+- name: N1
+  lower_bound: 1e3
+  upper_bound: 1e6
+  values: 
+    - demes: 
+        pop1: 
+          epochs: 
+            0: start_size
+
+- name: N2
+  lower_bound: 1e2
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        pop2: 
+          epochs: 
+            0: start_size
+
+- name: N3
+  lower_bound: 1e2
+  upper_bound: 1e4
+  values: 
+    - demes: 
+        pop3: 
+          epochs: 
+            0: start_size
+
+- name: ps3
+  lower_bound: 1e-16
+  upper_bound: 0.5
+  values:
+    - demes:
+        pop3:
+          proportions: 0
+
+constraints:
+- params: [Tanc, Tanc23]
+  constraint: greater_than
+

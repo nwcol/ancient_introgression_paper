@@ -4,10 +4,9 @@ Optionally, apply a genetic mask to the mutation map.
 """
 
 import argparse
+import h2py
 import numpy as np
 import pandas
-
-from dpluspy import utils
 
 
 def get_args():
@@ -18,17 +17,18 @@ def get_args():
         help="Window scale, in bp")
     parser.add_argument("-b", "--maskfile", required=True, 
         help="Pathname of optional BED genetic mask file")
+    parser.add_argument("-c", "--chrom", required=True)
     parser.add_argument("-o", "--outfile", required=True, 
         help="Pathname of output .bedgraph file")
     return parser.parse_args()
 
 
-def build_windowed_map(infile, scale, maskfile, outfile):
+def build_windowed_map(infile, scale, maskfile, chrom, outfile):
     mut_map = np.load(infile)
     L = len(mut_map)
-    regions, chrom = utils._read_bed_file(maskfile)
-    mask = utils._regions_to_mask(regions, length=L)
-    mut_map[mask] = np.nan
+    mask = h2py.GeneticMask.from_bed_file(maskfile, chrom_end=L)
+    bool_mask = mask.mask
+    mut_map[bool_mask == False] = np.nan
     chrom_start = np.arange(0, L, scale)
     chrom_end = np.arange(scale, L + scale, scale)
     windows = np.stack((chrom_start, chrom_end), axis=1)
@@ -46,16 +46,18 @@ def build_windowed_map(infile, scale, maskfile, outfile):
         "chrom": [chrom] * len(windows),
         "chromStart": chrom_start, 
         "chromEnd": chrom_end,
-        "num_sites": num_sites, 
-        "mut_map": windowed_map
+        "numSites": num_sites, 
+        "mutRate": windowed_map
     }
-    pandas.DataFrame(data).to_csv(outfile, index=False, na_rep="nan")
+    df = pandas.DataFrame(data)
+    df.to_csv(outfile, index=False, na_rep=0, sep="\t")
     return
 
 
 def main():
     args = get_args()
-    build_windowed_map(args.infile, args.scale, args.maskfile, args.outfile)
+    build_windowed_map(
+        args.infile, args.scale, args.maskfile, args.chrom, args.outfile)
     return
 
 

@@ -1,1 +1,1 @@
-s
+Scripts used in data processing and fitting models.

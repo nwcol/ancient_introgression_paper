@@ -1,0 +1,26 @@
+time_units: generations
+demes:
+- name: anc
+  epochs:
+  - {start_size: 1.6e4, end_time: 25000}
+- name: pop1
+  ancestors: [anc]
+  epochs:
+  - {start_size: 3e4, end_time: 0}
+- name: anc23
+  ancestors: [anc]
+  epochs:
+  - {start_size: 5e3, end_time: 20000}
+- name: pop2
+  ancestors: [anc23]
+  epochs:
+  - {start_size: 3e3, end_time: 2000}
+- name: pop3
+  ancestors: [anc23]
+  epochs:
+  - {start_size: 3e3, end_time: 2000}
+pulses:
+- sources: [pop1]
+  dest: pop2
+  proportions: [0.01]
+  time: 10000

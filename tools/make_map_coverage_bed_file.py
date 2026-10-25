@@ -4,10 +4,9 @@ mutation map (.npy format).
 """
 
 import argparse
+import h2py
 import gzip
 import numpy as np
-
-import dpluspy 
 
 
 def get_args():
@@ -21,12 +20,12 @@ def get_args():
     return parser.parse_args()
 
 
-def make_map_coverage_mask(infile, outfile, chrom_num):
+def make_map_coverage_mask(infile, outfile, chrom):
     mut_map = np.load(infile)
-    bool_mask = np.isnan(mut_map)
-    regions = dpluspy.utils._mask_to_regions(bool_mask)
-    dpluspy.utils._write_bed_file(outfile, regions, chrom_num)
-    return 
+    bool_mask = np.logical_not(np.isnan(mut_map))
+    mask = h2py.GeneticMask(bool_mask, chrom=chrom)
+    mask.to_bed_file(outfile)
+    return
 
 
 def main():

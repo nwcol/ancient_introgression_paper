@@ -1,0 +1,27 @@
+time_units: generations
+generation_time: 1
+demes:
+- name: anc
+  epochs:
+  - {end_time: 24828.12643471222, start_size: 15819.466841650066}
+- name: pop1
+  ancestors: [anc]
+  epochs:
+  - {end_time: 0, start_size: 30978.380817930083}
+- name: anc23
+  ancestors: [anc]
+  epochs:
+  - {end_time: 18738.21638649103, start_size: 7314.113364292767}
+- name: pop2
+  ancestors: [anc23]
+  epochs:
+  - {end_time: 2000, start_size: 3612.0259603379004}
+- name: pop3
+  ancestors: [anc23]
+  epochs:
+  - {end_time: 2000, start_size: 2818.8237484265164}
+pulses:
+- sources: [pop1]
+  dest: pop2
+  time: 10000.0
+  proportions: [0.001]

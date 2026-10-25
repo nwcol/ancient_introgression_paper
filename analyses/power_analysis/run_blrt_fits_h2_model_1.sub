@@ -1,0 +1,33 @@
+
+log = log/$(Cluster).log
+error = log/$(Cluster).$(Process).err
+output = log/$(Cluster).$(Process).out
+requirements = (Target.HasCHTCStaging == true)
+container_image = file:///staging/n/nwcollier/h2py-container.sif
+
+request_cpus   = 1
+request_memory = 4GB
+request_disk   = 4GB
+
+executable = ex_blrt_fits_h2_model_1.sh
+arguments = \
+    $(truth) \
+    $(graph0) \
+    $(params0) \
+    $(graph1) \
+    $(params1) \
+    $(prefix)
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = \
+    scripts/simulate_windows_h2.py, \
+    scripts/fit_nested_models_h2.py, \
+    models/pops.txt, \
+    models/$(truth), \
+    models/$(graph0), \
+    models/$(params0), \
+    models/$(graph1), \
+    models/$(params1)
+
+queue truth,graph0,params0,graph1,params1,prefix from h2_variables_model_1.txt

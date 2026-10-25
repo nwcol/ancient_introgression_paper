@@ -9,11 +9,11 @@ CHROMS = list(range(1, 23))
 
 rule all:
     input:
-        expand("intergenic/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("10kb_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("50kb_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("1e-4M_buffer/mask_chr{chrom}.bed.gz", chrom=CHROMS),
-        expand("1e-4M_buffer_strict/mask_chr{chrom}.bed.gz", chrom=CHROMS)
+        expand("accessible/mask_chr{chrom}.bed.gz", chrom=CHROMS),
+        expand("accessible_intergenic/mask_chr{chrom}.bed.gz", chrom=CHROMS),
+        expand("accessible_{size}_ccds_flank/mask_chr{chrom}.bed.gz", chrom=CHROMS,
+            size=["10kb", "50kb", "100kb", "1e-4M", "1e-3M"]),
+        expand("accessible_1e-4M_zhou_ccds_flank/mask_chr{chrom}.bed.gz", chrom=CHROMS)
 
 
 rule download_ccds_exon_tables:
@@ -47,31 +47,6 @@ rule split_1kg_combined_mask:
     params:
         chrom_num = "chr{chrom}"
     shell:
-        """ 
-        awk '$1=="{params.chrom_num}"' {input} > {output}
-        """
-
-
-rule download_1kg_strict_mask:
-    output:
-        temporary("20140520.strict_mask.autosomes.bed")
-    params:
-        link = "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/accessible_genome_masks/20140520.strict_mask.autosomes.bed"
-    shell:
-        """
-        wget {params.link}
-        """
-
-
-rule split_1kg_strict_mask:
-    # Break the 1KG mask up by chromosome
-    input:
-        "20140520.strict_mask.autosomes.bed"
-    output:
-        "1KG_strict/mask_chr{chrom}.bed"
-    params:
-        chrom_num = "chr{chrom}"
-    shell:
         """
         awk '$1=="{params.chrom_num}"' {input} > {output}
         """
@@ -93,21 +68,33 @@ rule build_roulette_masks:
             --chrom_num {params.chrom_num} \
             -o {output}
         """
-    
+
+
+rule intersect_filterbed_masks:
+    input:
+        script = "../../tools/intersect_bed_files.py",
+        masks = expand(config["filterbed_dir"] + "{sample}/chr{{chrom}}_mask.bed.gz", sample=config["ancient_samples"])
+    output:
+        "filterbed/mask_chr{chrom}.bed.gz"
+    shell:
+        """
+        python {input.script} -i {input.masks} -o {output}
+        """
+
 
 rule intersect_masks:
     # Merge callability filters for ancient genomes, the 1KG strict mask, and the Roulette mutation map coverage.
     input:
         script = "../../tools/intersect_bed_files.py",
-        filterbeds = expand(config["filterbed_dir"] + "{sample}/chr{{chrom}}_mask.bed.gz", sample=config["ancient_samples"]),
+        filterbed = "filterbed/mask_chr{chrom}.bed.gz",
         combined_mask = "1KG_combined/mask_chr{chrom}.bed",
         roulette_mask = "roulette_coverage/mask_chr{chrom}.bed.gz"
     output:
-        "basis/mask_chr{chrom}.bed.gz"
+        "accessible/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i {input.filterbeds} {input.combined_mask} {input.roulette_mask} \
+            -i {input.filterbed} {input.combined_mask} {input.roulette_mask} \
             -o {output}
         """
 
@@ -115,14 +102,14 @@ rule intersect_masks:
 rule make_intergenic_mask:
     input:
         script = "../../tools/subtract_bed_files.py",
-        basis = "basis/mask_chr{chrom}.bed.gz",
+        accessible = "accessible/mask_chr{chrom}.bed.gz",
         exons = "ccds_exons/exons_chr{chrom}.bed"
     output:
-        "intergenic/mask_chr{chrom}.bed.gz"
+        "accessible_intergenic/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i1 {input.basis} \
+            -i1 {input.accessible} \
             -i2 {input.exons} \
             -o {output}
         """
@@ -140,7 +127,7 @@ rule slop_exons_10kb:
         """
         python {input.script} \
             -i {input.exons} \
-            --buffer {params.buffer} \
+            --slop {params.buffer} \
             -o {output}
         """
 
@@ -157,14 +144,31 @@ rule slop_exons_50kb:
         """
         python {input.script} \
             -i {input.exons} \
-            --buffer {params.buffer} \
+            --slop {params.buffer} \
             -o {output}
         """
 
 
-rule slop_exons_1e_4M:
+rule slop_exons_100kb:
     input:
-        script = "../../tools/slop_bed_file_with_map.py",
+        script = "../../tools/slop_bed_file.py",
+        exons = "ccds_exons/exons_chr{chrom}.bed"
+    params:
+        buffer = "100000"
+    output:
+        "buffers/100kb/mask_chr{chrom}.bed.gz"
+    shell:
+        """
+        python {input.script} \
+            -i {input.exons} \
+            --slop {params.buffer} \
+            -o {output}
+        """
+
+
+rule slop_exons_1eneg4M:
+    input:
+        script = "../../tools/map_slop_bed_file.py",
         exons = "ccds_exons/exons_chr{chrom}.bed",
         map_file = "../recombination_maps/Bherer/sexavg_chr{chrom}.txt.gz"
     params:
@@ -181,66 +185,56 @@ rule slop_exons_1e_4M:
         """
 
 
-rule subtract_exons_10kb:
+rule slop_exons_1eneg4M_zhou:
     input:
-        script = "../../tools/subtract_bed_files.py",
-        basis = "basis/mask_chr{chrom}.bed.gz",
-        exons_buffers = "buffers/10kb/mask_chr{chrom}.bed.gz"
+        script = "../../tools/map_slop_bed_file_zhou.py",
+        exons = "ccds_exons/exons_chr{chrom}.bed",
+        map_file = "../recombination_maps/Zhou/JHS/JHS.chr{chrom}.1000.plinkmap.txt.gz"
+    params:
+        buffer = "1e-4"
     output:
-        "10kb_buffer/mask_chr{chrom}.bed.gz"
+        "buffers/1e-4M_zhou/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i1 {input.basis} \
-            -i2 {input.exons_buffers} \
+            -i {input.exons} \
+            -r {input.map_file} \
+            --buffer {params.buffer} \
             -o {output}
         """
 
 
-rule subtract_exons_50kb:
+rule slop_exons_1eneg3M:
     input:
-        script = "../../tools/subtract_bed_files.py",
-        basis = "basis/mask_chr{chrom}.bed.gz",
-        exons_buffers = "buffers/50kb/mask_chr{chrom}.bed.gz"
+        script = "../../tools/map_slop_bed_file.py",
+        exons = "ccds_exons/exons_chr{chrom}.bed",
+        map_file = "../recombination_maps/Bherer/sexavg_chr{chrom}.txt.gz"
+    params:
+        buffer = "1e-3"
     output:
-        "50kb_buffer/mask_chr{chrom}.bed.gz"
+        "buffers/1e-3M/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i1 {input.basis} \
-            -i2 {input.exons_buffers} \
+            -i {input.exons} \
+            -r {input.map_file} \
+            --buffer {params.buffer} \
             -o {output}
         """
 
 
-rule subtract_exons_1e_4M:
+rule subtract_cds_buffers:
     input:
         script = "../../tools/subtract_bed_files.py",
-        basis = "basis/mask_chr{chrom}.bed.gz",
-        exons_buffers = "buffers/1e-4M/mask_chr{chrom}.bed.gz"
+        accessible = "accessible/mask_chr{chrom}.bed.gz",
+        exon_buffers = "buffers/{buffer}/mask_chr{chrom}.bed.gz"
     output:
-        "1e-4M_buffer/mask_chr{chrom}.bed.gz"
+        "accessible_{buffer}_ccds_flank/mask_chr{chrom}.bed.gz"
     shell:
         """
         python {input.script} \
-            -i1 {input.basis} \
-            -i2 {input.exons_buffers} \
-            -o {output}
-        """
-
-
-rule build_strict_mask_1e_4M:
-    # use the strict 1KG mask on top of the 1e-4M CCDS exon-buffer map
-    input:
-        script = "../../tools/intersect_bed_files.py",
-        base = "1e-4M_buffer/mask_chr{chrom}.bed.gz",
-        strict_mask = "1KG_strict/mask_chr{chrom}.bed",
-    output:
-        "1e-4M_buffer_strict/mask_chr{chrom}.bed.gz"
-    shell:
-        """
-        python {input.script} \
-            -i {input.base} {input.strict_mask} \
+            -i1 {input.accessible} \
+            -i2 {input.exon_buffers} \
             -o {output}
         """
 

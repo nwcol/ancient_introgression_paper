@@ -1,0 +1,64 @@
+time_units: years
+generation_time: 29
+metadata:
+  opt_info: {ll: -488.6689262258505, num_iter: 1, max_iter: 100, flag: 0, u: 1.3e-08}
+demes:
+- name: Anc
+  epochs:
+  - {end_time: 727670.625272212, start_size: 17900.63164159995}
+- name: MH
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 48433.11729515564, start_size: 37282.598311661226}
+- name: ND
+  ancestors: [Anc]
+  epochs:
+  - {end_time: 692072.195865039, start_size: 1665.4522080026863}
+- name: Denisova
+  ancestors: [ND]
+  epochs:
+  - {end_time: 60000, start_size: 3519.2043176189354}
+- name: N
+  ancestors: [ND]
+  epochs:
+  - {end_time: 118015.95456544199, start_size: 2861.771494554544}
+- name: Altai
+  ancestors: [N]
+  epochs:
+  - {end_time: 115000, start_size: 120.05251742119431}
+- name: WN
+  ancestors: [N]
+  epochs:
+  - {end_time: 65224.487111547554, start_size: 2861.771494554544}
+- name: Chagyrskaya
+  ancestors: [WN]
+  epochs:
+  - {end_time: 55000, start_size: 593.2277072604477}
+- name: Vindija
+  ancestors: [WN]
+  epochs:
+  - {end_time: 45000, start_size: 1167.5229177206481}
+- name: Yoruba1
+  ancestors: [MH]
+  epochs:
+  - {end_time: 0, start_size: 5236.705168456076}
+- name: Loschbour
+  ancestors: [MH]
+  epochs:
+  - {end_time: 8000, start_size: 576.2291081654603}
+migrations:
+- demes: [Denisova, N]
+  rate: 3.364960060124723e-06
+- demes: [Denisova, Altai]
+  rate: 3.364960060124723e-06
+- demes: [Yoruba1, Loschbour]
+  rate: 0.00030433258539776367
+pulses:
+- sources: [MH]
+  dest: N
+  time: 250000
+  proportions: [0.0772650499427327]
+- sources: [Vindija]
+  dest: Loschbour
+  time: 48000
+  proportions: [0.05249593981857717]
