@@ -1,1 +1,0 @@
-Scripts for building a container on an htcondor server and some example scripts 
