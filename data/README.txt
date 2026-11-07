@@ -17,16 +17,18 @@ paths. These large files are:
     http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/hg19/
 
 With these files secured, you will want to run these Snakefiles sequentially:
-- mutation_maps/Snakefile 
+- mutation_maps/Snakefile
 - bed_files/Snakefile
 - intervals/Snakefile [TODO write this one!]
 These can be executed in any order, before or after the above:
-- recombination_maps/Snakefile 
-- vcf_files/Snakefile 
-With all that done, run the Snakefile in statistics/ to compute the D+ statistic
-from this data under the configurations used in this work.
+- recombination_maps/Snakefile
+- vcf_files/Snakefile
+With all that done, run the Snakefile in ../workflow to compute H2 from this
+data under the configurations used in this work.
 
-In places I have been a little sloppy with directory and file names. Note that 
-throughout I use several synonyms for GRCh37!
+This use of Snakemake is nonstandard; in the future I should refactor
+the separate Snakefiles into a single standard-format one.
 
+In places I have been inconsistent with names - please note that `hg19`
+and `GRCh37` refer to the same genome build, which is used throughout.
 

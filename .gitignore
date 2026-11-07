@@ -50,6 +50,6 @@ models/free_pulse_times/fitted_models/
 models/buffer_sensitivity/fitted_models/
 models/bootstrapped_data/
 models/omit_superarchaic/fitted_models/
-models/submodels/blrt/*/
-models/submodels/bootstrap_models/*/
+models/main/bootstrap_lrt/*/*
+models/main/empirical_bootstrap/*/*
 theory/
